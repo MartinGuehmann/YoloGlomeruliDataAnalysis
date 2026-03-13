@@ -809,7 +809,7 @@ write_xlsx(list("linear_model_results" = cbind(coef_data, AIC_lm1 = AIC(lm), AIC
 
 # Create a PDF file
 
-pdf("Abb_LM_Koeffizienten_mAP_95.pdf_angepasst",height=5, width=5)
+pdf("Abb_LM_Koeffizienten_mAP_95_angepasst.pdf",height=5, width=5)
 
 # Create a bar plot of the coefficients with error bars
 library(ggplot2)
