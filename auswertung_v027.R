@@ -623,22 +623,19 @@ dev.off()
 
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 
 
-# Ändern Sie den Namen der Spalte "old_name" in "new_name"
-colnames(subdata)[colnames(subdata) == "X800_SG_au"] <- "X800_SG_aug"
-
-result <- aggregate(mAP_50 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_aug + version +Versuch, data = subdata, FUN = median)
+result <- aggregate(mAP_50 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
 result
 
 # Lineares Modell 1 (Summenmodell-Modell)
 
-lm <- lm(mAP_50 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_aug,data =result)
+lm <- lm(mAP_50 ~ OG + OG_aug + SG + SG_aug, data =result)
 summary(lm)
 AIC(lm)
 
 #Lineares Modell 2 (Interaktionsmodell)
 
-lmi <- lm(mAP_50 ~ X15_OG * X15_OG_aug * X800_SG * X800_SG_aug,data =result)
+lmi <- lm(mAP_50 ~ OG * OG_aug * SG * SG_aug, data =result)
 summary(lmi)
 AIC(lmi)
 
@@ -671,12 +668,6 @@ dev.off()
 #######################################################################################################################
 
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 (angepasst Version)
-
-# Ändern Sie den Namen der Spalte "old_name" in "new_name"
-colnames(subdata)[colnames(subdata) == "X15_OG"] <- "OG"
-colnames(subdata)[colnames(subdata) == "X15_OG_aug"] <- "OG_aug"
-colnames(subdata)[colnames(subdata) == "X800_SG"] <- "SG"
-colnames(subdata)[colnames(subdata) == "X800_SG_aug"] <- "SG_aug"
 
 result <- aggregate(mAP_50 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
@@ -724,22 +715,19 @@ dev.off()
 
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_95 
 
-# Ändern Sie den Namen der Spalte "old_name" in "new_name"
-colnames(subdata)[colnames(subdata) == "X800_SG_au"] <- "X800_SG_aug"
-
-result <- aggregate(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_aug + version +Versuch, data = subdata, FUN = median)
+result <- aggregate(mAP_95 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
 result
 
 # Lineares Modell 1 (Summen-Modell)
 
-lm <- lm(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_aug,data =result)
+lm <- lm(mAP_95 ~ OG + OG_aug + SG + SG_aug,data =result)
 summary(lm)
 AIC(lm)
 
 #Lineares Modell 2 (Interaktionsmodell)
 
-lmi <- lm(mAP_95 ~ X15_OG * X15_OG_aug * X800_SG * X800_SG_aug,data =result)
+lmi <- lm(mAP_95 ~ OG * OG_aug * SG * SG_aug,data =result)
 summary(lmi)
 AIC(lmi)
 
@@ -773,12 +761,6 @@ dev.off()
 #####################################################################################################################
 
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_95 (angepasst Version)
-
-# Ändern Sie den Namen der Spalte "old_name" in "new_name"
-colnames(subdata)[colnames(subdata) == "X15_OG"] <- "OG"
-colnames(subdata)[colnames(subdata) == "X15_OG_aug"] <- "OG_aug"
-colnames(subdata)[colnames(subdata) == "X800_SG"] <- "SG"
-colnames(subdata)[colnames(subdata) == "X800_SG_aug"] <- "SG_aug"
 
 result <- aggregate(mAP_95 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
@@ -2790,18 +2772,18 @@ library(tidyr)
 
 ########################################################################################################################
 
-result <- aggregate(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au + version +Versuch, data = subdata, FUN = median)
+result <- aggregate(mAP_95 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
 result
 
 kruskal_result <- kruskal.test(mAP_95 ~ Versuch, data = result)
 kruskal_result
 
-lm <- lm(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au,data =result)
+lm <- lm(mAP_95 ~ OG + OG_aug + SG + SG_aug,data =result)
 summary(lm)
 AIC(lm)
 
-lmi <- lm(mAP_95 ~ X15_OG * X15_OG_aug * X800_SG * X800_SG_au,data =result)
+lmi <- lm(mAP_95 ~ OG * OG_aug * SG * SG_aug,data =result)
 summary(lmi)
 AIC(lmi)
 
@@ -2809,7 +2791,7 @@ AIC(lmi)
 
 ###################################################################################################################################
 
-result <- aggregate(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au + version +Versuch, data = subdata, FUN = median)
+result <- aggregate(mAP_95 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
 result
 
@@ -2817,27 +2799,27 @@ kruskal_result <- kruskal.test(mAP_95 ~ Versuch, data = result)
 kruskal_result
 
 
-lm <- lm(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au,data =result)
+lm <- lm(mAP_95 ~ OG + OG_aug + SG + SG_aug,data =result)
 summary(lm)
 AIC(lm)
 
-lmi <- lm(mAP_95 ~ X15_OG * X15_OG_aug * X800_SG * X800_SG_au,data =result)
+lmi <- lm(mAP_95 ~ OG * OG_aug * SG * SG_aug,data =result)
 summary(lmi)
 AIC(lmi)
 
 ########################################################################################################################
 
-result <- aggregate(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au + version +Versuch, data = subdata, FUN = median)
+result <- aggregate(mAP_95 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
 result
 
 kruskal_result <- kruskal.test(mAP_95 ~ Versuch, data = result)
 kruskal_result
 
-lm <- lm(mAP_95 ~ X15_OG + X15_OG_aug + X800_SG + X800_SG_au,data =result)
+lm <- lm(mAP_95 ~ OG + OG_aug + SG + SG_aug,data =result)
 summary(lm)
 AIC(lm)
 
-lmi <- lm(mAP_95 ~ X15_OG * X15_OG_aug * X800_SG * X800_SG_au,data =result)
+lmi <- lm(mAP_95 ~ OG * OG_aug * SG * SG_aug,data =result)
 summary(lmi)
 AIC(lmi)
