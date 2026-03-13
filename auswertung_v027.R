@@ -1378,10 +1378,11 @@ plot(bildanzahl,
 
 
 # Füge eine Regressionslinie hinzu
-abline(lm(trainingszeit ~ bildanzahl))
+fit <- lm(trainingszeit ~ bildanzahl)
+abline(fit)
 
 # Zeige die Formel der Regressionsgerade an
-formula <- paste("y =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
+formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
 mtext(formula,
       side = 3,
       line = -12,
