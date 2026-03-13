@@ -50,10 +50,10 @@ for (i in 1:dim(data1)[1]){
 subdata <- subset(data1,  (Epoche > 298) & (Epoche < 300) )
 
 subdata$versuch <- factor(subdata$versuch , levels=c("012", "010", "011", "001","004",
-                                                "003", "013","005","006","007","008","009"))
+                                                     "003", "013","005","006","007","008","009"))
 ggplot(subdata, aes(x = versuch, y= mAP_95) ) +
   geom_boxplot()
- 
+
 
 data1_f <- data1 %>%
   group_by(versuch,version) %>%
@@ -221,7 +221,7 @@ ggplot(subdata_median, aes(x = versuch, y = mAP_95)) +
   geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width = 1)) +
   scale_shape_manual(values=c(4,3,1,2), labels=c("B6","DS","DS_b","DS_b_aug")) +
   # Füge die Mediane als kleine rote Punkte hinzu
- 
+  
   labs(shape="") + geom_hline(yintercept=1)+   
   scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
   ggtitle("Datensatz A: mAP_50 der letzten 10 Epochen") +
@@ -1382,7 +1382,7 @@ mtext(formula,
       cex = 0.8)
 
 dev.off()
-                                                                 
+
 #######################################################################################################################
 # Versuch 1 (001), mAP_50
 
