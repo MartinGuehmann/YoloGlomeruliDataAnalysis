@@ -289,8 +289,7 @@ dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n
 # Display results of Dunn test
 dunn_result$res
 
-# Install and load writexl package
-install.packages("writexl")
+# Load writexl package
 library(writexl)
 
 # Create a list of data frames to write to the XLSX file
@@ -2727,7 +2726,6 @@ dev.off()
 
 #weitere Tabellen
 
-install.packages("tidyr")
 library(tidyr)
 ####################################################################################################
 
