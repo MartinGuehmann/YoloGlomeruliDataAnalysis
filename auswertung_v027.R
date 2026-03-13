@@ -805,7 +805,17 @@ ggplot(coef_data, aes(x = Trainingsdatensatzkombinationen, y = Koeffizienten)) +
 
 dev.off()
 
-write_xlsx(list("interaction_model_results" = cbind(summary(lmi), AIC_lmi = AIC(lmi))), path = "interaction_model_results_mAP_95_angepasst.xlsx")
+# Convert summary to a data frame
+summary_df <- as.data.frame(summary(lmi)$coefficients)
+
+# Add AIC as a new column
+summary_df$AIC <- AIC(lmi)
+
+# Write to Excel, one sheet named "interaction_model_results"
+write_xlsx(
+  list("interaction_model_results" = summary_df),
+  path = "interaction_model_results_mAP_95_angepasst.xlsx"
+)
 
 ####################################################################################################################
 
