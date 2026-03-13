@@ -8,7 +8,7 @@ library(readxl)
 rm(list = ls()) 
 
 
-setwd('/home/nutzer/Project/yolov7/Rscripts')
+#setwd('/home/nutzer/Project/yolov7/Rscripts')
 
 exceldata <- read_excel("Design2.xlsx")  
 Design <- data.frame(exceldata)
