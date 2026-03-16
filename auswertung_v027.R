@@ -93,26 +93,38 @@ subdata$versuch <- factor(subdata$versuch , levels=c("001", "003", "004", "012",
                                                      "017", "018", "013", "019", "010",
                                                      "020","011"))
 
-subdata$visible_symbols <- ifelse(subdata$versuch == "012", c("DS_b_aug"),
-                                  ifelse(subdata$versuch == "010", c("OG","SG", "SG_aug"),
-                                         ifelse(subdata$versuch == "011", c("OG", "OG_aug", "SG", "SG_aug"),
-                                                ifelse(subdata$versuch == "001", c("B6"),
-                                                       ifelse(subdata$versuch == "004", c("DS_b"),
-                                                              ifelse(subdata$versuch == "003", c("DS"),
-                                                                     ifelse(subdata$versuch == "005", c("SG"),
-                                                                            ifelse(subdata$versuch == "006", c("OG"),
-                                                                                   ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
-                                                                                          ifelse(subdata$versuch == "008", c("OG","SG"),
-                                                                                                 ifelse(subdata$versuch == "009", c("SG", "SG_aug"), 
-                                                                                                        ifelse(subdata$versuch == "013", c("OG", "OG_aug", "SG"),
-                                                                                                               ifelse(subdata$versuch == "014", c("OG_aug"),
-                                                                                                                      ifelse(subdata$versuch == "015", c("SG_aug"),
-                                                                                                                             ifelse(subdata$versuch == "016", c("OG_aug","SG"),
-                                                                                                                                    ifelse(subdata$versuch == "017", c("OG_aug","SG_aug"),
-                                                                                                                                           ifelse(subdata$versuch == "018", c("OG","SG_aug"),
-                                                                                                                                                  ifelse(subdata$versuch == "019", c("OG_aug","SG","SG_aug"),
-                                                                                                                                                         ifelse(subdata$versuch == "020", c("OG","OG_aug","SG_aug"), NA)))))))))))))))))))
+# Step 1: mapping of versuch to symbols
+symbol_map <- list(
+  "001" = c("B6"),
+  "003" = c("DS"),
+  "004" = c("DS_b"),
+  "012" = c("DS_b_aug"),
+  "006" = c("OG"),
+  "014" = c("OG_aug"),
+  "005" = c("SG"),
+  "015" = c("SG_aug"),
+  "007" = c("OG","OG_aug"),
+  "016" = c("OG_aug","SG"),
+  "009" = c("SG","SG_aug"),
+  "008" = c("OG","SG"),
+  "017" = c("OG_aug","SG_aug"),
+  "018" = c("OG","SG_aug"),
+  "013" = c("OG","OG_aug","SG"),
+  "019" = c("OG_aug","SG","SG_aug"),
+  "010" = c("OG","SG","SG_aug"),
+  "020" = c("OG","OG_aug","SG_aug"),
+  "011" = c("OG","OG_aug","SG","SG_aug")
+)
 
+# Step 2: create empty vector
+subdata$visible_symbols <- character(nrow(subdata))
+
+# Step 3: assign symbols per versuch with recycling
+for (v in names(symbol_map)) {
+  rows <- which(subdata$versuch == v)
+  syms <- symbol_map[[v]]
+  subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
+}
 # Berechne den Median für jeden SuperRank
 subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
 
