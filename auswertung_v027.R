@@ -95,7 +95,7 @@ versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
 
 subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
-# Step 1: mapping of versuch to symbols
+# Step 1: Mapping of versuch to symbols
 symbol_map <- list(
   "001" = c("B6"),
   "003" = c("DS"),
@@ -118,13 +118,14 @@ symbol_map <- list(
   "011" = c("OG","OG_aug","SG","SG_aug")
 )
 
+# Step 2: Check all versuch_levels must have symbols
 missing <- setdiff(versuch_levels, names(symbol_map))
 
 if (length(missing) > 0) {
   stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
 }
 
-# Step 2: create empty vector
+# Step 3: Create empty vector
 subdata$visible_symbols <- character(nrow(subdata))
 
 # Step 3: assign symbols per versuch with recycling
@@ -134,12 +135,14 @@ for (v in versuch_levels) {
   subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
 }
 
+# Step 4: Check that all experiments have symbols
 check <- table(subdata$versuch, subdata$visible_symbols)
 
 if (any(rowSums(check) == 0)) {
   stop("Some versuch levels have no visible symbols assigned")
 }
 
+# Step 5: Check recycling pattern
 for (v in versuch_levels) {
   
   rows <- which(subdata$versuch == v)
@@ -154,12 +157,13 @@ for (v in versuch_levels) {
   }
 }
 
-# Berechne den Median für jeden SuperRank
+# Compute the median for each SuperRank
 subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
 
-# Berechne den Median der Mediane für jeden Versuch
+# Compute the median of the medians for each versuch
 subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
 
+# Plot
 pdf("Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",height=5, width=5)
 
 ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
