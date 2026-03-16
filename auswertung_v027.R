@@ -25,10 +25,8 @@ if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
 setwd(script_dir)
 cat("Working directory set to:", getwd(), "\n")
 
-exceldata <- read_excel("Design2.xlsx")  
+exceldata <- read_excel("Design2.xlsx")
 Design <- data.frame(exceldata)
-
-
 
 data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
 data1 <- data.frame(data)
@@ -125,16 +123,16 @@ pdf("Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_
 
 ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
   geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(data = subset(subdata, visible_symbols == "B6"), aes(shape = factor("B6"), y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS"), aes(shape = factor("DS"), y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b"), aes(shape = factor("DS_b"), y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG_aug"),aes(shape=factor("OG_aug"),y=1.15),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG_aug"),aes(shape=factor("SG_aug"),y=1.05),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
+  geom_point(data = subset(subdata, visible_symbols == "B6"),       aes(shape = factor("B6"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS"),       aes(shape = factor("DS"),       y = 1.15), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS_b"),     aes(shape = factor("DS_b"),     y = 1.10), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "OG"),       aes(shape = factor("OG"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "OG_aug"),   aes(shape = factor("OG_aug"),   y = 1.15), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "SG_aug"),   aes(shape = factor("SG_aug"),   y = 1.05), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "SG"),       aes(shape = factor("SG"),       y = 1.10), size = 2, position = position_dodge(width = 1)) +
   scale_shape_manual(values=c(4,3,1,2,8,7,6,5),labels=c("B6","DS","DS_b","DS_b_aug","OG","OG_aug","SG","SG_aug"))+
-  labs(shape="") + geom_hline(yintercept=1)+   
+  labs(shape="") + geom_hline(yintercept=1) +
   scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
   ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
   theme(plot.title=element_text(color="black",size=9))+
@@ -187,14 +185,14 @@ pdf("Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_
 
 ggplot(subdata_median, aes(x = versuch, y = mAP_50)) + 
   geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(data = subset(subdata, visible_symbols == "B6"), aes(shape = factor("B6"), y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS"), aes(shape = factor("DS"), y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b"), aes(shape = factor("DS_b"), y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG_aug"),aes(shape=factor("OG_aug"),y=1.15),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG_aug"),aes(shape=factor("SG_aug"),y=1.05),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
+  geom_point(data = subset(subdata, visible_symbols == "B6"),       aes(shape = factor("B6"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS"),       aes(shape = factor("DS"),       y = 1.15), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS_b"),     aes(shape = factor("DS_b"),     y = 1.10), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "OG"),       aes(shape = factor("OG"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "OG_aug"),   aes(shape = factor("OG_aug"),   y = 1.15), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "SG_aug"),   aes(shape = factor("SG_aug"),   y = 1.05), size = 2, position = position_dodge(width = 1)) +
+  geom_point(data = subset(subdata, visible_symbols == "SG"),       aes(shape = factor("SG"),       y = 1.10), size = 2, position = position_dodge(width = 1)) +
   scale_shape_manual(values=c(4,3,1,2,8,7,6,5),labels=c("B6","DS","DS_b","DS_b_aug","OG","OG_aug","SG","SG_aug"))+
   labs(shape="") + geom_hline(yintercept=1)+   
   scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
@@ -206,6 +204,7 @@ ggplot(subdata_median, aes(x = versuch, y = mAP_50)) +
   scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
 
 dev.off()
+
 #########################################################################################################################
 
 # 4 Experimente (großer Datensatz, mAP_95, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
