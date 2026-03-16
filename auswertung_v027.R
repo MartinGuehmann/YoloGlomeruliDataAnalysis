@@ -126,7 +126,7 @@ if (length(missing) > 0) {
 }
 
 # Step 3: Create empty vector
-subdata$visible_symbols <- character(nrow(subdata))
+subdata$visible_symbols <- NA_character_
 
 # Step 3: assign symbols per versuch with recycling
 for (v in versuch_levels) {
@@ -157,34 +157,69 @@ for (v in versuch_levels) {
   }
 }
 
-# Compute the median for each SuperRank
+# Step 6: Compute the median for each SuperRank
 subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
 
-# Compute the median of the medians for each versuch
+# Step 7: Compute the median of the medians for each versuch
 subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
 
-# Plot
-pdf("Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",height=5, width=5)
+# Ensure the median dataset has the same versuch levels
+subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
+# Ensure the median dataset has the same versuch levels
+subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
+
+# Step 8: Define y-positions for the symbols
+symbol_y <- c(
+  B6       = 1.20,
+  DS       = 1.15,
+  DS_b     = 1.10,
+  DS_b_aug = 1.05,
+  OG       = 1.20,
+  OG_aug   = 1.15,
+  SG       = 1.10,
+  SG_aug   = 1.05
+)
+
+# Step 9: Safety check: all visible symbols must have a y-position
+missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
+                     names(symbol_y))
+if (length(missing_y) > 0) {
+  stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
+}
+
+# Step 10: Assign y positions
+subdata$symbol_y <- NA_real_  # initialize as NA
+subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
+  symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
+
+# Step 10: Plot
+pdf("Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
+    height = 5, width = 5)
 
 ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
   geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(data = subset(subdata, visible_symbols == "B6"),       aes(shape = factor("B6"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS"),       aes(shape = factor("DS"),       y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b"),     aes(shape = factor("DS_b"),     y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "OG"),       aes(shape = factor("OG"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "OG_aug"),   aes(shape = factor("OG_aug"),   y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "SG_aug"),   aes(shape = factor("SG_aug"),   y = 1.05), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "SG"),       aes(shape = factor("SG"),       y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  scale_shape_manual(values=c(4,3,1,2,8,7,6,5),labels=c("B6","DS","DS_b","DS_b_aug","OG","OG_aug","SG","SG_aug"))+
-  labs(shape="") + geom_hline(yintercept=1) +
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
+  geom_point(
+    data = subdata[!is.na(subdata$symbol_y), ],  # <--- only rows with y
+    aes(x = versuch, y = symbol_y, shape = visible_symbols),
+    size = 2
+  ) +
+  scale_shape_manual(
+    values = c(4, 3, 1, 2, 8, 7, 6, 5),
+    labels = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug")
+  ) +
+  labs(shape = "") +
+  geom_hline(yintercept = 1) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.1),
+    minor_breaks = seq(0, 1, 0.01)
+  ) +
   ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
+  theme(
+    plot.title = element_text(color = "black", size = 9),
+    axis.text.x = element_text(size = 6),
+    panel.grid.major.y = element_line(colour = "grey", size = 0.25),
+    panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
+  )
 
 dev.off()
 
