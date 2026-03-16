@@ -88,12 +88,12 @@ data1df <- data1_s
 
 subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
-levels <- c("001", "003", "004", "012", "006", "014", "005",
-            "015","007","016","009","008",
-            "017", "018", "013", "019", "010",
-            "020","011")
+versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
+                    "015","007","016","009","008",
+                    "017", "018", "013", "019", "010",
+                    "020","011")
 
-subdata$versuch <- factor(subdata$versuch , levels=levels)
+subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
 # Step 1: mapping of versuch to symbols
 symbol_map <- list(
@@ -122,7 +122,7 @@ symbol_map <- list(
 subdata$visible_symbols <- character(nrow(subdata))
 
 # Step 3: assign symbols per versuch with recycling
-for (v in levels) {
+for (v in versuch_levels) {
 
   if (!v %in% names(symbol_map)) {
     stop(paste("No symbol mapping defined for versuch", v))
