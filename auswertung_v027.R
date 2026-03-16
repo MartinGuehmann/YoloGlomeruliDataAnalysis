@@ -134,6 +134,26 @@ for (v in versuch_levels) {
   subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
 }
 
+check <- table(subdata$versuch, subdata$visible_symbols)
+
+if (any(rowSums(check) == 0)) {
+  stop("Some versuch levels have no visible symbols assigned")
+}
+
+for (v in versuch_levels) {
+  
+  rows <- which(subdata$versuch == v)
+  if (length(rows) == 0) next
+  
+  expected <- rep(symbol_map[[v]], length.out = length(rows))
+  actual <- subdata$visible_symbols[rows]
+  
+  if (!identical(actual, expected)) {
+    print(data.frame(expected, actual))
+    stop(paste("Symbol recycling mismatch for versuch", v))
+  }
+}
+
 # Berechne den Median für jeden SuperRank
 subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
 
