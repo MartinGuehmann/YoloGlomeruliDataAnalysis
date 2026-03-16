@@ -88,10 +88,12 @@ data1df <- data1_s
 
 subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
-subdata$versuch <- factor(subdata$versuch , levels=c("001", "003", "004", "012", "006", "014", "005",
-                                                     "015","007","016","009","008",
-                                                     "017", "018", "013", "019", "010",
-                                                     "020","011"))
+levels <- c("001", "003", "004", "012", "006", "014", "005",
+            "015","007","016","009","008",
+            "017", "018", "013", "019", "010",
+            "020","011")
+
+subdata$versuch <- factor(subdata$versuch , levels=levels)
 
 # Step 1: mapping of versuch to symbols
 symbol_map <- list(
@@ -120,11 +122,12 @@ symbol_map <- list(
 subdata$visible_symbols <- character(nrow(subdata))
 
 # Step 3: assign symbols per versuch with recycling
-for (v in names(symbol_map)) {
-  rows <- which(subdata$versuch == v)
+for (v in levels) {
+  rows <- which(subdata$versuch == names(symbol_map[v]))
   syms <- symbol_map[[v]]
   subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
 }
+
 # Berechne den Median für jeden SuperRank
 subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
 
