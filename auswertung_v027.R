@@ -89,9 +89,9 @@ data1df <- data1_s
 subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
 versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
-                    "015","007","016","009","008",
+                    "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
-                    "020","011")
+                    "020", "011")
 
 subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
