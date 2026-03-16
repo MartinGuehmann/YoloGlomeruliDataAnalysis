@@ -123,7 +123,7 @@ subdata$visible_symbols <- character(nrow(subdata))
 
 # Step 3: assign symbols per versuch with recycling
 for (v in levels) {
-  rows <- which(subdata$versuch == names(symbol_map[v]))
+  rows <- which(subdata$versuch == v)
   syms <- symbol_map[[v]]
   subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
 }
