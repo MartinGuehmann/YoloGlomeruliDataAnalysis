@@ -96,40 +96,43 @@ plot_boxes <- function(data,
                        epoch_range = c(290, 299),
                        outlier_filter = list(versuch="001", SuperRank=6)) {
 
+  # Step 1: Get subdata from the last 10 epochs
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
 
+  # Step 2: Remove outliers
   if (!is.null(outlier_filter)) {
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                          subdata$SuperRank == outlier_filter$SuperRank), ]
   }
 
+  # Step 3: factorize
   subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
-  # Step 2: Check all versuch_levels must have symbols
+  # Step $: Check all versuch_levels must have symbols
   missing <- setdiff(versuch_levels, names(symbol_map))
 
   if (length(missing) > 0) {
     stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
   }
 
-  # Step 3: Create empty vector
+  # Step 5: Create empty vector
   subdata$visible_symbols <- NA_character_
 
-  # Step 3: assign symbols per versuch with recycling
+  # Step 6: assign symbols per versuch with recycling
   for (v in versuch_levels) {
     rows <- which(subdata$versuch == v)
     syms <- symbol_map[[v]] # get the symbols for that versuch
     subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
   }
 
-  # Step 4: Check that all experiments have symbols
+  # Step 7: Check that all experiments have symbols
   check <- table(subdata$versuch, subdata$visible_symbols)
 
   if (any(rowSums(check) == 0)) {
     stop("Some versuch levels have no visible symbols assigned")
   }
 
-  # Step 5: Check recycling pattern
+  # Step 8: Check recycling pattern
   for (v in versuch_levels) {
 
     rows <- which(subdata$versuch == v)
@@ -144,13 +147,13 @@ plot_boxes <- function(data,
     }
   }
 
-  # Step 6: Compute the median for each SuperRank
+  # Step 9: Compute the median for each SuperRank
   form <- as.formula(
     paste(metric, "~ versuch + SuperRank")
   )
   subdata_median <- aggregate(form, data = subdata, median)
 
-  # Step 7: Compute the median of the medians for each versuch
+  # Step 10: Compute the median of the medians for each versuch
   form <- as.formula(
     paste(metric, "~ versuch")
   )
@@ -161,19 +164,19 @@ plot_boxes <- function(data,
   # Ensure the median dataset has the same versuch levels
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
 
-  # Step 9: Safety check: all visible symbols must have a y-position
+  # Step 10: Safety check: all visible symbols must have a y-position
   missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
                        names(symbol_y))
   if (length(missing_y) > 0) {
     stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
   }
 
-  # Step 10: Assign y positions
+  # Step 11: Assign y positions
   subdata$symbol_y <- NA_real_  # initialize as NA
   subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
     symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
 
-  # Step 11: Create Plot
+  # Step 12: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
@@ -199,7 +202,7 @@ plot_boxes <- function(data,
       panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
     )
 
-  # Step 12: Save Plot
+  # Step 13: Save Plot
   ggsave(
     filename = pdf_file,
     plot = p,
