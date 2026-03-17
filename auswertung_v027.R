@@ -86,142 +86,162 @@ data1df <- data1_s
 
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
+#                       epoch_range = c(290, 299),
+#                       outlier_filter = list(versuch="001", SuperRank=6),
+#                       pdf_file = "mAP95_plot.pdf") {
 
-versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
+  subdata <- subset(data, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
-subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
+  versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
+                      "015", "007", "016", "009", "008",
+                      "017", "018", "013", "019", "010",
+                      "020", "011")
 
-# Step 1: Mapping of versuch to symbols
-symbol_map <- list(
-  "001" = c("B6"),
-  "003" = c("DS"),
-  "004" = c("DS_b"),
-  "012" = c("DS_b_aug"),
-  "006" = c("OG"),
-  "014" = c("OG_aug"),
-  "005" = c("SG"),
-  "015" = c("SG_aug"),
-  "007" = c("OG","OG_aug"),
-  "016" = c("OG_aug","SG"),
-  "009" = c("SG","SG_aug"),
-  "008" = c("OG","SG"),
-  "017" = c("OG_aug","SG_aug"),
-  "018" = c("OG","SG_aug"),
-  "013" = c("OG","OG_aug","SG"),
-  "019" = c("OG_aug","SG","SG_aug"),
-  "010" = c("OG","SG","SG_aug"),
-  "020" = c("OG","OG_aug","SG_aug"),
-  "011" = c("OG","OG_aug","SG","SG_aug")
-)
+  #versuch_levels <- c("001", "003", "004", "012")
 
-# Step 2: Check all versuch_levels must have symbols
-missing <- setdiff(versuch_levels, names(symbol_map))
+  subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
-if (length(missing) > 0) {
-  stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
-}
-
-# Step 3: Create empty vector
-subdata$visible_symbols <- NA_character_
-
-# Step 3: assign symbols per versuch with recycling
-for (v in versuch_levels) {
-  rows <- which(subdata$versuch == v)
-  syms <- symbol_map[[v]] # get the symbols for that versuch
-  subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
-}
-
-# Step 4: Check that all experiments have symbols
-check <- table(subdata$versuch, subdata$visible_symbols)
-
-if (any(rowSums(check) == 0)) {
-  stop("Some versuch levels have no visible symbols assigned")
-}
-
-# Step 5: Check recycling pattern
-for (v in versuch_levels) {
-  
-  rows <- which(subdata$versuch == v)
-  if (length(rows) == 0) next
-  
-  expected <- rep(symbol_map[[v]], length.out = length(rows))
-  actual <- subdata$visible_symbols[rows]
-  
-  if (!identical(actual, expected)) {
-    print(data.frame(expected, actual))
-    stop(paste("Symbol recycling mismatch for versuch", v))
-  }
-}
-
-# Step 6: Compute the median for each SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Step 7: Compute the median of the medians for each versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-# Ensure the median dataset has the same versuch levels
-subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
-# Ensure the median dataset has the same versuch levels
-subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
-
-# Step 8: Define y-positions for the symbols
-symbol_y <- c(
-  B6       = 1.20,
-  DS       = 1.15,
-  DS_b     = 1.10,
-  DS_b_aug = 1.05,
-  OG       = 1.20,
-  OG_aug   = 1.15,
-  SG       = 1.10,
-  SG_aug   = 1.05
-)
-
-# Step 9: Safety check: all visible symbols must have a y-position
-missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
-                     names(symbol_y))
-if (length(missing_y) > 0) {
-  stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
-}
-
-# Step 10: Assign y positions
-subdata$symbol_y <- NA_real_  # initialize as NA
-subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
-  symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
-
-# Step 10: Plot
-pdf("Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
-    height = 5, width = 5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(
-    data = subdata[!is.na(subdata$symbol_y), ],  # <--- only rows with y
-    aes(x = versuch, y = symbol_y, shape = visible_symbols),
-    size = 2
-  ) +
-  scale_shape_manual(
-    values = c(4, 3, 1, 2, 8, 7, 6, 5),
-    labels = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug")
-  ) +
-  labs(shape = "") +
-  geom_hline(yintercept = 1) +
-  scale_y_continuous(
-    breaks = seq(0, 1, 0.1),
-    minor_breaks = seq(0, 1, 0.01)
-  ) +
-  ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
-  theme(
-    plot.title = element_text(color = "black", size = 9),
-    axis.text.x = element_text(size = 6),
-    panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-    panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
+  # Step 1: Mapping of versuch to symbols
+  symbol_map <- list(
+    "001" = c("B6"),
+    "003" = c("DS"),
+    "004" = c("DS_b"),
+    "012" = c("DS_b_aug"),
+    "006" = c("OG"),
+    "014" = c("OG_aug"),
+    "005" = c("SG"),
+    "015" = c("SG_aug"),
+    "007" = c("OG","OG_aug"),
+    "016" = c("OG_aug","SG"),
+    "009" = c("SG","SG_aug"),
+    "008" = c("OG","SG"),
+    "017" = c("OG_aug","SG_aug"),
+    "018" = c("OG","SG_aug"),
+    "013" = c("OG","OG_aug","SG"),
+    "019" = c("OG_aug","SG","SG_aug"),
+    "010" = c("OG","SG","SG_aug"),
+    "020" = c("OG","OG_aug","SG_aug"),
+    "011" = c("OG","OG_aug","SG","SG_aug")
   )
 
-dev.off()
+  # Step 2: Check all versuch_levels must have symbols
+  missing <- setdiff(versuch_levels, names(symbol_map))
+
+  if (length(missing) > 0) {
+    stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
+  }
+
+  # Step 3: Create empty vector
+  subdata$visible_symbols <- NA_character_
+
+  # Step 3: assign symbols per versuch with recycling
+  for (v in versuch_levels) {
+    rows <- which(subdata$versuch == v)
+    syms <- symbol_map[[v]] # get the symbols for that versuch
+    subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
+  }
+
+  # Step 4: Check that all experiments have symbols
+  check <- table(subdata$versuch, subdata$visible_symbols)
+
+  if (any(rowSums(check) == 0)) {
+    stop("Some versuch levels have no visible symbols assigned")
+  }
+
+  # Step 5: Check recycling pattern
+  for (v in versuch_levels) {
+
+    rows <- which(subdata$versuch == v)
+    if (length(rows) == 0) next
+
+    expected <- rep(symbol_map[[v]], length.out = length(rows))
+    actual <- subdata$visible_symbols[rows]
+
+    if (!identical(actual, expected)) {
+      print(data.frame(expected, actual))
+      stop(paste("Symbol recycling mismatch for versuch", v))
+    }
+  }
+
+  # Step 6: Compute the median for each SuperRank
+  subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
+
+  # Step 7: Compute the median of the medians for each versuch
+  subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
+
+  # Ensure the median dataset has the same versuch levels
+  subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
+  # Ensure the median dataset has the same versuch levels
+  subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
+
+  # Step 8: Define y-positions for the symbols
+  symbol_y <- c(
+    B6       = 1.20,
+    DS       = 1.15,
+    DS_b     = 1.10,
+    DS_b_aug = 1.05,
+    OG       = 1.20,
+    OG_aug   = 1.15,
+    SG       = 1.10,
+    SG_aug   = 1.05
+  )
+
+  # Step 9: Safety check: all visible symbols must have a y-position
+  missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
+                       names(symbol_y))
+  if (length(missing_y) > 0) {
+    stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
+  }
+
+  # Step 10: Assign y positions
+  subdata$symbol_y <- NA_real_  # initialize as NA
+  subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
+    symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
+
+  # Step 11: Plot
+  pdf("Abb_GesamtÃ¼bersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
+      height = 5, width = 5)
+
+  p <- ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
+    geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
+    geom_point(
+      data = subdata[!is.na(subdata$symbol_y), ],  # <--- only rows with y
+      aes(x = versuch, y = symbol_y, shape = visible_symbols),
+      size = 2
+    ) +
+    scale_shape_manual(
+      values = c(4, 3, 1, 2, 8, 7, 6, 5),
+      labels = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug")
+    ) +
+    labs(shape = "") +
+    geom_hline(yintercept = 1) +
+    scale_y_continuous(
+      breaks = seq(0, 1, 0.1),
+      minor_breaks = seq(0, 1, 0.01)
+    ) +
+    ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
+    theme(
+      plot.title = element_text(color = "black", size = 9),
+      axis.text.x = element_text(size = 6),
+      panel.grid.major.y = element_line(colour = "grey", size = 0.25),
+      panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
+    )
+
+  print(p)
+
+  dev.off()
+
+}
+
+plot_mAP95(data1df)
+#res <- plot_mAP95(
+#  data = data1df,
+#  versuch_levels = versuch_levels,
+#  symbol_map = symbol_map,
+#  symbol_y = symbol_y,
+#  pdf_file = "test_plot.pdf"
+#)
 
 ##########################################################################################################################
 
