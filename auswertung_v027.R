@@ -90,13 +90,14 @@ plot_mAP95 <- function(data,
                        versuch_levels,
                        symbol_map,
                        symbol_y,
+                       metric,
                        plot_title = "Plot Title",
                        pdf_file = "plot.pdf",
                        epoch_range = c(290, 299),
                        outlier_filter = list(versuch="001", SuperRank=6)) {
 
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
-  
+
   if (!is.null(outlier_filter)) {
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                          subdata$SuperRank == outlier_filter$SuperRank), ]
@@ -144,10 +145,16 @@ plot_mAP95 <- function(data,
   }
 
   # Step 6: Compute the median for each SuperRank
-  subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
+  form <- as.formula(
+    paste(metric, "~ versuch + SuperRank")
+  )
+  subdata_median <- aggregate(form, data = subdata, median)
 
   # Step 7: Compute the median of the medians for each versuch
-  subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
+  form <- as.formula(
+    paste(metric, "~ versuch")
+  )
+  subdata_median_median <- aggregate(form, data = subdata_median, median)
 
   # Ensure the median dataset has the same versuch levels
   subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
@@ -167,7 +174,7 @@ plot_mAP95 <- function(data,
     symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
 
   # Step 11: Create Plot
-  p <- ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
+  p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
       data = subdata[!is.na(subdata$symbol_y), ],  # <--- only rows with y
@@ -246,7 +253,7 @@ symbol_y_pos <- c(
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
 
-plot_mAP95(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, plot_title, file_name)
+plot_mAP95(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
 
 
 ##########################################################################################################################
