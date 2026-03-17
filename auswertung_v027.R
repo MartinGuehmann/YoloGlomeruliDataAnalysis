@@ -234,14 +234,7 @@ symbol_map_experiments <- list(
   "011" = c("OG","OG_aug","SG","SG_aug")
 )
 
-versuch_levels_all <- c("001", "003", "004", "012", "006", "014", "005",
-                        "015", "007", "016", "009", "008",
-                        "017", "018", "013", "019", "010",
-                        "020", "011")
-
-#versuch_levels <- c("001", "003", "004", "012")
-
-# Step 8: Define y-positions for the symbols
+# Define y-positions for the symbols
 symbol_y_pos <- c(
   B6       = 1.20,
   DS       = 1.15,
@@ -252,6 +245,11 @@ symbol_y_pos <- c(
   SG       = 1.10,
   SG_aug   = 1.05
 )
+
+versuch_levels_all <- c("001", "003", "004", "012", "006", "014", "005",
+                        "015", "007", "016", "009", "008",
+                        "017", "018", "013", "019", "010",
+                        "020", "011")
 
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
