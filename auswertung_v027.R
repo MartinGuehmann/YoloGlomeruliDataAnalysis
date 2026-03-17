@@ -93,8 +93,8 @@ plot_boxes <- function(data,
                        metric,
                        plot_title = "Plot Title",
                        pdf_file = "plot.pdf",
-                       epoch_range = c(290, 299),
-                       outlier_filter = list(versuch="001", SuperRank=6)) {
+                       outlier_filter = list(versuch="001", SuperRank=6),
+                       epoch_range = c(290, 299)) {
 
   # Step 1: Get subdata from the last 10 epochs
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
@@ -180,7 +180,7 @@ plot_boxes <- function(data,
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
-      data = subdata[!is.na(subdata$symbol_y), ],  # <--- only rows with y
+      data = subdata[!is.na(subdata$symbol_y), ],  # <--- Only rows with y
       aes(x = versuch, y = symbol_y, shape = visible_symbols),
       size = 2
     ) +
