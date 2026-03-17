@@ -84,8 +84,6 @@ data1df <- data1_s
 ################################################################################################
 ###############################################################################################
 
-# Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
 plot_boxes <- function(data,
                        versuch_levels,
                        symbol_map,
@@ -248,7 +246,11 @@ symbol_y_pos <- c(
   SG_aug   = 1.05
 )
 
-versuch_levels_all <- c("001", "003", "004", "012", "006", "014", "005",
+#########################################################################################################################
+
+# Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
                         "015", "007", "016", "009", "008",
                         "017", "018", "013", "019", "010",
                         "020", "011")
@@ -256,17 +258,24 @@ versuch_levels_all <- c("001", "003", "004", "012", "006", "014", "005",
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
 
-plot_boxes(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
+
+# Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
-
-# Outlier filter here is set to NULL
-plot_boxes(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, file_name, NULL)
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, file_name, NULL) # Outlier filter here is set to NULL
 
 #########################################################################################################################
 
 # 4 Experimente (großer Datensatz, mAP_95, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+versuch_levels <- c("001", "003","004", "012")
+file_name  <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
+plot_title <- "Datensatz A: mAP_50 der letzten 10 Epochen"
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
+
+#########################################################################################################################
 
 subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
