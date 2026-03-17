@@ -200,8 +200,8 @@ plot_boxes <- function(data,
     theme(
       plot.title = element_text(color = "black", size = 9),
       axis.text.x = element_text(size = 6),
-      panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-      panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
+      panel.grid.major.y = element_line(colour = "grey40", size = 0.3),
+      panel.grid.minor.y = element_line(colour = "grey80", size = 0.1)
     )
 
   # Step 13: Save Plot
