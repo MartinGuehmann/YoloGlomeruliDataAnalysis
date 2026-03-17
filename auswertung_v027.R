@@ -87,9 +87,9 @@ data1df <- data1_s
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 plot_mAP95 <- function(data,
-#                       versuch_levels,
+                       versuch_levels,
                        symbol_map,
-#                       symbol_y,
+                       symbol_y,
                        pdf_file = "plot.pdf",
                        epoch_range = c(290, 299),
                        outlier_filter = list(versuch="001", SuperRank=6)) {
@@ -100,13 +100,6 @@ plot_mAP95 <- function(data,
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                          subdata$SuperRank == outlier_filter$SuperRank), ]
   }
-
-  versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
-                      "015", "007", "016", "009", "008",
-                      "017", "018", "013", "019", "010",
-                      "020", "011")
-
-  #versuch_levels <- c("001", "003", "004", "012")
 
   subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
@@ -160,18 +153,6 @@ plot_mAP95 <- function(data,
   # Ensure the median dataset has the same versuch levels
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
 
-  # Step 8: Define y-positions for the symbols
-  symbol_y <- c(
-    B6       = 1.20,
-    DS       = 1.15,
-    DS_b     = 1.10,
-    DS_b_aug = 1.05,
-    OG       = 1.20,
-    OG_aug   = 1.15,
-    SG       = 1.10,
-    SG_aug   = 1.05
-  )
-
   # Step 9: Safety check: all visible symbols must have a y-position
   missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
                        names(symbol_y))
@@ -199,7 +180,7 @@ plot_mAP95 <- function(data,
     labs(shape = "") +
     geom_hline(yintercept = 1) +
     scale_y_continuous(
-      breaks = seq(0, 1, 0.1),
+      breaks       = seq(0, 1, 0.1),
       minor_breaks = seq(0, 1, 0.01)
     ) +
     ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
@@ -243,8 +224,27 @@ symbol_map_experiments <- list(
   "011" = c("OG","OG_aug","SG","SG_aug")
 )
 
+versuch_levels_all <- c("001", "003", "004", "012", "006", "014", "005",
+                        "015", "007", "016", "009", "008",
+                        "017", "018", "013", "019", "010",
+                        "020", "011")
+
+#versuch_levels <- c("001", "003", "004", "012")
+
+# Step 8: Define y-positions for the symbols
+symbol_y_pos <- c(
+  B6       = 1.20,
+  DS       = 1.15,
+  DS_b     = 1.10,
+  DS_b_aug = 1.05,
+  OG       = 1.20,
+  OG_aug   = 1.15,
+  SG       = 1.10,
+  SG_aug   = 1.05
+)
+
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
-plot_mAP95(data1df, symbol_map_experiments, file_name)
+plot_mAP95(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, file_name)
 #res <- plot_mAP95(
 #  data = data1df,
 #  versuch_levels = versuch_levels,
