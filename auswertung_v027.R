@@ -191,6 +191,8 @@ plot_boxes <- function(data,
     labs(shape = "") +
     geom_hline(yintercept = 1) +
     scale_y_continuous(
+      limits       = c(0, 1.25),
+      expand       = c(0, 0),
       breaks       = seq(0, 1, 0.1),
       minor_breaks = seq(0, 1, 0.01)
     ) +
