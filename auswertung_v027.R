@@ -317,7 +317,8 @@ dev.off()
 
 ###########################################################################################################
 
-# Perform Kruskal-Wallis test
+
+# Kruskal-Wallis test
 kruskal_result <- kruskal.test(mAP_95 ~ versuch, data = subdata)
 kruskal_result
 
@@ -331,7 +332,7 @@ kruskal_df <- data.frame(statistic = kruskal_result$statistic,
 # Load FSA library
 library(FSA)
 
-# Perform Dunn test
+# Dunn test
 dunn_result <- dunnTest(mAP_95 ~ versuch, data=subdata, method="bonferroni")
 
 # Calculate effect size r
