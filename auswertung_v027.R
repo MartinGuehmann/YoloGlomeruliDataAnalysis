@@ -86,12 +86,18 @@ data1df <- data1_s
 
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
-plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
-#                       epoch_range = c(290, 299),
-#                       outlier_filter = list(versuch="001", SuperRank=6),
-#                       pdf_file = "mAP95_plot.pdf") {
+plot_mAP95 <- function(data,
+#                       versuch_levels, symbol_map, symbol_y,
+                       pdf_file = "plot.pdf",
+                       epoch_range = c(290, 299),
+                       outlier_filter = list(versuch="001", SuperRank=6)) {
 
-  subdata <- subset(data, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+  subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
+  
+  if (!is.null(outlier_filter)) {
+    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
+                         subdata$SuperRank == outlier_filter$SuperRank), ]
+  }
 
   versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
                       "015", "007", "016", "009", "008",
@@ -227,7 +233,7 @@ plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
 
   # Step 12: Save Plot
   ggsave(
-    filename = "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
+    filename = pdf_file,
     plot = p,
     height = 5,
     width = 5
@@ -235,7 +241,8 @@ plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
 
 }
 
-plot_mAP95(data1df)
+file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
+plot_mAP95(data1df, file_name)
 #res <- plot_mAP95(
 #  data = data1df,
 #  versuch_levels = versuch_levels,
