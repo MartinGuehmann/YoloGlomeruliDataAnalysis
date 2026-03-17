@@ -256,68 +256,11 @@ plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epo
 
 plot_boxes(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
 
+file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
+plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
 
-##########################################################################################################################
-
-# Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300))
-#subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("001", "003", "004", "012", "006", "014", "005",
-                                                     "015","007","016","009","008",
-                                                     "017", "018", "013", "019", "010",
-                                                     "020","011"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "012", c("DS_b_aug"),
-                                  ifelse(subdata$versuch == "010", c("OG","SG", "SG_aug"),
-                                         ifelse(subdata$versuch == "011", c("OG", "OG_aug", "SG", "SG_aug"),
-                                                ifelse(subdata$versuch == "001", c("B6"),
-                                                       ifelse(subdata$versuch == "004", c("DS_b"),
-                                                              ifelse(subdata$versuch == "003", c("DS"),
-                                                                     ifelse(subdata$versuch == "005", c("SG"),
-                                                                            ifelse(subdata$versuch == "006", c("OG"),
-                                                                                   ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
-                                                                                          ifelse(subdata$versuch == "008", c("OG","SG"),
-                                                                                                 ifelse(subdata$versuch == "009", c("SG", "SG_aug"), 
-                                                                                                        ifelse(subdata$versuch == "013", c("OG", "OG_aug", "SG"),
-                                                                                                               ifelse(subdata$versuch == "014", c("OG_aug"),
-                                                                                                                      ifelse(subdata$versuch == "015", c("SG_aug"),
-                                                                                                                             ifelse(subdata$versuch == "016", c("OG_aug","SG"),
-                                                                                                                                    ifelse(subdata$versuch == "017", c("OG_aug","SG_aug"),
-                                                                                                                                           ifelse(subdata$versuch == "018", c("OG","SG_aug"),
-                                                                                                                                                  ifelse(subdata$versuch == "019", c("OG_aug","SG","SG_aug"),
-                                                                                                                                                         ifelse(subdata$versuch == "020", c("OG","OG_aug","SG_aug"), NA)))))))))))))))))))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_50 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_50 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_50)) + 
-  geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(data = subset(subdata, visible_symbols == "B6"),       aes(shape = factor("B6"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS"),       aes(shape = factor("DS"),       y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b"),     aes(shape = factor("DS_b"),     y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS_b_aug"), aes(shape = factor("DS_b_aug"), y = 1.05), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "OG"),       aes(shape = factor("OG"),       y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "OG_aug"),   aes(shape = factor("OG_aug"),   y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "SG_aug"),   aes(shape = factor("SG_aug"),   y = 1.05), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "SG"),       aes(shape = factor("SG"),       y = 1.10), size = 2, position = position_dodge(width = 1)) +
-  scale_shape_manual(values=c(4,3,1,2,8,7,6,5),labels=c("B6","DS","DS_b","DS_b_aug","OG","OG_aug","SG","SG_aug"))+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
+# Outlier filter here is set to NULL
+plot_boxes(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, file_name, NULL)
 
 #########################################################################################################################
 
