@@ -90,6 +90,7 @@ plot_mAP95 <- function(data,
                        versuch_levels,
                        symbol_map,
                        symbol_y,
+                       plot_title = "Plot Title",
                        pdf_file = "plot.pdf",
                        epoch_range = c(290, 299),
                        outlier_filter = list(versuch="001", SuperRank=6)) {
@@ -183,7 +184,7 @@ plot_mAP95 <- function(data,
       breaks       = seq(0, 1, 0.1),
       minor_breaks = seq(0, 1, 0.01)
     ) +
-    ggtitle("Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen") +
+    ggtitle(plot_title) +
     theme(
       plot.title = element_text(color = "black", size = 9),
       axis.text.x = element_text(size = 6),
@@ -244,7 +245,9 @@ symbol_y_pos <- c(
 )
 
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
-plot_mAP95(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, file_name)
+plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
+
+plot_mAP95(data1df, versuch_levels_all, symbol_map_experiments, symbol_y_pos, plot_title, file_name)
 #res <- plot_mAP95(
 #  data = data1df,
 #  versuch_levels = versuch_levels,
