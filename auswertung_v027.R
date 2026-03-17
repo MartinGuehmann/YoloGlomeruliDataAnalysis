@@ -87,7 +87,9 @@ data1df <- data1_s
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 plot_mAP95 <- function(data,
-#                       versuch_levels, symbol_map, symbol_y,
+#                       versuch_levels,
+                       symbol_map,
+#                       symbol_y,
                        pdf_file = "plot.pdf",
                        epoch_range = c(290, 299),
                        outlier_filter = list(versuch="001", SuperRank=6)) {
@@ -107,29 +109,6 @@ plot_mAP95 <- function(data,
   #versuch_levels <- c("001", "003", "004", "012")
 
   subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
-
-  # Step 1: Mapping of versuch to symbols
-  symbol_map <- list(
-    "001" = c("B6"),
-    "003" = c("DS"),
-    "004" = c("DS_b"),
-    "012" = c("DS_b_aug"),
-    "006" = c("OG"),
-    "014" = c("OG_aug"),
-    "005" = c("SG"),
-    "015" = c("SG_aug"),
-    "007" = c("OG","OG_aug"),
-    "016" = c("OG_aug","SG"),
-    "009" = c("SG","SG_aug"),
-    "008" = c("OG","SG"),
-    "017" = c("OG_aug","SG_aug"),
-    "018" = c("OG","SG_aug"),
-    "013" = c("OG","OG_aug","SG"),
-    "019" = c("OG_aug","SG","SG_aug"),
-    "010" = c("OG","SG","SG_aug"),
-    "020" = c("OG","OG_aug","SG_aug"),
-    "011" = c("OG","OG_aug","SG","SG_aug")
-  )
 
   # Step 2: Check all versuch_levels must have symbols
   missing <- setdiff(versuch_levels, names(symbol_map))
@@ -241,8 +220,31 @@ plot_mAP95 <- function(data,
 
 }
 
+# Mapping of versuch to symbols
+symbol_map_experiments <- list(
+  "001" = c("B6"),
+  "003" = c("DS"),
+  "004" = c("DS_b"),
+  "012" = c("DS_b_aug"),
+  "006" = c("OG"),
+  "014" = c("OG_aug"),
+  "005" = c("SG"),
+  "015" = c("SG_aug"),
+  "007" = c("OG","OG_aug"),
+  "016" = c("OG_aug","SG"),
+  "009" = c("SG","SG_aug"),
+  "008" = c("OG","SG"),
+  "017" = c("OG_aug","SG_aug"),
+  "018" = c("OG","SG_aug"),
+  "013" = c("OG","OG_aug","SG"),
+  "019" = c("OG_aug","SG","SG_aug"),
+  "010" = c("OG","SG","SG_aug"),
+  "020" = c("OG","OG_aug","SG_aug"),
+  "011" = c("OG","OG_aug","SG","SG_aug")
+)
+
 file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
-plot_mAP95(data1df, file_name)
+plot_mAP95(data1df, symbol_map_experiments, file_name)
 #res <- plot_mAP95(
 #  data = data1df,
 #  versuch_levels = versuch_levels,
