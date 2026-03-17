@@ -199,10 +199,7 @@ plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
   subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
     symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
 
-  # Step 11: Plot
-  pdf("Abb_GesamtÃ¼bersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
-      height = 5, width = 5)
-
+  # Step 11: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
@@ -228,9 +225,13 @@ plot_mAP95 <- function(data){# versuch_levels, symbol_map, symbol_y,
       panel.grid.minor.y = element_line(colour = "grey", size = 0.125)
     )
 
-  print(p)
-
-  dev.off()
+  # Step 12: Save Plot
+  ggsave(
+    filename = "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",
+    plot = p,
+    height = 5,
+    width = 5
+  )
 
 }
 
