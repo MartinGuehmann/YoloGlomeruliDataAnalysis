@@ -92,7 +92,7 @@ plot_boxes <- function(data,
                        symbol_y,
                        metric,
                        plot_title = "Plot Title",
-                       pdf_file = "plot.pdf",
+                       base_file_name = "plot", # File name without extension
                        outlier_filter = list(versuch="001", SuperRank=6),
                        epoch_range = c(290, 299)) {
 
@@ -164,19 +164,64 @@ plot_boxes <- function(data,
   # Ensure the median dataset has the same versuch levels
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
 
-  # Step 10: Safety check: all visible symbols must have a y-position
+
+  # Step 11: Kruskal-Wallis test
+  kruskal_result <- kruskal.test(form, data = subdata)
+
+  # Convert result to data.frame
+  kruskal_df <- data.frame(statistic = kruskal_result$statistic,
+                           parameter = kruskal_result$parameter,
+                           p.value = kruskal_result$p.value,
+                           method = kruskal_result$method,
+                           data.name = kruskal_result$data.name)
+
+  # Step 12: Dunn test
+  dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
+
+  # Step 13: Calculate effect size r
+  # n is the number of observation, one observation from each epoch, per experiment per repetitions
+  n <- nrow(model.frame(form, data = subdata))
+  dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
+
+  # Add column indicating significance
+  alpha <- 0.05
+  dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
+
+  # Step 14: Add column indicating strength of effect size
+  dunn_result$res <- dunn_result$res %>%
+    mutate(effect_size_strength = case_when(
+      abs(r) < 0.1 ~ "vernachlässigbar",
+      abs(r) < 0.3 ~ "klein",
+      abs(r) < 0.5 ~ "mittel",
+      TRUE         ~ "groß"
+    ))
+
+  # Add column n to the results table before the effect size column
+  dunn_result$res$n <- n
+
+  # Reorder columns to move n before r
+  dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
+
+  # Create a list of data frames to write to the XLSX file
+  data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
+
+  # Step 15: Write data to XLSX file
+  write_xlsx(data_to_write, paste0(base_file_name, ".xlsx"))
+
+
+  # Step 16: Safety check: all visible symbols must have a y-position
   missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
                        names(symbol_y))
   if (length(missing_y) > 0) {
     stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
   }
 
-  # Step 11: Assign y positions
+  # Step 17: Assign y positions
   subdata$symbol_y <- NA_real_  # initialize as NA
   subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
     symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
 
-  # Step 12: Create Plot
+  # Step 18: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
@@ -206,7 +251,7 @@ plot_boxes <- function(data,
 
   # Step 13: Save Plot
   ggsave(
-    filename = pdf_file,
+    filename = paste0(base_file_name, ".pdf"),
     plot = p,
     height = 5,
     width = 5
@@ -257,25 +302,25 @@ versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
                         "017", "018", "013", "019", "010",
                         "020", "011")
 
-file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
+base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
 
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
 
 # Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
-file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
+base_file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, file_name, NULL) # Outlier filter here is set to NULL
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
 
 #########################################################################################################################
 
 # 4 Experimente (großer Datensatz, mAP_95, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 versuch_levels <- c("001", "003","004", "012")
-file_name  <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf"
-plot_title <- "Datensatz A: mAP_50 der letzten 10 Epochen"
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, file_name)
+base_file_name <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
+plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
 
 #########################################################################################################################
 
