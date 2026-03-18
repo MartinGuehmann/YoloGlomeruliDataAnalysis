@@ -298,9 +298,9 @@ symbol_y_pos <- c(
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
-                        "015", "007", "016", "009", "008",
-                        "017", "018", "013", "019", "010",
-                        "020", "011")
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
 
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
@@ -324,58 +324,7 @@ plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_9
 
 #########################################################################################################################
 
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
 
-subdata$versuch <- factor(subdata$versuch , levels=c("001","003","004",
-                                                     "012"))
-
-# Kruskal-Wallis test
-kruskal_result <- kruskal.test(mAP_95 ~ versuch, data = subdata)
-kruskal_result
-
-# Convert result to data.frame
-kruskal_df <- data.frame(statistic = kruskal_result$statistic,
-                         parameter = kruskal_result$parameter,
-                         p.value = kruskal_result$p.value,
-                         method = kruskal_result$method,
-                         data.name = kruskal_result$data.name)
-
-# Dunn test
-dunn_result <- dunnTest(mAP_95 ~ versuch, data=subdata, method="bonferroni")
-
-# Calculate effect size r
-# n is the number of observation, one observation from each epoch, per experiment per repetitions
-n <- nrow(model.frame(mAP_95 ~ versuch, data = subdata))
-dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
-
-# Add column indicating significance
-alpha <- 0.05
-dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
-
-dunn_result$res <- dunn_result$res %>%
-  mutate(effect_size_strength = case_when(
-    abs(r) < 0.1 ~ "vernachlässigbar",
-    abs(r) < 0.3 ~ "klein",
-    abs(r) < 0.5 ~ "mittel",
-    TRUE         ~ "groß"
-  ))
-
-# Add column n to the results table before the effect size column
-dunn_result$res$n <- n
-
-# Reorder columns to move n before r
-dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
-
-# Display results of Dunn test
-dunn_result$res
-
-
-
-# Create a list of data frames to write to the XLSX file
-data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
-
-# Write data to XLSX file
-write_xlsx(data_to_write, "kruskal_dunn_results_4DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final.xlsx")
 
 ##########################################################################################################################################################
 
