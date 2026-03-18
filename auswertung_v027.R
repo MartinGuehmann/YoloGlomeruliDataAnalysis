@@ -299,7 +299,8 @@ kruskal_df <- data.frame(statistic = kruskal_result$statistic,
 dunn_result <- dunnTest(mAP_95 ~ versuch, data=subdata, method="bonferroni")
 
 # Calculate effect size r
-n <- 10
+# n is the number of observation, one observation from each epoch, per experiment per repetitions
+n <- nrow(model.frame(mAP_95 ~ versuch, data = subdata))
 dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
 
 # Add column indicating significance
