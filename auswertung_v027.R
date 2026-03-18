@@ -1,6 +1,7 @@
 library(ggplot2)
 library(readr)
 library(dplyr)
+library(tidyr)
 library(readxl)
 library(writexl)
 library(FSA)
@@ -89,105 +90,74 @@ data1df <- data1_s
 analyze_data <- function(data,
                        versuch_levels,
                        symbol_map,
-                       symbol_y,
+                         symbol_config,
                        metric,
                        plot_title = "Plot Title",
                        base_file_name = "plot", # File name without extension
                        outlier_filter = list(versuch="001", SuperRank=6),
                        epoch_range = c(290, 299)) {
 
-  # Step 1: Get subdata from the last 10 epochs
+  # Step 1: Filter data to include only the last 10 epochs
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
 
-  # Step 2: Remove outliers
+  # Step 2: Remove outliers (specific versuch and SuperRank)
   if (!is.null(outlier_filter)) {
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                          subdata$SuperRank == outlier_filter$SuperRank), ]
   }
 
-  # Step 3: factorize
+  # Step 3: Keep only valid versuch levels and factorize
+  subdata <- subdata[subdata$versuch %in% versuch_levels, ]
   subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
 
-  # Step $: Check all versuch_levels must have symbols
+  # Step 4: Ensure all versuch_levels have a corresponding symbol mapping
   missing <- setdiff(versuch_levels, names(symbol_map))
 
   if (length(missing) > 0) {
     stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
   }
 
-  # Step 5: Create empty vector
-  subdata$visible_symbols <- NA_character_
+  # Step 5: Convert symbol_map to a lookup table, join symbols to data, and add y/shape from symbol_config
+  symbol_lookup <- stack(symbol_map)
+  colnames(symbol_lookup) <- c("symbol", "versuch")
+  subdata <- subdata %>%
+    left_join(symbol_lookup, by = "versuch")
+  subdata <- subdata %>%
+    left_join(symbol_config, by = c("symbol"))
 
-  # Step 6: assign symbols per versuch with recycling
-  for (v in versuch_levels) {
-    rows <- which(subdata$versuch == v)
-    syms <- symbol_map[[v]] # get the symbols for that versuch
-    subdata$visible_symbols[rows] <- rep(syms, length.out = length(rows))
-  }
-
-  # Step 7: Check that all experiments have symbols
-  check <- table(subdata$versuch, subdata$visible_symbols)
-
-  if (any(rowSums(check) == 0)) {
-    stop("Some versuch levels have no visible symbols assigned")
-  }
-
-  # Step 8: Check recycling pattern
-  for (v in versuch_levels) {
-
-    rows <- which(subdata$versuch == v)
-    if (length(rows) == 0) next
-
-    expected <- rep(symbol_map[[v]], length.out = length(rows))
-    actual <- subdata$visible_symbols[rows]
-
-    if (!identical(actual, expected)) {
-      print(data.frame(expected, actual))
-      stop(paste("Symbol recycling mismatch for versuch", v))
-    }
-  }
-
-  # Step 9: Compute the median for each SuperRank
-  form <- as.formula(
-    paste(metric, "~ versuch + SuperRank")
-  )
+  # Step 6: Compute median per SuperRank for each versuch
+  form <- as.formula(paste(metric, "~ versuch + SuperRank"))
   subdata_median <- aggregate(form, data = subdata, median)
 
-  # Step 10: Compute the median of the medians for each versuch
+  # Step 7: Compute median of medians per versuch
   form <- as.formula(
     paste(metric, "~ versuch")
   )
   subdata_median_median <- aggregate(form, data = subdata_median, median)
 
-  # Ensure the median dataset has the same versuch levels
+  # Step 8: Ensure median datasets have correct factor levels
   subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
-  # Ensure the median dataset has the same versuch levels
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
 
-
-  # Step 11: Kruskal-Wallis test
+  # Step 9: Kruskal-Wallis test across versuch
   kruskal_result <- kruskal.test(form, data = subdata)
-
-  # Convert result to data.frame
   kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                            parameter = kruskal_result$parameter,
                            p.value = kruskal_result$p.value,
                            method = kruskal_result$method,
                            data.name = kruskal_result$data.name)
 
-  # Step 12: Dunn test
+  # Step 10: Dunn's pairwise post-hoc test with Bonferroni correction
   dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
 
-  # Step 13: Calculate effect size r
+  # Step 11: Calculate effect size r and add significance
   # n is the number of observation, one observation from each epoch, per experiment per repetitions
   n <- nrow(model.frame(form, data = subdata))
   dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
-
-  # Add column indicating significance
   alpha <- 0.05
   dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
 
-  # Step 14: Add column indicating strength of effect size
+  # Step 12: Add strength of effect size
   dunn_result$res <- dunn_result$res %>%
     mutate(effect_size_strength = case_when(
       abs(r) < 0.1 ~ "vernachlässigbar",
@@ -196,42 +166,39 @@ analyze_data <- function(data,
       TRUE         ~ "groß"
     ))
 
-  # Add column n to the results table before the effect size column
+  # Step 13: Add sample size column and reorder columns
   dunn_result$res$n <- n
-
-  # Reorder columns to move n before r
   dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
 
-  # Create a list of data frames to write to the XLSX file
+  # Step 14: Export Kruskal-Wallis and Dunn results to XLSX
   data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
-
-  # Step 15: Write data to XLSX file
   write_xlsx(data_to_write, paste0(base_file_name, ".xlsx"))
 
-
-  # Step 16: Safety check: all visible symbols must have a y-position
-  missing_y <- setdiff(unique(subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]),
-                       names(symbol_y))
-  if (length(missing_y) > 0) {
-    stop("No y-position defined for symbols: ", paste(missing_y, collapse = ", "))
+  # Step 15: Safety check: all symbols must have y-position
+  missing <- subdata %>%
+    filter(!is.na(symbol) & is.na(y))
+  if (nrow(missing) > 0) {
+    stop("Some symbols have no y-position defined")
+  }
+  missing <- setdiff(unique(subdata$symbol), symbol_config$symbol)
+  if (length(missing) > 0) {
+    stop("Missing symbol_config entries for: ", paste(missing, collapse = ", "))
   }
 
-  # Step 17: Assign y positions
-  subdata$symbol_y <- NA_real_  # initialize as NA
-  subdata$symbol_y[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""] <- 
-    symbol_y[subdata$visible_symbols[!is.na(subdata$visible_symbols) & subdata$visible_symbols != ""]]
+  # Step 17: Create plot with boxplots and symbols
+  symbol_y     <- setNames(symbol_config$y, symbol_config$symbol)
+  shape_values <- setNames(symbol_config$shape, symbol_config$symbol)
 
-  # Step 18: Create Plot
+  # Step 15: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
-      data = subdata[!is.na(subdata$symbol_y), ],  # <--- Only rows with y
-      aes(x = versuch, y = symbol_y, shape = visible_symbols),
+      data = subdata[!is.na(subdata$symbol), ],
+      aes(x = versuch, y = y, shape = symbol),
       size = 2
     ) +
     scale_shape_manual(
-      values = c(4, 3, 1, 2, 8, 7, 6, 5),
-      labels = names(symbol_y)
+      values = setNames(symbol_config$shape, symbol_config$symbol)
     ) +
     labs(shape = "") +
     geom_hline(yintercept = 1) +
@@ -249,7 +216,7 @@ analyze_data <- function(data,
       panel.grid.minor.y = element_line(colour = "grey80", size = 0.1)
     )
 
-  # Step 13: Save Plot
+  # Step 18: Save plot as PDF
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
     plot = p,
@@ -281,16 +248,12 @@ symbol_map_experiments <- list(
   "011" = c("OG","OG_aug","SG","SG_aug")
 )
 
-# Define y-positions for the symbols
-symbol_y_pos <- c(
-  B6       = 1.20,
-  DS       = 1.15,
-  DS_b     = 1.10,
-  DS_b_aug = 1.05,
-  OG       = 1.20,
-  OG_aug   = 1.15,
-  SG       = 1.10,
-  SG_aug   = 1.05
+# Define y-positions for the symbols and their shapes
+symbol_config <- data.frame(
+  symbol = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug"),
+  y      = c(1.20, 1.15,   1.10,       1.05, 1.20,     1.15, 1.10,     1.05),
+  shape  = c(4   , 3   ,   1   ,       2   , 8   ,     7   , 6   ,     5   ),
+  stringsAsFactors = FALSE
 )
 
 #########################################################################################################################
@@ -305,13 +268,13 @@ versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
 
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
 
 # Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
 
 #########################################################################################################################
 
@@ -321,13 +284,13 @@ versuch_levels <- c("001", "003","004", "012")
 
 base_file_name <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
 
 # 4 Experimente (großer Datensatz, mAP_50, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_DS_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
 
 #########################################################################################################################
 
@@ -337,13 +300,13 @@ versuch_levels <- c("006", "001","003")
 
 base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Effekt der Datensatzgröße: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
   
 # Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Effekt der Datensatzgröße: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
 
 #########################################################################################################################
 
