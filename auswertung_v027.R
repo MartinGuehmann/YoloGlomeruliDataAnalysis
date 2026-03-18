@@ -307,10 +307,13 @@ dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
 alpha <- 0.05
 dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
 
-# Add column indicating strength of effect size
-dunn_result$res$effect_size_strength <- ifelse(abs(dunn_result$res$r) < 0.1, "vernachlässigbar",
-                                               ifelse(abs(dunn_result$res$r) < 0.3, "klein",
-                                                      ifelse(abs(dunn_result$res$r) < 0.5, "mittel", "groß")))
+dunn_result$res <- dunn_result$res %>%
+  mutate(effect_size_strength = case_when(
+    abs(r) < 0.1 ~ "vernachlässigbar",
+    abs(r) < 0.3 ~ "klein",
+    abs(r) < 0.5 ~ "mittel",
+    TRUE         ~ "groß"
+  ))
 
 # Add column n to the results table before the effect size column
 dunn_result$res$n <- n
