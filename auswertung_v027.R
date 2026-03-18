@@ -263,7 +263,7 @@ symbol_map_experiments <- list(
   "001" = c("B6"),
   "003" = c("DS"),
   "004" = c("DS_b"),
-  "012" = c("DS_b_aug"),
+  "012" = c("DS_b", "DS_b_aug"),
   "006" = c("OG"),
   "014" = c("OG_aug"),
   "005" = c("SG"),
