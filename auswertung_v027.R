@@ -2,6 +2,8 @@ library(ggplot2)
 library(readr)
 library(dplyr)
 library(readxl)
+library(writexl)
+library(FSA)
 
 rm(list = ls()) 
 
@@ -329,9 +331,6 @@ kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                          method = kruskal_result$method,
                          data.name = kruskal_result$data.name)
 
-# Load FSA library
-library(FSA)
-
 # Dunn test
 dunn_result <- dunnTest(mAP_95 ~ versuch, data=subdata, method="bonferroni")
 
@@ -357,15 +356,13 @@ dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n
 # Display results of Dunn test
 dunn_result$res
 
-# Load writexl package
-library(writexl)
+
 
 # Create a list of data frames to write to the XLSX file
 data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
 
 # Write data to XLSX file
 write_xlsx(data_to_write, "kruskal_dunn_results_4DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final.xlsx")
-
 
 ##########################################################################################################################################################
 
@@ -594,8 +591,7 @@ kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                          method = kruskal_result$method,
                          data.name = kruskal_result$data.name)
 
-# Load FSA library
-library(FSA)
+
 
 # Perform Dunn test
 dunn_result <- dunnTest(mAP_95 ~ versuch, data=subdata, method="bonferroni")
