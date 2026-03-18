@@ -86,7 +86,7 @@ data1df <- data1_s
 ################################################################################################
 ###############################################################################################
 
-plot_boxes <- function(data,
+analyze_data <- function(data,
                        versuch_levels,
                        symbol_map,
                        symbol_y,
@@ -305,13 +305,13 @@ versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
 
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
 
 # Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
 
 #########################################################################################################################
 
@@ -321,13 +321,13 @@ versuch_levels <- c("001", "003","004", "012")
 
 base_file_name <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_95", plot_title, base_file_name)
 
 # 4 Experimente (großer Datensatz, mAP_50, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_DS_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-plot_boxes(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name)
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_y_pos, "mAP_50", plot_title, base_file_name)
 
 #########################################################################################################################
 
