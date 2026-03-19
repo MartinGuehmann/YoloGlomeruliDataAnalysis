@@ -94,6 +94,7 @@ analyze_data <- function(data,
                          metric,
                          plot_title = "Plot Title",
                          base_file_name = "plot", # File name without extension
+                         mode = "default",
                          outlier_filter = list(versuch="001", SuperRank=6),
                          epoch_range = c(290, 299)) {
 
@@ -212,7 +213,44 @@ analyze_data <- function(data,
       panel.grid.minor.y = element_blank()
     )
 
-  # Step 17: Save plot as PDF
+  # Step 17: Add optional annotations
+  if (mode == "augmentation") {
+
+    max_df <- subdata_median %>%
+      dplyr::group_by(versuch) %>%
+      dplyr::summarise(y_max = max(.data[[metric]], na.rm = TRUE))
+
+    label_offset_factor <- 0.08
+
+    offset <- label_offset_factor * diff(range(subdata_median[[metric]], na.rm = TRUE))
+    max_df$y_label <- max_df$y_max + offset
+
+
+    p <- p +
+      # Blue median-of-medians points
+      stat_summary(
+        fun = median,
+        geom = "point",
+        color = "blue",
+        size = 2.5
+      ) +
+      # Blue median labels
+      geom_text(
+        data = max_df,
+        aes(x = versuch, y = y_label, label = round(y_max, 3)),
+        color = "blue",
+        size = 3
+      ) +
+      # Red raw medians
+      geom_point(
+        data = subdata_median,
+        aes(x = versuch, y = .data[[metric]]),
+        color = "red",
+        size = 0.5
+      )
+  }
+
+  # Step 18: Save plot as PDF
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
     plot = p,
