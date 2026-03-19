@@ -449,6 +449,20 @@ run_linear_model <- function(data,
     Koeffizienten = coefs[, 1],
     StdErr = coefs[, 2]
   )
+  coef_data$TermType <- dplyr::case_when(
+    coef_data$Trainingsdatensatzkombinationen == "(Intercept)" ~ "Intercept",
+    grepl(":", coef_data$Trainingsdatensatzkombinationen) ~ "Interaction",
+    TRUE ~ "Main Effect"
+  )
+  # Keep model order, but group by type
+  coef_data$Trainingsdatensatzkombinationen <- factor(
+    coef_data$Trainingsdatensatzkombinationen,
+    levels = coef_data$Trainingsdatensatzkombinationen
+  )
+  coef_data$Group <- ifelse(coef_data$TermType == "Interaction", 2,
+                            ifelse(coef_data$TermType == "Main Effect", 1, 0))
+
+  coef_data <- coef_data[order(coef_data$Group), ]
 
   # ----------------------------
   # Step 9: File naming
@@ -480,15 +494,28 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 12: Plot
   # ----------------------------
-  p <- ggplot(coef_data, aes(x = Trainingsdatensatzkombinationen, y = Koeffizienten)) +
+  p <- ggplot(coef_data, aes(
+    x = Trainingsdatensatzkombinationen,
+    y = Koeffizienten,
+    fill = TermType
+  )) +
     geom_bar(stat = "identity") +
     geom_errorbar(
-      aes(ymin = Koeffizienten - StdErr, ymax = Koeffizienten + StdErr),
+      aes(ymin = Koeffizienten - StdErr,
+          ymax = Koeffizienten + StdErr),
       width = 0.2
     ) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(paste("Koeffizienten des linearen Interaktionsmodells:", metric)) +
-    theme(plot.title = element_text(size = 9, color = "black"))
+    scale_fill_manual(values = c(
+      "Intercept" = "gray70",
+      "Main Effect" = "steelblue",
+      "Interaction" = "tomato"
+    )) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 9)
+    ) +
+    ggtitle(paste("Koeffizienten des linearen Interaktionsmodells:", metric))
 
   ggsave(
     filename = pdf_name,
