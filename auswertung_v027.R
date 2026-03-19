@@ -88,14 +88,14 @@ data1df <- data1_s
 ###############################################################################################
 
 analyze_data <- function(data,
-                       versuch_levels,
-                       symbol_map,
+                         versuch_levels,
+                         symbol_map,
                          symbol_config,
-                       metric,
-                       plot_title = "Plot Title",
-                       base_file_name = "plot", # File name without extension
-                       outlier_filter = list(versuch="001", SuperRank=6),
-                       epoch_range = c(290, 299)) {
+                         metric,
+                         plot_title = "Plot Title",
+                         base_file_name = "plot", # File name without extension
+                         outlier_filter = list(versuch="001", SuperRank=6),
+                         epoch_range = c(290, 299)) {
 
   # Step 1: Filter data to include only the last 10 epochs
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
@@ -301,7 +301,7 @@ versuch_levels <- c("006", "001","003")
 base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Effekt der Datensatzgröße: mAP_95 der letzten 10 Epochen"
 analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-  
+
 # Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
 base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
@@ -310,92 +310,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-##############################################################################################################################################
-
-# Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "001","003"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "001", c("B6"),
-                                  ifelse(subdata$versuch == "003", c("DS"),
-                                         
-                                         ifelse(subdata$versuch == "006", c("OG"),NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_50 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_50 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_50)) + 
-  geom_boxplot(outlier.colour = "black", outlier.size = 0.75) +
-  geom_point(data = subset(subdata, visible_symbols == "B6"), aes(shape = factor("B6"), y = 1.20), size = 2, position = position_dodge(width = 1)) +
-  geom_point(data = subset(subdata, visible_symbols == "DS"), aes(shape = factor("DS"), y = 1.15), size = 2, position = position_dodge(width = 1)) +
-  
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  
-  scale_shape_manual(values=c(4,3,8),labels=c("B6","DS","OG"))+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Effekt der Datensatzgröße: mAP_50 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
-
-#######################################################################################################################
-
-# Perform Kruskal-Wallis test
-kruskal_result <- kruskal.test(mAP_50 ~ versuch, data = subdata)
-kruskal_result
-
-# Convert result to data.frame
-kruskal_df <- data.frame(statistic = kruskal_result$statistic,
-                         parameter = kruskal_result$parameter,
-                         p.value = kruskal_result$p.value,
-                         method = kruskal_result$method,
-                         data.name = kruskal_result$data.name)
-
-# Load FSA library
-library(FSA)
-
-# Perform Dunn test
-dunn_result <- dunnTest(mAP_50 ~ versuch, data=subdata, method="bonferroni")
-
-# Calculate effect size r
-n <- 10
-dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
-
-# Add column indicating significance
-alpha <- 0.05
-dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
-
-# Add column indicating strength of effect size
-dunn_result$res$effect_size_strength <- ifelse(abs(dunn_result$res$r) < 0.1, "vernachlässigbar",
-                                               ifelse(abs(dunn_result$res$r) < 0.3, "klein",
-                                                      ifelse(abs(dunn_result$res$r) < 0.5, "mittel", "groß")))
-
-# Add column n to the results table before the effect size column
-dunn_result$res$n <- n
-
-# Reorder columns to move n before r
-dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
-
-# Display results of Dunn test
-dunn_result$res
-
-# Create a list of data frames to write to the XLSX file
-data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
-
-# Write data to XLSX file
-write_xlsx(data_to_write, "kruskal_dunn_results_Datensatzgröße_mAP_50_10E_5x001_Median_Datensatzumbenennung_final.xlsx")
 
 ##############################################################################################################################################
 
