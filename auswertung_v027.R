@@ -117,29 +117,40 @@ analyze_data <- function(data,
     stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
   }
 
-  # Step 5: Convert symbol_map to a lookup table, join symbols to data, and add y/shape from symbol_config
-  symbol_lookup <- stack(symbol_map)
-  colnames(symbol_lookup) <- c("symbol", "versuch")
-  subdata <- subdata %>%
-    left_join(symbol_lookup, by = "versuch")
-  subdata <- subdata %>%
-    left_join(symbol_config, by = c("symbol"))
+  # Step 5: Create symbol dataset (independent of main data)
+  symbol_df <- stack(symbol_map)
+  colnames(symbol_df) <- c("symbol", "versuch")
+  # Keep only relevant versuch
+  symbol_df <- symbol_df[symbol_df$versuch %in% versuch_levels, ]
+  # Join with symbol_config (safe: no duplication issue here)
+  symbol_df <- merge(symbol_df, symbol_config, by = "symbol", all.x = TRUE)
+  # Ensure factor levels match plot
+  symbol_df$versuch <- factor(symbol_df$versuch, levels = versuch_levels)
 
-  # Step 6: Compute median per SuperRank for each versuch
+  # Step 6: Safety checks
+  missing <- setdiff(symbol_df$symbol, symbol_config$symbol)
+  if (length(missing) > 0) {
+    stop("Missing symbol_config entries for: ", paste(missing, collapse = ", "))
+  }
+  if (any(is.na(symbol_df$y))) {
+    stop("Some symbols have no y-position defined")
+  }
+
+  # Step 7: Compute median per SuperRank for each versuch
   form <- as.formula(paste(metric, "~ versuch + SuperRank"))
   subdata_median <- aggregate(form, data = subdata, median)
 
-  # Step 7: Compute median of medians per versuch
+  # Step 8: Compute median of medians per versuch
   form <- as.formula(
     paste(metric, "~ versuch")
   )
   subdata_median_median <- aggregate(form, data = subdata_median, median)
 
-  # Step 8: Ensure median datasets have correct factor levels
+  # Step 9: Ensure median datasets have correct factor levels
   subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
 
-  # Step 9: Kruskal-Wallis test across versuch
+  # Step 10: Kruskal-Wallis test across versuch
   kruskal_result <- kruskal.test(form, data = subdata)
   kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                            parameter = kruskal_result$parameter,
@@ -147,17 +158,17 @@ analyze_data <- function(data,
                            method = kruskal_result$method,
                            data.name = kruskal_result$data.name)
 
-  # Step 10: Dunn's pairwise post-hoc test with Bonferroni correction
+  # Step 11: Dunn's pairwise post-hoc test with Bonferroni correction
   dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
 
-  # Step 11: Calculate effect size r and add significance
+  # Step 12: Calculate effect size r and add significance
   # n is the number of observation, one observation from each epoch, per experiment per repetitions
   n <- nrow(model.frame(form, data = subdata))
   dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
   alpha <- 0.05
   dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
 
-  # Step 12: Add strength of effect size
+  # Step 13: Add strength of effect size
   dunn_result$res <- dunn_result$res %>%
     mutate(effect_size_strength = case_when(
       abs(r) < 0.1 ~ "vernachlässigbar",
@@ -166,34 +177,19 @@ analyze_data <- function(data,
       TRUE         ~ "groß"
     ))
 
-  # Step 13: Add sample size column and reorder columns
+  # Step 14: Add sample size column and reorder columns
   dunn_result$res$n <- n
   dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
 
-  # Step 14: Export Kruskal-Wallis and Dunn results to XLSX
+  # Step 15: Export Kruskal-Wallis and Dunn results to XLSX
   data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
   write_xlsx(data_to_write, paste0(base_file_name, ".xlsx"))
 
-  # Step 15: Safety check: all symbols must have y-position
-  missing <- subdata %>%
-    filter(!is.na(symbol) & is.na(y))
-  if (nrow(missing) > 0) {
-    stop("Some symbols have no y-position defined")
-  }
-  missing <- setdiff(unique(subdata$symbol), symbol_config$symbol)
-  if (length(missing) > 0) {
-    stop("Missing symbol_config entries for: ", paste(missing, collapse = ", "))
-  }
-
-  # Step 17: Create plot with boxplots and symbols
-  symbol_y     <- setNames(symbol_config$y, symbol_config$symbol)
-  shape_values <- setNames(symbol_config$shape, symbol_config$symbol)
-
-  # Step 15: Create Plot
+  # Step 16: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
     geom_point(
-      data = subdata[!is.na(subdata$symbol), ],
+      data = symbol_df,
       aes(x = versuch, y = y, shape = symbol),
       size = 2
     ) +
@@ -216,7 +212,7 @@ analyze_data <- function(data,
       panel.grid.minor.y = element_line(colour = "grey80", size = 0.1)
     )
 
-  # Step 18: Save plot as PDF
+  # Step 17: Save plot as PDF
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
     plot = p,
