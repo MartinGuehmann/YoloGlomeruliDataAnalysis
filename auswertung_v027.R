@@ -310,61 +310,24 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-
-##############################################################################################################################################
+versuch_levels <- c("006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
 
 # Datenaugmentation (15): mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
 
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+base_file_name <- "Abb_Datenaugmentation_15_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datenaugmentation (Übersicht): mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
 
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "014", "005",
-                                                     "015","007","016","009","008",
-                                                     "017", "018", "013", "019", "010",
-                                                     "020","011"))
+# Datenaugmentation (15): mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
 
-subdata$visible_symbols <- ifelse(subdata$versuch == "010", c("OG","SG", "SG_aug"),
-                                  ifelse(subdata$versuch == "011", c("OG", "OG_aug", "SG", "SG_aug"),
-                                         ifelse(subdata$versuch == "006", c("OG"),
-                                                ifelse(subdata$versuch == "005", c("SG"),
-                                                       ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
-                                                              ifelse(subdata$versuch == "008", c("OG","SG"),
-                                                                     ifelse(subdata$versuch == "009", c("SG", "SG_aug"), 
-                                                                            ifelse(subdata$versuch == "013", c("OG", "OG_aug", "SG"),
-                                                                                   ifelse(subdata$versuch == "014", c("OG_aug"),
-                                                                                          ifelse(subdata$versuch == "015", c("SG_aug"),
-                                                                                                 ifelse(subdata$versuch == "016", c("OG_aug","SG"),
-                                                                                                        ifelse(subdata$versuch == "017", c("OG_aug","SG_aug"),
-                                                                                                               ifelse(subdata$versuch == "018", c("OG","SG_aug"),
-                                                                                                                      ifelse(subdata$versuch == "019", c("OG_aug","SG","SG_aug"),
-                                                                                                                             ifelse(subdata$versuch == "020", c("OG","OG_aug","SG_aug"), NA)))))))))))))))
+base_file_name <- "Abb_Datenaugmentation_15_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datenaugmentation (Übersicht): mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
 
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Datenaugmentation_15_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG_aug"),aes(shape=factor("OG_aug"),y=1.15),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG_aug"),aes(shape=factor("SG_aug"),y=1.05),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,7,6,5),labels=c("OG","OG_aug","SG","SG_aug"))+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Datenaugmentation (Übersicht): mAP_95 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
-
-#########################################################################################################################
+##############################################################################################################################################
 
 
 
