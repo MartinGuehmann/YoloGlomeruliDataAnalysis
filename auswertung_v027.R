@@ -187,11 +187,11 @@ analyze_data <- function(data,
 
   # Step 16: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
-    geom_boxplot(outlier.colour = "black", outlier.size = 0.25) +
+    geom_boxplot(outlier.colour = "black", outlier.size = 0.2, width = 0.6) +
     geom_point(
       data = symbol_df,
       aes(x = versuch, y = y, shape = symbol),
-      size = 2
+      size = 2.2
     ) +
     scale_shape_manual(
       values = setNames(symbol_config$shape, symbol_config$symbol)
@@ -208,8 +208,8 @@ analyze_data <- function(data,
     theme(
       plot.title = element_text(color = "black", size = 9),
       axis.text.x = element_text(size = 6),
-      panel.grid.major.y = element_line(colour = "grey40", size = 0.3),
-      panel.grid.minor.y = element_line(colour = "grey80", size = 0.1)
+      panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
+      panel.grid.minor.y = element_blank()
     )
 
   # Step 17: Save plot as PDF
@@ -263,7 +263,6 @@ versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
 
 base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
 plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
-
 analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
 
 # Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
