@@ -363,12 +363,187 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 ##############################################################################################################################################
 
 
+run_linear_model <- function(data,
+                             versuch_levels,
+                             metric,
+                             suffix = "",
+                             outlier_filter = list(versuch="001", SuperRank=6),
+                             epoch_range = c(290, 299)) {
 
+  # ----------------------------
+  # Step 1: Filter epochs
+  # ----------------------------
+  subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
+
+  # ----------------------------
+  # Step 2: Remove outliers
+  # ----------------------------
+  if (!is.null(outlier_filter)) {
+    subdata <- subdata[!(
+      subdata$versuch == outlier_filter$versuch &
+        subdata$SuperRank == outlier_filter$SuperRank
+    ), ]
+  }
+
+  # ----------------------------
+  # Step 3: Keep valid versuch levels
+  # ----------------------------
+  subdata$versuch <- factor(subdata$versuch, levels = versuch_levels)
+
+  # ----------------------------
+  # Step 4: Sanity checks
+  # ----------------------------
+  if (nrow(subdata) == 0) stop("subdata is empty after filtering")
+
+  if (!metric %in% colnames(subdata)) {
+    stop(paste("Metric column not found:", metric))
+  }
+
+  # Check for NA in key columns
+  if (any(is.na(subdata[[metric]]))) {
+    stop("NA values found in metric column after filtering")
+  }
+
+  # ----------------------------
+  # Step 5: Aggregation
+  # ----------------------------
+  form_agg <- as.formula(
+    paste(metric, "~ OG + OG_aug + SG + SG_aug + version + Versuch")
+  )
+
+  result <- aggregate(form_agg, data = subdata, FUN = median)
+
+  # Check aggregation integrity
+  expected_groups <- length(unique(subdata$versuch))
+  actual_groups <- nrow(result)
+
+  if (actual_groups == 0) stop("Aggregation produced empty result")
+
+  # ----------------------------
+  # Step 6: Model matrices (consistency check)
+  # ----------------------------
+  lm_formula  <- as.formula(paste(metric, "~ OG + OG_aug + SG + SG_aug"))
+  lmi_formula <- as.formula(paste(metric, "~ OG * OG_aug * SG * SG_aug"))
+
+  # Build model matrices explicitly (important check)
+  X_lm  <- model.matrix(lm_formula, data = result)
+  X_lmi <- model.matrix(lmi_formula, data = result)
+
+  if (any(is.na(X_lm)) || any(is.na(X_lmi))) {
+    stop("NA values detected in model matrices")
+  }
+
+  # ----------------------------
+  # Step 7: Fit models
+  # ----------------------------
+  lm_model  <- lm(lm_formula, data = result)
+  lmi_model <- lm(lmi_formula, data = result)
+
+  # ----------------------------
+  # Step 8: Coefficients
+  # ----------------------------
+  coefs <- summary(lmi_model)$coefficients
+
+  coef_data <- data.frame(
+    Trainingsdatensatzkombinationen = rownames(coefs),
+    Koeffizienten = coefs[, 1],
+    StdErr = coefs[, 2]
+  )
+
+  # ----------------------------
+  # Step 9: File naming
+  # ----------------------------
+  suffix_part <- ifelse(suffix != "", paste0("_", suffix), "")
+
+  xlsx_name <- paste0("linear_model_results_", metric, suffix_part, ".xlsx")
+  pdf_name  <- paste0("Abb_LM_Koeffizienten_", metric, suffix_part, ".pdf")
+
+  # ----------------------------
+  # Step 10: Output consistency check
+  # ----------------------------
+  if (!is.finite(AIC(lm_model)) || !is.finite(AIC(lmi_model))) {
+    stop("AIC computation returned non-finite values")
+  }
+
+  # ----------------------------
+  # Step 11: Save Excel
+  # ----------------------------
+  write_xlsx(
+    list("linear_model_results" = cbind(
+      coef_data,
+      AIC_lm1 = AIC(lm_model),
+      AIC_lmi = AIC(lmi_model)
+    )),
+    path = xlsx_name
+  )
+
+  # ----------------------------
+  # Step 12: Plot
+  # ----------------------------
+  p <- ggplot(coef_data, aes(x = Trainingsdatensatzkombinationen, y = Koeffizienten)) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(
+      aes(ymin = Koeffizienten - StdErr, ymax = Koeffizienten + StdErr),
+      width = 0.2
+    ) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(paste("Koeffizienten des linearen Interaktionsmodells:", metric)) +
+    theme(plot.title = element_text(size = 9, color = "black"))
+
+  ggsave(
+    filename = pdf_name,
+    plot = p,
+    height = 5,
+    width = 5
+  )
+
+  # ----------------------------
+  # Step 13: Return diagnostics
+  # ----------------------------
+  invisible(list(
+    lm = lm_model,
+    lmi = lmi_model,
+    coef = coef_data,
+    n_rows_subdata = nrow(subdata),
+    n_rows_result = nrow(result)
+  ))
+}
 
 
 ######################################################################################################################
 
+versuch_levels <- c("006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
+
+diag <- run_linear_model(data1df, versuch_levels, "mAP_50")
+
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 
+
+subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+
+subdata$versuch <- factor(subdata$versuch , levels=c("006", "014", "005",
+                                                     "015","007","016","009","008",
+                                                     "017", "018", "013", "019", "010",
+                                                     "020","011"))
+
+subdata$visible_symbols <- ifelse(subdata$versuch == "010", c("OG","SG", "SG_aug"),
+                                  ifelse(subdata$versuch == "011", c("OG", "OG_aug", "SG", "SG_aug"),
+                                         ifelse(subdata$versuch == "006", c("OG"),
+                                                ifelse(subdata$versuch == "005", c("SG"),
+                                                       ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
+                                                              ifelse(subdata$versuch == "008", c("OG","SG"),
+                                                                     ifelse(subdata$versuch == "009", c("SG", "SG_aug"), 
+                                                                            ifelse(subdata$versuch == "013", c("OG", "OG_aug", "SG"),
+                                                                                   ifelse(subdata$versuch == "014", c("OG_aug"),
+                                                                                          ifelse(subdata$versuch == "015", c("SG_aug"),
+                                                                                                 ifelse(subdata$versuch == "016", c("OG_aug","SG"),
+                                                                                                        ifelse(subdata$versuch == "017", c("OG_aug","SG_aug"),
+                                                                                                               ifelse(subdata$versuch == "018", c("OG","SG_aug"),
+                                                                                                                      ifelse(subdata$versuch == "019", c("OG_aug","SG","SG_aug"),
+                                                                                                                             ifelse(subdata$versuch == "020", c("OG","OG_aug","SG_aug"), NA)))))))))))))))
+
 
 result <- aggregate(mAP_50 ~ OG + OG_aug + SG + SG_aug + version +Versuch, data = subdata, FUN = median)
 # View the result
@@ -394,12 +569,12 @@ coef_data <- data.frame(Trainingsdatensatzkombinationen = rownames(coefs), Koeff
 
 # Save the results of the second linear model and the AIC values of both models to an xlsx file
 library(writexl)
-write_xlsx(list("linear_model_results" = cbind(coef_data, AIC_lm1 = AIC(lm), AIC_lmi = AIC(lmi))), path = "linear_model_results_mAP_50.xlsx")
+write_xlsx(list("linear_model_results" = cbind(coef_data, AIC_lm1 = AIC(lm), AIC_lmi = AIC(lmi))), path = "linear_model_results_mAP_50_1.xlsx")
 
 
 # Create a PDF file
 
-pdf("Abb_LM_Koeffizienten_mAP_50.pdf",height=5, width=5)
+pdf("Abb_LM_Koeffizienten_mAP_50_1.pdf",height=5, width=5)
 
 # Create a bar plot of the coefficients with error bars
 library(ggplot2)
@@ -412,6 +587,13 @@ ggplot(coef_data, aes(x = Trainingsdatensatzkombinationen, y = Koeffizienten)) +
   theme(plot.title = element_text(size = 9, color = "black"))
 
 dev.off()
+
+# manual
+coefs_manual <- summary(lmi)$coefficients
+
+all.equal(diag$coef$Koeffizienten, coefs_manual[,1])
+all.equal(diag$coef$StdErr, coefs_manual[,2])
+
 #######################################################################################################################
 
 # Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 (angepasst Version)
