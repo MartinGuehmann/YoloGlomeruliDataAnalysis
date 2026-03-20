@@ -225,6 +225,10 @@ analyze_data <- function(data,
     offset <- label_offset_factor * diff(range(subdata_median[[metric]], na.rm = TRUE))
     max_df$y_label <- max_df$y_max + offset
 
+    max_df$median_value <- subdata_median_median[[metric]][
+      match(max_df$versuch, subdata_median_median$versuch)
+    ]
+
 
     if (mode == "annotated") {
     p <- p +
@@ -238,7 +242,7 @@ analyze_data <- function(data,
       # Blue median labels
       geom_text(
         data = max_df,
-        aes(x = versuch, y = y_label, label = round(y_max, 3)),
+        aes(x = versuch, y = y_label, label = round(median_value, 3)),
         color = "blue",
         size = 3
       )
