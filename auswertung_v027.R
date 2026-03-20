@@ -214,7 +214,7 @@ analyze_data <- function(data,
     )
 
   # Step 17: Add optional annotations
-  if (mode == "augmentation") {
+  if (mode != "default") {
 
     max_df <- subdata_median %>%
       dplyr::group_by(versuch) %>%
@@ -226,6 +226,7 @@ analyze_data <- function(data,
     max_df$y_label <- max_df$y_max + offset
 
 
+    if (mode == "annotated") {
     p <- p +
       # Blue median-of-medians points
       stat_summary(
@@ -240,7 +241,10 @@ analyze_data <- function(data,
         aes(x = versuch, y = y_label, label = round(y_max, 3)),
         color = "blue",
         size = 3
-      ) +
+      )
+    }
+    if (mode == "annotated" || mode == "red_raw_medians" ) {
+      p <- p +
       # Red raw medians
       geom_point(
         data = subdata_median,
@@ -248,6 +252,7 @@ analyze_data <- function(data,
         color = "red",
         size = 0.5
       )
+  }
   }
 
   # Step 18: Save plot as PDF
