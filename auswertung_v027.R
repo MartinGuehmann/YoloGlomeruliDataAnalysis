@@ -612,82 +612,27 @@ run_linear_model(data1df, versuch_levels, "mAP_95")
 
 ###############################################################################################################################
 
+versuch_levels <- c("006", "014", "007")
+
 # Effekt der konventionellen Datenaugmentation: mAP_95, 10 Epochen (schön), 5x001, Median-Version, Datensatzumbenennung
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "014", "007"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
-                                         ifelse(subdata$versuch == "014", c("OG_aug"), NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG_aug"),aes(shape=factor("OG_aug"),y=1.15),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,7),labels=c("OG","OG_aug"))+
-  stat_summary(fun=median,geom='point',color='blue',size=2.5)+
-  stat_summary(fun=median,geom='text',
-               aes(label=round(..y..,digits=3)),
-               vjust=-10.5,color='blue',size=3)+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_95),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=c(0.5,0.75,1))+
-  ggtitle("Effekt der konventionellen Datenaugmentation: mAP_95 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))
-
-dev.off()
-
-##################################################################################################################
-
+base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung"
+plot_title <- "Effekt der konventionellen Datenaugmentation: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
 
 # Effekt der konventionellen Datenaugmentation: mAP_95, 10 Epochen (schön), 5x001, Median-Version, Datensatzumbenennung, finale Version
+base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung_final"
+plot_title <- "Einfluss der konventionellen Datenaugmentation: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "red_raw_medians")
 
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+# Effekt der konventionellen Datenaugmentation (mAP_50), 10 Epochen (schön), Median-Version, Datensatzumbenennung
+base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_50_10E_5x001_Median_Datensatzumbenennung"
+plot_title <- "Effekt der konventionellen Datenaugmentation: mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "annotated")
 
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "014", "007"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "007", c("OG", "OG_aug"),
-                                         ifelse(subdata$versuch == "014", c("OG_aug"), NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung_final.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="OG_aug"),aes(shape=factor("OG_aug"),y=1.15),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,7),labels=c("OG","OG_aug"))+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_95),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Einfluss der konventionellen Datenaugmentation: mAP_95 der 
-letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
+# Effekt der konventionellen Datenaugmentation (mAP_50), 10 Epochen (schön), Median-Version, Datensatzumbenennung, finale Version
+base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_50_10E_5x001_Median_Datensatzumbenennung_final"
+plot_title <- "Einfluss der konventionellen Datenaugmentation: mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
 #################################################################################################################
 
