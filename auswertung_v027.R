@@ -638,161 +638,41 @@ base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_50_10E_5x001_Median_
 plot_title <- "Einfluss der konventionellen Datenaugmentation: mAP_50 der letzten 10 Epochen"
 analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
-#################################################################################################################
+#########################################################################################################################
 
-#############################################################################################################
+versuch_levels <- c("006", "005", "008")
 
 # Effekt der synthetischen Datenaugmentation (mAP_95), 10 Epochen (schön),Median-Version, Datensatzumbenennung
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "005", "008"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "005", c("SG"),
-                                         ifelse(subdata$versuch == "008", c("OG","SG"), NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,6),labels=c("OG","SG"))+
-  stat_summary(fun=median,geom='point',color='blue',size=2.5)+
-  stat_summary(fun=median,geom='text',
-               aes(label=round(..y..,digits=3)),
-               vjust=-10.5,color='blue',size=3)+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_95),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=c(0.5,0.75,1))+
-  ggtitle("Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))
-
-dev.off()
-
-###############################################################################################################
+base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung"
+plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
 
 # Effekt der synthetischen Datenaugmentation (mAP_95), 10 Epochen (schön),Median-Version, Datensatzumbenennung, finale Version
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "005", "008"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "005", c("SG"),
-                                         ifelse(subdata$versuch == "008", c("OG","SG"), NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_95 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_95 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung_final.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_95)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,6),labels=c("OG","SG"))+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_95),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
-
-#############################################################################################################
+base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung_final"
+plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "red_raw_medians")
 
 # Effekt der synthetischen Datenaugmentation (mAP_50), 10 Epochen (schön),Median-Version, Datensatzumbenennung
-
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
-
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "005", "008"))
-
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "005", c("SG"),
-                                         ifelse(subdata$versuch == "008", c("OG","SG"), NA)))
-
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_50 ~ versuch + SuperRank, data = subdata, median)
-
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_50 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_50)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,6),labels=c("OG","SG"))+
-  stat_summary(fun=median,geom='point',color='blue',size=2.5)+
-  stat_summary(fun=median,geom='text',
-               aes(label=round(..y..,digits=3)),
-               vjust=-10.5,color='blue',size=3)+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_50),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=c(0.5,0.75,1))+
-  ggtitle("Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))
-
-dev.off()
-
-#####################################################################################################################
+base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung"
+plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "annotated")
 
 # Effekt der synthetischen Datenaugmentation (mAP_50), 10 Epochen (schön),Median-Version, Datensatzumbenennung, finale Version
+base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung_final"
+plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
-subdata <- subset(data1df, (Epoche > 289) & (Epoche < 300) & !(versuch == "001" & SuperRank == 6))
+#########################################################################################################################
 
-subdata$versuch <- factor(subdata$versuch , levels=c("006", "005", "008"))
+versuch_levels <- c("006", "007", "008", "013", "011")
 
-subdata$visible_symbols <- ifelse(subdata$versuch == "006", c("OG"),
-                                  ifelse(subdata$versuch == "005", c("SG"),
-                                         ifelse(subdata$versuch == "008", c("OG","SG"), NA)))
+# maximaler Effekt der Datenaugmentation/kombinierte Datenaugmentation; mAP_95, 10 Epochen (5 Plots), Median, Datensatzumbenennung
+base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung"
+plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
 
-# Berechne den Median für jeden SuperRank
-subdata_median <- aggregate(mAP_50 ~ versuch + SuperRank, data = subdata, median)
 
-# Berechne den Median der Mediane für jeden Versuch
-subdata_median_median <- aggregate(mAP_50 ~ versuch, data = subdata_median, median)
-
-pdf("Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung_final.pdf",height=5, width=5)
-
-ggplot(subdata_median, aes(x = versuch, y = mAP_50)) + 
-  geom_boxplot(outlier.colour = "darkgrey", outlier.size = 0.25) +
-  geom_point(data=subset(subdata,visible_symbols=="OG"),aes(shape=factor("OG"),y=1.2),size=2,position=position_dodge(width=1))+
-  geom_point(data=subset(subdata,visible_symbols=="SG"),aes(shape=factor("SG"),y=1.10),size=2,position=position_dodge(width=1))+
-  scale_shape_manual(values=c(8,6),labels=c("OG","SG"))+
-  # Füge die Mediane als kleine rote Punkte hinzu
-  geom_point(data=subdata_median,aes(x=versuch,y=mAP_50),color="red",size=0.5)+
-  labs(shape="") + geom_hline(yintercept=1)+   
-  scale_y_continuous(breaks=seq(0,1,0.1), labels=seq(0,1,0.1)) +
-  ggtitle("Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen") +
-  theme(plot.title=element_text(color="black",size=9))+
-  theme(axis.text.x=element_text(size=6))+
-  theme(panel.grid.major.y = element_line(colour = "grey", size = 0.25),
-        panel.grid.minor.y = element_line(colour = "grey", size = 0.125)) +
-  scale_y_continuous(breaks = seq(0,1,0.1), minor_breaks = seq(0,1,0.01))
-
-dev.off()
+#########################################################################################################################
 
 #############################################################################################################
 
