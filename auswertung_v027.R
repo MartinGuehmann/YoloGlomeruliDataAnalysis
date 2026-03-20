@@ -447,8 +447,12 @@ run_linear_model <- function(data,
   coef_data <- data.frame(
     Trainingsdatensatzkombinationen = rownames(coefs),
     Koeffizienten = coefs[, 1],
-    StdErr = coefs[, 2]
+    `Std. Error`  = coefs[, 2],
+    `t-value`     = coefs[, 3],
+    "Pr(>|t|)"    = coefs[, 4],
+    check.names   = FALSE
   )
+
   coef_data$TermType <- dplyr::case_when(
     coef_data$Trainingsdatensatzkombinationen == "(Intercept)" ~ "Intercept",
     !grepl(":", coef_data$Trainingsdatensatzkombinationen) ~ "Main Effect",
@@ -514,8 +518,10 @@ run_linear_model <- function(data,
   )) +
     geom_bar(stat = "identity") +
     geom_errorbar(
-      aes(ymin = Koeffizienten - StdErr,
-          ymax = Koeffizienten + StdErr),
+      aes(
+        ymin = Koeffizienten - `Std. Error`,
+        ymax = Koeffizienten + `Std. Error`
+      ),
       width = 0.2
     ) +
     scale_fill_manual(values = c(
