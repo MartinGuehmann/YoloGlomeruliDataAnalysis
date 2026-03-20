@@ -778,31 +778,65 @@ for (versuch_id in names(symbol_map_experiments)) {
 #Statistik Teil:
 
 
-# Grafische Untersuchung auf Normalverteilung (mAP_95, 10 Epochen, 5x 001)
-subdata_all <- subset(data1df, (Epoche > 289) & (Epoche < 300) & versuch %in% c("001", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020") & !(versuch == "001" & SuperRank == 6))
-pdf("Histogramm_alleVersuche_mAP_95_10E_5x001.pdf", height=5, width=5)
+plot_histogram_normality <- function(
+    data,
+    metric,
+    filename,
+    versuche,
+    epoch_range = c(290, 299),
+    filter_superrank = TRUE,
+    axis_text_size = 8
+) {
+  
+  # Filter data
+  subdata_all <- subset(
+    data,
+    Epoche >= epoch_range[1] &
+      Epoche <= epoch_range[2] &
+      versuch %in% versuche
+  )
+  
+  if (filter_superrank) {
+    subdata_all <- subset(
+      subdata_all,
+      !(versuch == "001" & SuperRank == 6)
+    )
+  }
+  
+  # Create plot
+  p <- ggplot(subdata_all, aes(x = .data[[metric]])) +
+    geom_histogram(binwidth = 0.01) +
+    facet_wrap(~versuch) +
+    ggtitle(
+      paste0(
+        "Histogramm der ", metric,
+        "-Werte für alle Versuche in den letzten 10 Epochen"
+      )
+    ) +
+    theme(
+      plot.title = element_text(color = "black", size = 9),
+      axis.text.x = element_text(size = axis_text_size)
+    )
+  
+  # Save
+  pdf(filename, height = 5, width = 5)
+  print(p)
+  dev.off()
+}
 
-ggplot(subdata_all, aes(x = mAP_95)) +
-  geom_histogram(binwidth = 0.01) +
-  facet_wrap(~versuch) +
-  ggtitle("Histogramm der mAP_95-Werte für alle Versuche in den letzten 10 Epochen") +
-  theme(plot.title = element_text(color = "black", size = 9),
-        axis.text.x = element_text(size = 8))
+versuche <- c(
+  "001","003","004","005","006","007","008","009","010",
+  "011","012","013","014","015","016","017","018","019","020"
+)
 
-dev.off()
+metrics <- c("mAP_95", "mAP_50")
 
-################################################################################################
-# Grafische Untersuchung auf Normalverteilung (mAP_50, 10 Epochen, 5x 001)
+for (metric in metrics) {
+  plot_histogram_normality(
+    data = data1df,
+    metric = metric,
+    filename = paste0("Histogramm_alleVersuche_", metric, "_10E_5x001.pdf"),
+    versuche = versuche
+  )
+}
 
-subdata_all <- subset(data1df, (Epoche > 289) & (Epoche < 300) & versuch %in% c("001", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016", "017", "018", "019", "020") & !(versuch == "001" & SuperRank == 6))
-pdf("Histogramm_alleVersuche_mAP_50_10E_5x001.pdf", height=5, width=5)
-
-ggplot(subdata_all, aes(x = mAP_50)) +
-  geom_histogram(binwidth = 0.01) +
-  facet_wrap(~versuch) +
-  ggtitle("Histogramm der mAP_95-Werte für alle Versuche in den letzten 10 Epochen") +
-  theme(plot.title = element_text(color = "black", size = 9),
-        axis.text.x = element_text(size = 5))
-
-dev.off()
-###################################################################################################
