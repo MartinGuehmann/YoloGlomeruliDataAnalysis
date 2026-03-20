@@ -214,7 +214,7 @@ analyze_data <- function(data,
     )
 
   # Step 17: Add optional annotations
-  if (mode != "default") {
+  if (isTRUE(mode != "default")) {
 
     max_df <- subdata_median %>%
       dplyr::group_by(versuch) %>%
@@ -768,8 +768,6 @@ metrics <- c(
 for (versuch_id in names(symbol_map_experiments)) {
 
   for (metric in names(metrics)) {
-
-    filter_superrank <- experiments[[versuch_id]]$filter
 
       plot_versuch(
       data = data1df,
