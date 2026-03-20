@@ -545,6 +545,44 @@ run_linear_model <- function(data,
     width = 5
   )
 
+  pdf_name_facet <- paste0("Abb_LM_Koeffizienten_FACET_", metric, suffix_part, ".pdf")
+  
+  p_facet <- ggplot(coef_data, aes(
+    x = Trainingsdatensatzkombinationen,
+    y = Koeffizienten,
+    fill = TermType
+  )) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(
+      aes(
+        ymin = Koeffizienten - `Std. Error`,
+        ymax = Koeffizienten + `Std. Error`
+      ),
+      width = 0.2
+    ) +
+    facet_wrap(~ TermType, scales = "free_x") +
+    scale_fill_manual(values = c(
+      "Intercept" = "gray70",
+      "Main Effect" = "steelblue",
+      "2-way Interaction" = "#fdae61",
+      "3-way Interaction" = "#f46d43",
+      "4-way Interaction" = "#d73027"
+    )) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 9),
+      legend.position = "none"
+    ) +
+    ggtitle(paste("Faceted Koeffizienten des linearen Interaktionsmodells:", metric))
+  
+  ggsave(
+    filename = pdf_name_facet,
+    plot = p_facet,
+    height = 6,
+    width = 8
+  )
+
   # ----------------------------
   # Step 13: Return diagnostics
   # ----------------------------
