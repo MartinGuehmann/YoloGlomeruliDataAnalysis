@@ -787,7 +787,7 @@ plot_histogram_normality <- function(
     filter_superrank = TRUE,
     axis_text_size = 8
 ) {
-  
+
   # Filter data
   subdata_all <- subset(
     data,
@@ -795,15 +795,47 @@ plot_histogram_normality <- function(
       Epoche <= epoch_range[2] &
       versuch %in% versuche
   )
-  
+
   if (filter_superrank) {
     subdata_all <- subset(
       subdata_all,
       !(versuch == "001" & SuperRank == 6)
     )
   }
+
+  # ---------------------------
+  # Shapiro-Wilk test per versuch
+  # ---------------------------
+  shapiro_df <- do.call(
+    rbind,
+    lapply(split(subdata_all[[metric]], subdata_all$versuch), function(x) {
+      
+      # Shapiro requires at least 3 values
+      if (length(x) < 3) {
+        return(data.frame(W = NA, p_value = NA))
+      }
+      
+      test <- shapiro.test(x)
+      
+      data.frame(
+        W = as.numeric(test$statistic),
+        p_value = test$p.value
+      )
+    })
+  )
   
-  # Create plot
+  shapiro_df$versuch <- rownames(shapiro_df)
+  rownames(shapiro_df) <- NULL
+
+  write.csv(
+    shapiro_df,
+    file = paste0("Shapiro_", metric, ".csv"),
+    row.names = FALSE
+  )
+
+  # ---------------------------
+  # Plot
+  # ---------------------------
   p <- ggplot(subdata_all, aes(x = .data[[metric]])) +
     geom_histogram(binwidth = 0.01) +
     facet_wrap(~versuch) +
@@ -817,11 +849,14 @@ plot_histogram_normality <- function(
       plot.title = element_text(color = "black", size = 9),
       axis.text.x = element_text(size = axis_text_size)
     )
-  
-  # Save
+
+  # Plot
   pdf(filename, height = 5, width = 5)
   print(p)
   dev.off()
+
+  # Return results for further use
+  return(shapiro_df)
 }
 
 versuche <- c(
