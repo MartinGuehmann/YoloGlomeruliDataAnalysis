@@ -827,10 +827,16 @@ plot_histogram_normality <- function(
   shapiro_df$versuch <- rownames(shapiro_df)
   rownames(shapiro_df) <- NULL
 
-  write.csv(
-    shapiro_df,
-    file = paste0("Shapiro_", metric, ".csv"),
-    row.names = FALSE
+  # Add significance column
+  alpha <- 0.05
+  shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Ja", "Nein")
+
+  # ---------------------------
+  # Write Excel file
+  # ---------------------------
+  write_xlsx(
+    list("Shapiro-Wilk" = shapiro_df),
+    path = paste0("Shapiro_", metric, ".xlsx")
   )
 
   # ---------------------------
