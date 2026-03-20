@@ -730,6 +730,63 @@ plot_training_times(traing_times, image_numbers)
 
 #########################################################################################################################
 
+plot_versuch <- function(data,
+                         versuch_id, 
+                         metric,
+                         title,
+                         filename,
+                         outlier_filter = list(versuch="001", SuperRank=6)) {
+
+  # Filter data
+  subdata <- subset(data, versuch == versuch_id)
+  
+  if (!is.null(outlier_filter)) {
+    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
+                           subdata$SuperRank == outlier_filter$SuperRank), ]
+  }
+
+  # Create plot
+  p <- ggplot(subdata) +
+    geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
+    facet_wrap(~ SuperRank, nrow = 3) +
+    ggtitle(title) +
+    theme(plot.title = element_text(color = "black", size = 9))
+  
+  # Save to PDF
+  pdf(filename, height = 5, width = 5)
+  print(p)
+  dev.off()
+}
+
+metrics <- c(
+  mAP_50    = "mAP@50",
+  mAP_95    = "mAP@95",
+  precision = "Precision (Positiver Prädiktiver Wert)",
+  recall    = "Recall (Sensitivität)"
+)
+
+experiments <- list(
+  "001" = list(filter = TRUE),
+  "003" = list(filter = FALSE)
+)
+
+for (versuch_id in names(experiments)) {
+
+  for (metric in names(metrics)) {
+
+    filter_superrank <- experiments[[versuch_id]]$filter
+
+      plot_versuch(
+      data = data1df,
+      versuch_id = versuch_id,
+      metric = metric,
+      title = paste0("Experiment ", versuch_id, ": ", metrics[[metric]]),
+      filename = paste0("Abb_Versuch_", versuch_id, "_", metric, ".pdf"),
+    )
+    
+  }
+}
+
 # Versuch 1 (001), mAP_50
 
 versuch_001 <-subset(data1df, versuch == "001"& SuperRank != 6)
