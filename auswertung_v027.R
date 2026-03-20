@@ -689,46 +689,47 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
+plot_training_times <- function(traing_times, image_numbers)
+{
+  pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
 
+  # Ändere die Grafikparameter
+  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5)
 
-#######################################################################################################################
+  # Plotte Trainingszeit gegen Bildanzahl
+  plot(image_numbers,
+       traing_times,
+       ylab = "Trainingszeit in h",
+       xlab = "Anzahl der Trainingsbilder",
+       main = "Abhängigkeit der Trainingszeit von der Trainingsdatensatzgröße",
+       pch = 1,
+       col = 2,
+       cex = 1)
 
-#Zusammenhang zwischen Bildanzahl und Trainingszeit
+  # Füge eine Regressionslinie hinzu
+  fit <- lm(traing_times ~ image_numbers)
+  abline(fit)
 
-# Erstelle Vektoren für Trainingszeit und Bildanzahl
-trainingszeit <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
-bildanzahl <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
+  # Zeige die Formel der Regressionsgerade an
+  formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
+  mtext(formula,
+        side = 3,
+        line = -12,
+        cex = 0.8)
 
-pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
+  dev.off()
+}
 
-# Ändere die Grafikparameter
-par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5)
+# Zusammenhang zwischen Bildanzahl und Trainingszeit
 
-# Plotte Trainingszeit gegen Bildanzahl
-plot(bildanzahl,
-     trainingszeit,
-     ylab = "Trainingszeit in h",
-     xlab = "Anzahl der Trainingsbilder",
-     main = "Abhängigkeit der Trainingszeit von der Trainingsdatensatzgröße",
-     pch = 1,
-     col = 2,
-     cex = 1)
+# Make vectors for training time and number of images, hard encoded, come from outside.
+traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
+image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
 
+plot_training_times(traing_times, image_numbers)
 
-# Füge eine Regressionslinie hinzu
-fit <- lm(trainingszeit ~ bildanzahl)
-abline(fit)
+#########################################################################################################################
 
-# Zeige die Formel der Regressionsgerade an
-formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
-mtext(formula,
-      side = 3,
-      line = -12,
-      cex = 0.8)
-
-dev.off()
-
-#######################################################################################################################
 # Versuch 1 (001), mAP_50
 
 versuch_001 <-subset(data1df, versuch == "001"& SuperRank != 6)
