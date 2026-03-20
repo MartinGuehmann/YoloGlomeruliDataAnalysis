@@ -694,7 +694,7 @@ plot_training_times <- function(traing_times, image_numbers)
   pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
 
   # Ändere die Grafikparameter
-  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5)
+  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
 
   # Plotte Trainingszeit gegen Bildanzahl
   plot(image_numbers,
