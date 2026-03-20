@@ -61,16 +61,6 @@ for (i in 1:dim(data1)[1]){
 }
 ##############################################################################################
 
-#subdata <- subset(data1, ((Versuch == 3) | (Versuch == 4)) & (Epoche > 290)  )
-
-subdata <- subset(data1,  (Epoche > 298) & (Epoche < 300) )
-
-subdata$versuch <- factor(subdata$versuch , levels=c("012", "010", "011", "001","004",
-                                                     "003", "013","005","006","007","008","009"))
-ggplot(subdata, aes(x = versuch, y= mAP_95) ) +
-  geom_boxplot()
-
-
 data1_f <- data1 %>%
   group_by(versuch,version) %>%
   mutate(MaxValue = max(Epoche))
@@ -231,7 +221,7 @@ analyze_data <- function(data,
 
 
     if (mode == "annotated") {
-    p <- p +
+      p <- p +
       # Blue median-of-medians points
       stat_summary(
         fun = median,
@@ -256,7 +246,7 @@ analyze_data <- function(data,
         color = "red",
         size = 0.5
       )
-  }
+    }
   }
 
   # Step 18: Save plot as PDF
