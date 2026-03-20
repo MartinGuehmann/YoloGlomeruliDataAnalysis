@@ -366,7 +366,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 run_linear_model <- function(data,
                              versuch_levels,
                              metric,
-                             suffix = "",
                              outlier_filter = list(versuch="001", SuperRank=6),
                              epoch_range = c(290, 299)) {
 
@@ -484,10 +483,8 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 9: File naming
   # ----------------------------
-  suffix_part <- ifelse(suffix != "", paste0("_", suffix), "")
-
-  xlsx_name <- paste0("linear_model_results_", metric, suffix_part, ".xlsx")
-  pdf_name  <- paste0("Abb_LM_Koeffizienten_", metric, suffix_part, ".pdf")
+  xlsx_name <- paste0("linear_model_results_", metric, ".xlsx")
+  pdf_name  <- paste0("Abb_LM_Koeffizienten_", metric, ".pdf")
 
   # ----------------------------
   # Step 10: Output consistency check
@@ -545,7 +542,7 @@ run_linear_model <- function(data,
     width = 5
   )
 
-  pdf_name_facet <- paste0("Abb_LM_Koeffizienten_FACET_", metric, suffix_part, ".pdf")
+  pdf_name_facet <- paste0("Abb_LM_Koeffizienten_FACET_", metric, ".pdf")
   
   p_facet <- ggplot(coef_data, aes(
     x = Trainingsdatensatzkombinationen,
