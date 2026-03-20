@@ -451,8 +451,21 @@ run_linear_model <- function(data,
   )
   coef_data$TermType <- dplyr::case_when(
     coef_data$Trainingsdatensatzkombinationen == "(Intercept)" ~ "Intercept",
-    grepl(":", coef_data$Trainingsdatensatzkombinationen) ~ "Interaction",
-    TRUE ~ "Main Effect"
+    !grepl(":", coef_data$Trainingsdatensatzkombinationen) ~ "Main Effect",
+    TRUE ~ paste0(
+      stringr::str_count(coef_data$Trainingsdatensatzkombinationen, ":") + 1,
+      "-way Interaction"
+    )
+  )
+  coef_data$TermType <- factor(
+    coef_data$TermType,
+    levels = c(
+      "Intercept",
+      "Main Effect",
+      "2-way Interaction",
+      "3-way Interaction",
+      "4-way Interaction"
+    )
   )
   # Keep model order, but group by type
   coef_data$Trainingsdatensatzkombinationen <- factor(
@@ -462,7 +475,7 @@ run_linear_model <- function(data,
   coef_data$Group <- ifelse(coef_data$TermType == "Interaction", 2,
                             ifelse(coef_data$TermType == "Main Effect", 1, 0))
 
-  coef_data <- coef_data[order(coef_data$Group), ]
+  coef_data <- coef_data[order(coef_data$TermType), ]
 
   # ----------------------------
   # Step 9: File naming
@@ -508,7 +521,9 @@ run_linear_model <- function(data,
     scale_fill_manual(values = c(
       "Intercept" = "gray70",
       "Main Effect" = "steelblue",
-      "Interaction" = "tomato"
+      "2-way Interaction" = "#fdae61",
+      "3-way Interaction" = "#f46d43",
+      "4-way Interaction" = "#d73027"
     )) +
     theme_minimal() +
     theme(
