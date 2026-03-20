@@ -765,12 +765,7 @@ metrics <- c(
   recall    = "Recall (Sensitivität)"
 )
 
-experiments <- list(
-  "001" = list(filter = TRUE),
-  "003" = list(filter = FALSE)
-)
-
-for (versuch_id in names(experiments)) {
+for (versuch_id in names(symbol_map_experiments)) {
 
   for (metric in names(metrics)) {
 
