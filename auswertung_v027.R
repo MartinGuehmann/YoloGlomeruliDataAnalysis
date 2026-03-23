@@ -764,6 +764,12 @@ plot_training_times(traing_times, image_numbers)
 
 #########################################################################################################################
 
+plot_types <- c(
+  default         = "Default_",
+  annotated       = "Annotated_",
+  red_raw_medians = "RedRawMedians_"
+)
+
 jobs <- list(
   list(
     name        = "all",
@@ -785,40 +791,44 @@ jobs <- list(
   list(
     name        = "combinations",
     title       = "All combinations of augmentations: ",
-    experiments =   c("006", "014", "005",
-                      "015", "007", "016", "009", "008",
-                      "017", "018", "013", "019", "010",
-                      "020", "011")
+    experiments = c("006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
   )
 )
 
 for (metric in names(metrics)) {
-  for(job in jobs) {
-    plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
-    base_file_name  <- paste0(output_dir, "/", metric, "/", file_safe_name(plot_title))
-
-    if(metric == "mAP_50" && job$name == "all") {
-      analyze_data(
-        data1df,
-        job$experiments,
-        symbol_map_experiments,
-        symbol_config,
-        metric,
-        plot_title,
-        base_file_name,
-        NULL
-      )
-    }
-    else {
-      analyze_data(
-        data1df,
-        job$experiments,
-        symbol_map_experiments,
-        symbol_config,
-        metric,
-        plot_title,
-        base_file_name
-      )
+  for(plot_type in names(plot_types)) {
+      for(job in jobs) {
+      plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
+      base_file_name  <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]], file_safe_name(plot_title))
+  
+      if(metric == "mAP_50" && job$name == "all") {
+        analyze_data(
+          data1df,
+          job$experiments,
+          symbol_map_experiments,
+          symbol_config,
+          metric,
+          plot_title,
+          base_file_name,
+          plot_type,
+          NULL
+        )
+      }
+      else {
+        analyze_data(
+          data1df,
+          job$experiments,
+          symbol_map_experiments,
+          symbol_config,
+          metric,
+          plot_title,
+          base_file_name,
+          plot_type
+        )
+      }
     }
   }
 }
