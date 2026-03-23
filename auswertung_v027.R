@@ -805,6 +805,11 @@ jobs <- list(
     name        = "small_syn_augmented",
     title       = "Synthetic augmentations of small datasets: ",
     experiments = c("006", "005", "008")
+  ),
+  list(
+    name        = "small_combinations",
+    title       = "Classical and synthetic augmentations of small datasets: ",
+    experiments = c("006", "007", "008", "013", "011")
   )
 )
 
@@ -842,31 +847,6 @@ for (metric in names(metrics)) {
     }
   }
 }
-
-#########################################################################################################################
-
-versuch_levels <- c("006", "007", "008", "013", "011")
-
-# Maximaler Effekt der Datenaugmentation/kombinierte Datenaugmentation; mAP_95, 10 Epochen (5 Plots), Median, Datensatzumbenennung
-base_file_name <- "Abb_Datenaugmentation_kombiniert_mAP_95_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Kombinierte Datenaugmentation: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
-
-# Maximaler Effekt der Datenaugmentation/kombinierte Datenaugmentation; mAP_95, 10 Epochen (5 Plots), Median, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Datenaugmentation_kombiniert_mAP_95_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Kombinierte Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "red_raw_medians")
-
-# Maximaler Effekt der Datenaugmentation/kombinierte Datenaugmentation; mAP_50, 10 Epochen (5 Plots), Median, Datensatzumbenennung
-base_file_name <- "Abb_Datenaugmentation_kombiniert_mAP_50_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Kombinierte Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "annotated")
-
-# Maximaler Effekt der Datenaugmentation/kombinierte Datenaugmentation; mAP_50, 10 Epochen (5 Plots), Median, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Datenaugmentation_kombiniert_mAP_50_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Kombinierte Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
-
 
 #########################################################################################################################
 
