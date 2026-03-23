@@ -718,7 +718,7 @@ for (metric in names(metrics)) {
 
 #########################################################################################################################
 
-# Plot the relation of training time and number of traing images
+# Plot the relation of training time and number of training images
 plot_training_times(traing_times, image_numbers)
 
 #########################################################################################################################
@@ -793,18 +793,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-versuch_levels <- c("006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
-
-# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 
-run_linear_model(data1df, versuch_levels, "mAP_50")
-# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_95 
-run_linear_model(data1df, versuch_levels, "mAP_95")
-
-#########################################################################################################################
-
 versuch_levels <- c("006", "014", "007")
 
 # Effekt der konventionellen Datenaugmentation: mAP_95, 10 Epochen (schön), 5x001, Median-Version, Datensatzumbenennung
@@ -875,6 +863,19 @@ base_file_name <- "Abb_Datenaugmentation_kombiniert_mAP_50_10E_5x001_Median_Date
 plot_title <- "Kombinierte Datenaugmentation: mAP_50 der letzten 10 Epochen"
 analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
+
+#########################################################################################################################
+
+# Multiple linear regression for the models to determine what has the most effect
+versuch_levels <- c("006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
+
+# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 
+run_linear_model(data1df, versuch_levels, "mAP_50")
+# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_95 
+run_linear_model(data1df, versuch_levels, "mAP_95")
 
 #########################################################################################################################
 
