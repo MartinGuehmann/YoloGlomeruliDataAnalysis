@@ -754,8 +754,20 @@ jobs <- list(
     name        = "augmented",
     title       = "Original and classical augmented images: ",
     experiments = c("001", "003", "004", "012")
+  ),
+  list(
+    name        = "size",
+    title       = "Training data set sizes: ",
+    experiments = c("006", "001","003")
+  ),
+  list(
+    name        = "combinations",
+    title       = "All combinations of augmentations: ",
+    experiments =   c("006", "014", "005",
+                      "015", "007", "016", "009", "008",
+                      "017", "018", "013", "019", "010",
+                      "020", "011")
   )
-  
 )
 
 for (metric in names(metrics)) {
@@ -788,41 +800,6 @@ for (metric in names(metrics)) {
     }
   }
 }
-
-#########################################################################################################################
-
-# Effekt der Datensatzgröße: mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-versuch_levels <- c("006", "001","003")
-
-base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Effekt der Datensatzgröße: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Effekt der Datensatzgröße: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
-
-#########################################################################################################################
-
-versuch_levels <- c("006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
-
-# Datenaugmentation (15): mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
-
-base_file_name <- "Abb_Datenaugmentation_15_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datenaugmentation (Übersicht): mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# Datenaugmentation (15): mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
-
-base_file_name <- "Abb_Datenaugmentation_15_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datenaugmentation (Übersicht): mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
 
 #########################################################################################################################
 
