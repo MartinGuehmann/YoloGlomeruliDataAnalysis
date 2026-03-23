@@ -15,82 +15,6 @@ library(FSA)
 #############
 
 
-
-#################
-# Data Analysis #
-#################
-
-rm(list = ls()) 
-
-# Set working directory to script directory
-if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-  # In RStudio: Path of the active script
-  script_dir <- dirname(rstudioapi::getActiveDocumentContext()$path)
-} else {
-  # Outside RStudio: Path via Rscript arguments
-  args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- grep("--file=", args, value = TRUE)
-  if (length(file_arg) > 0) {
-    script_dir <- dirname(normalizePath(sub("--file=", "", file_arg)))
-  } else {
-    # Interactive or no file given: Current working directory
-    script_dir <- getwd()
-  }
-}
-
-# Set working directory
-setwd(script_dir)
-cat("Working directory set to:", getwd(), "\n")
-
-exceldata <- read_excel("Design2.xlsx")
-Design <- data.frame(exceldata)
-
-data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
-data1 <- data.frame(data)
-data1$versuch <- substr(data1$filename,19,21)
-
-data1$Versuch <- as.numeric(data1$versuch)
-
-tmp <- merge(data1, Design, by='Versuch')
-
-data1 <- tmp
-
-for (i in 1:dim(data1)[1]){
-  ver <- substr(data1$filename[i],22,30)
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
-  if (s ==""){
-    s="1"
-  }
-  data1$version[i] <- strtoi(s)
-}
-for (i in 1:dim(data1)[1]){
-  ver <- data1$Epoch[i]
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
-  
-  data1$Epoche[i] <- strtoi(s)
-}
-##############################################################################################
-
-data1_f <- data1 %>%
-  group_by(versuch,version) %>%
-  mutate(MaxValue = max(Epoche))
-
-subset_ff <- subset(data1_f,MaxValue > 290)
-
-data1_s <- subset_ff%>%
-  group_by(versuch) %>%
-  mutate(SuperRank = dense_rank(version))
-
-data1df <- data1_s
-
-################################################################################################
-################################################################################################
-###############################################################################################
-
 analyze_data <- function(data,
                          versuch_levels,
                          symbol_map,
@@ -271,6 +195,82 @@ analyze_data <- function(data,
     width = 5
   )
 }
+
+#################
+# Data Analysis #
+#################
+
+rm(list = ls()) 
+
+# Set working directory to script directory
+if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+  # In RStudio: Path of the active script
+  script_dir <- dirname(rstudioapi::getActiveDocumentContext()$path)
+} else {
+  # Outside RStudio: Path via Rscript arguments
+  args <- commandArgs(trailingOnly = FALSE)
+  file_arg <- grep("--file=", args, value = TRUE)
+  if (length(file_arg) > 0) {
+    script_dir <- dirname(normalizePath(sub("--file=", "", file_arg)))
+  } else {
+    # Interactive or no file given: Current working directory
+    script_dir <- getwd()
+  }
+}
+
+# Set working directory
+setwd(script_dir)
+cat("Working directory set to:", getwd(), "\n")
+
+exceldata <- read_excel("Design2.xlsx")
+Design <- data.frame(exceldata)
+
+data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
+data1 <- data.frame(data)
+data1$versuch <- substr(data1$filename,19,21)
+
+data1$Versuch <- as.numeric(data1$versuch)
+
+tmp <- merge(data1, Design, by='Versuch')
+
+data1 <- tmp
+
+for (i in 1:dim(data1)[1]){
+  ver <- substr(data1$filename[i],22,30)
+  vers <- strsplit(ver,split="/")
+  a<- vers
+  s <- a[[1]][1]
+  if (s ==""){
+    s="1"
+  }
+  data1$version[i] <- strtoi(s)
+}
+for (i in 1:dim(data1)[1]){
+  ver <- data1$Epoch[i]
+  vers <- strsplit(ver,split="/")
+  a<- vers
+  s <- a[[1]][1]
+  
+  data1$Epoche[i] <- strtoi(s)
+}
+##############################################################################################
+
+data1_f <- data1 %>%
+  group_by(versuch,version) %>%
+  mutate(MaxValue = max(Epoche))
+
+subset_ff <- subset(data1_f,MaxValue > 290)
+
+data1_s <- subset_ff%>%
+  group_by(versuch) %>%
+  mutate(SuperRank = dense_rank(version))
+
+data1df <- data1_s
+
+################################################################################################
+################################################################################################
+###############################################################################################
+
 
 # Mapping of versuch to symbols
 symbol_map_experiments <- list(
