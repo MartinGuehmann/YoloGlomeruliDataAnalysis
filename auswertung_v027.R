@@ -872,19 +872,19 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-# Multiple linear regression for the models to determine what has the most effect
+# Multiple linear regression for the models for all metrics to determine what has the most effect
 versuch_levels <- c("006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
                     "020", "011")
 
-# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_50 
-run_linear_model(data1df, versuch_levels, "mAP_50")
-# Statistik (15 Datenaugmentations-Versuche): Vergleich linearer Modelle: mAP_95 
-run_linear_model(data1df, versuch_levels, "mAP_95")
+for (metric in names(metrics)) {
+  run_linear_model(data1df, versuch_levels, metric)
+}
 
 #########################################################################################################################
 
+# Plot all the values for all epochs for all metrics
 for (versuch_id in names(symbol_map_experiments)) {
 
   for (metric in names(metrics)) {
