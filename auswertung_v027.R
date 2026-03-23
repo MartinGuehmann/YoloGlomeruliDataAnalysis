@@ -800,6 +800,11 @@ jobs <- list(
     name        = "small_augmented",
     title       = "Augmentations of small datasets: ",
     experiments = c("006", "014", "007")
+  ),
+  list(
+    name        = "small_syn_augmented",
+    title       = "Synthetic augmentations of small datasets: ",
+    experiments = c("006", "005", "008")
   )
 )
 
@@ -837,30 +842,6 @@ for (metric in names(metrics)) {
     }
   }
 }
-
-#########################################################################################################################
-
-versuch_levels <- c("006", "005", "008")
-
-# Effekt der synthetischen Datenaugmentation (mAP_95), 10 Epochen (schön),Median-Version, Datensatzumbenennung
-base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
-
-# Effekt der synthetischen Datenaugmentation (mAP_95), 10 Epochen (schön),Median-Version, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_95_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "red_raw_medians")
-
-# Effekt der synthetischen Datenaugmentation (mAP_50), 10 Epochen (schön),Median-Version, Datensatzumbenennung
-base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "annotated")
-
-# Effekt der synthetischen Datenaugmentation (mAP_50), 10 Epochen (schön),Median-Version, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Synthetische_Datenaugmentation__mAP_50_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Einfluss der synthetischen Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
 #########################################################################################################################
 
