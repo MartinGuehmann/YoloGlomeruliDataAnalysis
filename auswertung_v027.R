@@ -1,3 +1,7 @@
+#################
+# Load packages #
+#################
+
 library(ggplot2)
 library(readr)
 library(dplyr)
@@ -5,6 +9,16 @@ library(tidyr)
 library(readxl)
 library(writexl)
 library(FSA)
+
+#############
+# Functions #
+#############
+
+
+
+#################
+# Data Analysis #
+#################
 
 rm(list = ls()) 
 
