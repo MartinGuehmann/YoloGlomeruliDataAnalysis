@@ -41,6 +41,8 @@ if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
 setwd(script_dir)
 cat("Working directory set to:", getwd(), "\n")
 
+# Set output directory
+output_dir <- paste0(script_dir, "/output")
 
 ####################
 # Helper functions #
@@ -58,6 +60,14 @@ file_safe_name <- function(x) {
   x <- gsub("^_|_$", "", x)
 }
 
+create_parent_dir <- function(path) {
+
+  parent_dir <- dirname(path)
+  if (parent_dir != "." && !dir.exists(parent_dir)) {
+    dir.create(parent_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+}
+
 #############
 # Functions #
 #############
@@ -72,6 +82,9 @@ analyze_data <- function(data,
                          mode = "default",
                          outlier_filter = list(versuch="001", SuperRank=6),
                          epoch_range = c(290, 299)) {
+
+  # Create the parent dir of the output file if it does not exsit
+  create_parent_dir(base_file_name)
 
   # Step 1: Filter data to include only the last 10 epochs
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
@@ -778,7 +791,7 @@ jobs <- list(
 for (metric in names(metrics)) {
   for(job in jobs) {
     plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
-    base_file_name  <- file_safe_name(plot_title)
+    base_file_name  <- paste0(output_dir, "/", metric, "/", file_safe_name(plot_title))
 
     if(metric == "mAP_50" && job$name == "all") {
       analyze_data(
