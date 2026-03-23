@@ -41,6 +41,23 @@ if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
 setwd(script_dir)
 cat("Working directory set to:", getwd(), "\n")
 
+
+####################
+# Helper functions #
+####################
+
+file_safe_name <- function(x) {
+  
+  # Replace spaces, @, and other non-alphanumeric characters with underscores
+  x <- gsub("[^[:alnum:]]+", "_", x)
+  
+  # Collapse multiple underscores
+  x <- gsub("_+", "_", x)
+  
+  # Trim leading/trailing underscores
+  x <- gsub("^_|_$", "", x)
+}
+
 #############
 # Functions #
 #############
@@ -598,18 +615,6 @@ plot_histogram_normality <- function(
 
   # Return results for further use
   return(shapiro_df)
-}
-
-file_safe_name <- function(x) {
-
-  # Replace spaces, @, and other non-alphanumeric characters with underscores
-  x <- gsub("[^[:alnum:]]+", "_", x)
-  
-  # Collapse multiple underscores
-  x <- gsub("_+", "_", x)
-  
-  # Trim leading/trailing underscores
-  x <- gsub("^_|_$", "", x)
 }
 
 #########################################################################################################################
