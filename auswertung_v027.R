@@ -83,7 +83,7 @@ analyze_data <- function(data,
                          outlier_filter = list(versuch="001", SuperRank=6),
                          epoch_range = c(290, 299)) {
 
-  # Create the parent dir of the output file if it does not exsit
+  # Step 0: Create the parent dir of the output file if it does not exsist
   create_parent_dir(base_file_name)
 
   # Step 1: Filter data to include only the last 10 epochs
@@ -185,7 +185,11 @@ analyze_data <- function(data,
     scale_shape_manual(
       values = setNames(symbol_config$shape, symbol_config$symbol)
     ) +
-    labs(shape = "") +
+    labs(
+      shape = "",
+      x     = "Experiment",
+      y     = metric
+    ) +
     geom_hline(yintercept = 1) +
     scale_y_continuous(
       limits       = c(0, 1.25),
