@@ -728,48 +728,14 @@ metrics <- c(
   recall    = "Recall"
 )
 
-# Make vectors for training time and number of images, hard encoded, come from outside.
-# Would be better to have it in its own file.
-traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
-image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
-
-#########################################################################################################################
-
-##############################
-# Data analysis and plotting #
-##############################
-
-#########################################################################################################################
-
-# Check for normal distribution by histograms and Shapiro-Wilk test
-
-versuche <- c(
-  "001","003","004","005","006","007","008","009","010",
-  "011","012","013","014","015","016","017","018","019","020"
-)
-
-for (metric in names(metrics)) {
-  plot_histogram_normality(
-    data = data1df,
-    metric = metric,
-    filename = paste0("Histogramm_alleVersuche_", metric, "_10E_5x001.pdf"),
-    versuche = versuche
-  )
-}
-
-#########################################################################################################################
-
-# Plot the relation of training time and number of training images
-plot_training_times(traing_times, image_numbers)
-
-#########################################################################################################################
-
+#  Define the plot types
 plot_types <- c(
   default         = "Default_",
   annotated       = "Annotated_",
   red_raw_medians = "RedRawMedians_"
 )
 
+# Define the jobs for the box plots
 jobs <- list(
   list(
     name        = "all",
@@ -812,6 +778,42 @@ jobs <- list(
     experiments = c("006", "007", "008", "013", "011")
   )
 )
+
+# Make vectors for training time and number of images, hard encoded, come from outside.
+# Would be better to have it in its own file.
+traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
+image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
+
+#########################################################################################################################
+
+##############################
+# Data analysis and plotting #
+##############################
+
+#########################################################################################################################
+
+# Check for normal distribution by histograms and Shapiro-Wilk test
+
+versuche <- c(
+  "001","003","004","005","006","007","008","009","010",
+  "011","012","013","014","015","016","017","018","019","020"
+)
+
+for (metric in names(metrics)) {
+  plot_histogram_normality(
+    data = data1df,
+    metric = metric,
+    filename = paste0("Histogramm_alleVersuche_", metric, "_10E_5x001.pdf"),
+    versuche = versuche
+  )
+}
+
+#########################################################################################################################
+
+# Plot the relation of training time and number of training images
+plot_training_times(traing_times, image_numbers)
+
+#########################################################################################################################
 
 for (metric in names(metrics)) {
   for(plot_type in names(plot_types)) {
