@@ -426,10 +426,10 @@ run_linear_model <- function(data,
 plot_training_times <- function(traing_times, image_numbers)
 {
   pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
-
+  
   # Ändere die Grafikparameter
   par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
-
+  
   # Plotte Trainingszeit gegen Bildanzahl
   plot(image_numbers,
        traing_times,
@@ -439,18 +439,46 @@ plot_training_times <- function(traing_times, image_numbers)
        pch = 1,
        col = 2,
        cex = 1)
-
+  
   # Füge eine Regressionslinie hinzu
   fit <- lm(traing_times ~ image_numbers)
   abline(fit)
-
+  
   # Zeige die Formel der Regressionsgerade an
   formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
   mtext(formula,
         side = 3,
         line = -12,
         cex = 0.8)
+  
+  dev.off()
+}
 
+plot_versuch <- function(data,
+                         versuch_id, 
+                         metric,
+                         title,
+                         filename,
+                         outlier_filter = list(versuch="001", SuperRank=6)) {
+
+  # Filter data
+  subdata <- subset(data, versuch == versuch_id)
+  
+  if (!is.null(outlier_filter)) {
+    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
+                           subdata$SuperRank == outlier_filter$SuperRank), ]
+  }
+
+  # Create plot
+  p <- ggplot(subdata) +
+    geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
+    facet_wrap(~ SuperRank, nrow = 3) +
+    ggtitle(title) +
+    theme(plot.title = element_text(color = "black", size = 9))
+  
+  # Save to PDF
+  pdf(filename, height = 5, width = 5)
+  print(p)
   dev.off()
 }
 
@@ -633,11 +661,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-
-
-
-#########################################################################################################################
-
 versuch_levels <- c("006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
@@ -723,8 +746,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-
-
 # Zusammenhang zwischen Bildanzahl und Trainingszeit
 
 # Make vectors for training time and number of images, hard encoded, come from outside.
@@ -735,33 +756,6 @@ plot_training_times(traing_times, image_numbers)
 
 #########################################################################################################################
 
-plot_versuch <- function(data,
-                         versuch_id, 
-                         metric,
-                         title,
-                         filename,
-                         outlier_filter = list(versuch="001", SuperRank=6)) {
-
-  # Filter data
-  subdata <- subset(data, versuch == versuch_id)
-  
-  if (!is.null(outlier_filter)) {
-    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
-                           subdata$SuperRank == outlier_filter$SuperRank), ]
-  }
-
-  # Create plot
-  p <- ggplot(subdata) +
-    geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
-    facet_wrap(~ SuperRank, nrow = 3) +
-    ggtitle(title) +
-    theme(plot.title = element_text(color = "black", size = 9))
-  
-  # Save to PDF
-  pdf(filename, height = 5, width = 5)
-  print(p)
-  dev.off()
-}
 
 metrics <- c(
   mAP_50    = "mAP@50",
