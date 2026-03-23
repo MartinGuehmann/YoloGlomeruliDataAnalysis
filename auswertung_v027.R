@@ -460,7 +460,7 @@ plot_versuch <- function(data,
                          title,
                          filename,
                          outlier_filter = list(versuch="001", SuperRank=6)) {
-
+  
   # Filter data
   subdata <- subset(data, versuch == versuch_id)
   
@@ -468,7 +468,7 @@ plot_versuch <- function(data,
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                            subdata$SuperRank == outlier_filter$SuperRank), ]
   }
-
+  
   # Create plot
   p <- ggplot(subdata) +
     geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
@@ -480,6 +480,93 @@ plot_versuch <- function(data,
   pdf(filename, height = 5, width = 5)
   print(p)
   dev.off()
+}
+
+plot_histogram_normality <- function(
+    data,
+    metric,
+    filename,
+    versuche,
+    epoch_range = c(290, 299),
+    filter_superrank = TRUE,
+    axis_text_size = 8
+) {
+
+  # Filter data
+  subdata_all <- subset(
+    data,
+    Epoche >= epoch_range[1] &
+      Epoche <= epoch_range[2] &
+      versuch %in% versuche
+  )
+
+  if (filter_superrank) {
+    subdata_all <- subset(
+      subdata_all,
+      !(versuch == "001" & SuperRank == 6)
+    )
+  }
+
+  # ---------------------------
+  # Shapiro-Wilk test per versuch
+  # ---------------------------
+  shapiro_df <- do.call(
+    rbind,
+    lapply(split(subdata_all[[metric]], subdata_all$versuch), function(x) {
+      
+      # Shapiro requires at least 3 values
+      if (length(x) < 3) {
+        return(data.frame(W = NA, p_value = NA))
+      }
+      
+      test <- shapiro.test(x)
+      
+      data.frame(
+        W = as.numeric(test$statistic),
+        p_value = test$p.value
+      )
+    })
+  )
+  
+  shapiro_df$versuch <- rownames(shapiro_df)
+  rownames(shapiro_df) <- NULL
+
+  # Add significance column
+  alpha <- 0.05
+  shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Ja", "Nein")
+
+  # ---------------------------
+  # Write Excel file
+  # ---------------------------
+  write_xlsx(
+    list("Shapiro-Wilk" = shapiro_df),
+    path = paste0("Shapiro_", metric, ".xlsx")
+  )
+
+  # ---------------------------
+  # Plot
+  # ---------------------------
+  p <- ggplot(subdata_all, aes(x = .data[[metric]])) +
+    geom_histogram(binwidth = 0.01) +
+    facet_wrap(~versuch) +
+    ggtitle(
+      paste0(
+        "Histogramm der ", metric,
+        "-Werte für alle Versuche in den letzten 10 Epochen"
+      )
+    ) +
+    theme(
+      plot.title = element_text(color = "black", size = 9),
+      axis.text.x = element_text(size = axis_text_size)
+    )
+
+  # Plot
+  pdf(filename, height = 5, width = 5)
+  print(p)
+  dev.off()
+
+  # Return results for further use
+  return(shapiro_df)
 }
 
 #################
@@ -787,92 +874,7 @@ for (versuch_id in names(symbol_map_experiments)) {
 #Statistik Teil:
 
 
-plot_histogram_normality <- function(
-    data,
-    metric,
-    filename,
-    versuche,
-    epoch_range = c(290, 299),
-    filter_superrank = TRUE,
-    axis_text_size = 8
-) {
 
-  # Filter data
-  subdata_all <- subset(
-    data,
-    Epoche >= epoch_range[1] &
-      Epoche <= epoch_range[2] &
-      versuch %in% versuche
-  )
-
-  if (filter_superrank) {
-    subdata_all <- subset(
-      subdata_all,
-      !(versuch == "001" & SuperRank == 6)
-    )
-  }
-
-  # ---------------------------
-  # Shapiro-Wilk test per versuch
-  # ---------------------------
-  shapiro_df <- do.call(
-    rbind,
-    lapply(split(subdata_all[[metric]], subdata_all$versuch), function(x) {
-      
-      # Shapiro requires at least 3 values
-      if (length(x) < 3) {
-        return(data.frame(W = NA, p_value = NA))
-      }
-      
-      test <- shapiro.test(x)
-      
-      data.frame(
-        W = as.numeric(test$statistic),
-        p_value = test$p.value
-      )
-    })
-  )
-  
-  shapiro_df$versuch <- rownames(shapiro_df)
-  rownames(shapiro_df) <- NULL
-
-  # Add significance column
-  alpha <- 0.05
-  shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Ja", "Nein")
-
-  # ---------------------------
-  # Write Excel file
-  # ---------------------------
-  write_xlsx(
-    list("Shapiro-Wilk" = shapiro_df),
-    path = paste0("Shapiro_", metric, ".xlsx")
-  )
-
-  # ---------------------------
-  # Plot
-  # ---------------------------
-  p <- ggplot(subdata_all, aes(x = .data[[metric]])) +
-    geom_histogram(binwidth = 0.01) +
-    facet_wrap(~versuch) +
-    ggtitle(
-      paste0(
-        "Histogramm der ", metric,
-        "-Werte für alle Versuche in den letzten 10 Epochen"
-      )
-    ) +
-    theme(
-      plot.title = element_text(color = "black", size = 9),
-      axis.text.x = element_text(size = axis_text_size)
-    )
-
-  # Plot
-  pdf(filename, height = 5, width = 5)
-  print(p)
-  dev.off()
-
-  # Return results for further use
-  return(shapiro_df)
-}
 
 versuche <- c(
   "001","003","004","005","006","007","008","009","010",
