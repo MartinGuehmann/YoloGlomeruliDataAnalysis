@@ -599,11 +599,15 @@ plot_histogram_normality <- function(
   # Return results for further use
   return(shapiro_df)
 }
+#########################################################################################################################
 
 #################
 # Data Analysis #
 #################
 
+#########################################################################################################################
+
+# Load and prepare main data
 exceldata <- read_excel("Design2.xlsx")
 Design <- data.frame(exceldata)
 
@@ -636,8 +640,6 @@ for (i in 1:dim(data1)[1]){
   data1$Epoche[i] <- strtoi(s)
 }
 
-##############################################################################################
-
 data1_f <- data1 %>%
   group_by(versuch,version) %>%
   mutate(MaxValue = max(Epoche))
@@ -650,7 +652,7 @@ data1_s <- subset_ff%>%
 
 data1df <- data1_s
 
-##############################################################################################
+#########################################################################################################################
 
 # Mapping of versuch to symbols
 symbol_map_experiments <- list(
@@ -682,6 +684,11 @@ symbol_config <- data.frame(
   shape  = c(4   , 3   ,   1   ,       2   , 8   ,     7   , 6   ,     5   ),
   stringsAsFactors = FALSE
 )
+
+# Make vectors for training time and number of images, hard encoded, come from outside.
+# Would be better to have it in its own file.
+traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
+image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
 
 #########################################################################################################################
 
@@ -841,10 +848,6 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 #########################################################################################################################
 
 # Zusammenhang zwischen Bildanzahl und Trainingszeit
-
-# Make vectors for training time and number of images, hard encoded, come from outside.
-traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
-image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
 
 plot_training_times(traing_times, image_numbers)
 
