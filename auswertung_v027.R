@@ -1,7 +1,18 @@
 #################
-# Load packages #
+# Setup         #
 #################
 
+# Fail fast on errors, unless in interactive mode then go to debugging
+if (interactive() || Sys.getenv("DEBUG") == "true") {
+  options(error = recover)
+} else {
+  options(error = function() {
+    traceback(2)
+    quit(status = 1)
+  })
+}
+
+# Load libraries
 library(ggplot2)
 library(readr)
 library(dplyr)
@@ -572,8 +583,6 @@ plot_histogram_normality <- function(
 #################
 # Data Analysis #
 #################
-
-rm(list = ls()) 
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
