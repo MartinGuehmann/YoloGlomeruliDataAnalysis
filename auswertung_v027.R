@@ -14,7 +14,6 @@ library(FSA)
 # Functions #
 #############
 
-
 analyze_data <- function(data,
                          versuch_levels,
                          symbol_map,
@@ -32,7 +31,7 @@ analyze_data <- function(data,
   # Step 2: Remove outliers (specific versuch and SuperRank)
   if (!is.null(outlier_filter)) {
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
-                         subdata$SuperRank == outlier_filter$SuperRank), ]
+                           subdata$SuperRank == outlier_filter$SuperRank), ]
   }
 
   # Step 3: Keep only valid versuch levels and factorize
@@ -157,33 +156,32 @@ analyze_data <- function(data,
       match(max_df$versuch, subdata_median_median$versuch)
     ]
 
-
-    if (mode == "annotated") {
+      if (mode == "annotated") {
       p <- p +
-      # Blue median-of-medians points
-      stat_summary(
-        fun = median,
-        geom = "point",
-        color = "blue",
-        size = 2.5
-      ) +
-      # Blue median labels
-      geom_text(
-        data = max_df,
-        aes(x = versuch, y = y_label, label = round(median_value, 3)),
-        color = "blue",
-        size = 3
-      )
+        # Blue median-of-medians points
+        stat_summary(
+          fun = median,
+          geom = "point",
+          color = "blue",
+          size = 2.5
+        ) +
+        # Blue median labels
+        geom_text(
+          data = max_df,
+          aes(x = versuch, y = y_label, label = round(median_value, 3)),
+          color = "blue",
+          size = 3
+        )
     }
     if (mode == "annotated" || mode == "red_raw_medians" ) {
       p <- p +
-      # Red raw medians
-      geom_point(
-        data = subdata_median,
-        aes(x = versuch, y = .data[[metric]]),
-        color = "red",
-        size = 0.5
-      )
+        # Red raw medians
+        geom_point(
+          data = subdata_median,
+          aes(x = versuch, y = .data[[metric]]),
+          color = "red",
+          size = 0.5
+        )
     }
   }
 
@@ -195,185 +193,6 @@ analyze_data <- function(data,
     width = 5
   )
 }
-
-#################
-# Data Analysis #
-#################
-
-rm(list = ls()) 
-
-# Set working directory to script directory
-if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-  # In RStudio: Path of the active script
-  script_dir <- dirname(rstudioapi::getActiveDocumentContext()$path)
-} else {
-  # Outside RStudio: Path via Rscript arguments
-  args <- commandArgs(trailingOnly = FALSE)
-  file_arg <- grep("--file=", args, value = TRUE)
-  if (length(file_arg) > 0) {
-    script_dir <- dirname(normalizePath(sub("--file=", "", file_arg)))
-  } else {
-    # Interactive or no file given: Current working directory
-    script_dir <- getwd()
-  }
-}
-
-# Set working directory
-setwd(script_dir)
-cat("Working directory set to:", getwd(), "\n")
-
-exceldata <- read_excel("Design2.xlsx")
-Design <- data.frame(exceldata)
-
-data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
-data1 <- data.frame(data)
-data1$versuch <- substr(data1$filename,19,21)
-
-data1$Versuch <- as.numeric(data1$versuch)
-
-tmp <- merge(data1, Design, by='Versuch')
-
-data1 <- tmp
-
-for (i in 1:dim(data1)[1]){
-  ver <- substr(data1$filename[i],22,30)
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
-  if (s ==""){
-    s="1"
-  }
-  data1$version[i] <- strtoi(s)
-}
-for (i in 1:dim(data1)[1]){
-  ver <- data1$Epoch[i]
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
-  
-  data1$Epoche[i] <- strtoi(s)
-}
-##############################################################################################
-
-data1_f <- data1 %>%
-  group_by(versuch,version) %>%
-  mutate(MaxValue = max(Epoche))
-
-subset_ff <- subset(data1_f,MaxValue > 290)
-
-data1_s <- subset_ff%>%
-  group_by(versuch) %>%
-  mutate(SuperRank = dense_rank(version))
-
-data1df <- data1_s
-
-################################################################################################
-################################################################################################
-###############################################################################################
-
-
-# Mapping of versuch to symbols
-symbol_map_experiments <- list(
-  "001" = c("B6"),
-  "003" = c("DS"),
-  "004" = c("DS_b"),
-  "012" = c("DS_b", "DS_b_aug"),
-  "006" = c("OG"),
-  "014" = c("OG_aug"),
-  "005" = c("SG"),
-  "015" = c("SG_aug"),
-  "007" = c("OG","OG_aug"),
-  "016" = c("OG_aug","SG"),
-  "009" = c("SG","SG_aug"),
-  "008" = c("OG","SG"),
-  "017" = c("OG_aug","SG_aug"),
-  "018" = c("OG","SG_aug"),
-  "013" = c("OG","OG_aug","SG"),
-  "019" = c("OG_aug","SG","SG_aug"),
-  "010" = c("OG","SG","SG_aug"),
-  "020" = c("OG","OG_aug","SG_aug"),
-  "011" = c("OG","OG_aug","SG","SG_aug")
-)
-
-# Define y-positions for the symbols and their shapes
-symbol_config <- data.frame(
-  symbol = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug"),
-  y      = c(1.20, 1.15,   1.10,       1.05, 1.20,     1.15, 1.10,     1.05),
-  shape  = c(4   , 3   ,   1   ,       2   , 8   ,     7   , 6   ,     5   ),
-  stringsAsFactors = FALSE
-)
-
-#########################################################################################################################
-
-# Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
-
-base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-base_file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
-
-#########################################################################################################################
-
-# 4 Experimente (großer Datensatz, mAP_95, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-versuch_levels <- c("001", "003","004", "012")
-
-base_file_name <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# 4 Experimente (großer Datensatz, mAP_50, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-base_file_name <- "Abb_DS_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
-
-#########################################################################################################################
-
-# Effekt der Datensatzgröße: mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-versuch_levels <- c("006", "001","003")
-
-base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Effekt der Datensatzgröße: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
-
-base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Effekt der Datensatzgröße: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
-
-#########################################################################################################################
-
-versuch_levels <- c("006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
-
-# Datenaugmentation (15): mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
-
-base_file_name <- "Abb_Datenaugmentation_15_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datenaugmentation (Übersicht): mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
-
-# Datenaugmentation (15): mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
-
-base_file_name <- "Abb_Datenaugmentation_15_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
-plot_title <- "Datenaugmentation (Übersicht): mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
-
-#########################################################################################################################
 
 
 run_linear_model <- function(data,
@@ -604,6 +423,188 @@ run_linear_model <- function(data,
     n_rows_result = nrow(result)
   ))
 }
+
+
+#################
+# Data Analysis #
+#################
+
+rm(list = ls()) 
+
+# Set working directory to script directory
+if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+  # In RStudio: Path of the active script
+  script_dir <- dirname(rstudioapi::getActiveDocumentContext()$path)
+} else {
+  # Outside RStudio: Path via Rscript arguments
+  args <- commandArgs(trailingOnly = FALSE)
+  file_arg <- grep("--file=", args, value = TRUE)
+  if (length(file_arg) > 0) {
+    script_dir <- dirname(normalizePath(sub("--file=", "", file_arg)))
+  } else {
+    # Interactive or no file given: Current working directory
+    script_dir <- getwd()
+  }
+}
+
+# Set working directory
+setwd(script_dir)
+cat("Working directory set to:", getwd(), "\n")
+
+exceldata <- read_excel("Design2.xlsx")
+Design <- data.frame(exceldata)
+
+data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
+data1 <- data.frame(data)
+data1$versuch <- substr(data1$filename,19,21)
+
+data1$Versuch <- as.numeric(data1$versuch)
+
+tmp <- merge(data1, Design, by='Versuch')
+
+data1 <- tmp
+
+for (i in 1:dim(data1)[1]){
+  ver <- substr(data1$filename[i],22,30)
+  vers <- strsplit(ver,split="/")
+  a<- vers
+  s <- a[[1]][1]
+  if (s ==""){
+    s="1"
+  }
+  data1$version[i] <- strtoi(s)
+}
+for (i in 1:dim(data1)[1]){
+  ver <- data1$Epoch[i]
+  vers <- strsplit(ver,split="/")
+  a<- vers
+  s <- a[[1]][1]
+  
+  data1$Epoche[i] <- strtoi(s)
+}
+##############################################################################################
+
+data1_f <- data1 %>%
+  group_by(versuch,version) %>%
+  mutate(MaxValue = max(Epoche))
+
+subset_ff <- subset(data1_f,MaxValue > 290)
+
+data1_s <- subset_ff%>%
+  group_by(versuch) %>%
+  mutate(SuperRank = dense_rank(version))
+
+data1df <- data1_s
+
+################################################################################################
+################################################################################################
+###############################################################################################
+
+
+# Mapping of versuch to symbols
+symbol_map_experiments <- list(
+  "001" = c("B6"),
+  "003" = c("DS"),
+  "004" = c("DS_b"),
+  "012" = c("DS_b", "DS_b_aug"),
+  "006" = c("OG"),
+  "014" = c("OG_aug"),
+  "005" = c("SG"),
+  "015" = c("SG_aug"),
+  "007" = c("OG","OG_aug"),
+  "016" = c("OG_aug","SG"),
+  "009" = c("SG","SG_aug"),
+  "008" = c("OG","SG"),
+  "017" = c("OG_aug","SG_aug"),
+  "018" = c("OG","SG_aug"),
+  "013" = c("OG","OG_aug","SG"),
+  "019" = c("OG_aug","SG","SG_aug"),
+  "010" = c("OG","SG","SG_aug"),
+  "020" = c("OG","OG_aug","SG_aug"),
+  "011" = c("OG","OG_aug","SG","SG_aug")
+)
+
+# Define y-positions for the symbols and their shapes
+symbol_config <- data.frame(
+  symbol = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug"),
+  y      = c(1.20, 1.15,   1.10,       1.05, 1.20,     1.15, 1.10,     1.05),
+  shape  = c(4   , 3   ,   1   ,       2   , 8   ,     7   , 6   ,     5   ),
+  stringsAsFactors = FALSE
+)
+
+#########################################################################################################################
+
+# Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+versuch_levels <- c("001", "003", "004", "012", "006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
+
+base_file_name <- "Abb_Gesamtübersicht_19_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
+
+# Gesamtübersicht: 19 Experimente (mAP_50), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+base_file_name <- "Abb_Gesamtübersicht_19_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Gesamtübersicht (alle 19 Experimente): mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, NULL) # Outlier filter here is set to NULL
+
+#########################################################################################################################
+
+# 4 Experimente (großer Datensatz, mAP_95, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+versuch_levels <- c("001", "003","004", "012")
+
+base_file_name <- "Abb_DS_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
+
+# 4 Experimente (großer Datensatz, mAP_50, 10 Epochen), 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+base_file_name <- "Abb_DS_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datensatz A: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
+
+#########################################################################################################################
+
+# Effekt der Datensatzgröße: mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+versuch_levels <- c("006", "001","003")
+
+base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Effekt der Datensatzgröße: mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
+
+# Effekt der Datensatzgröße:mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
+
+base_file_name <- "Abb_Datensatzgrößeneffekt__mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Effekt der Datensatzgröße: mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
+
+#########################################################################################################################
+
+versuch_levels <- c("006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
+
+# Datenaugmentation (15): mAP_95, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
+
+base_file_name <- "Abb_Datenaugmentation_15_mAP_95_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datenaugmentation (Übersicht): mAP_95 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name)
+
+# Datenaugmentation (15): mAP_50, 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version,1
+
+base_file_name <- "Abb_Datenaugmentation_15_mAP_50_10E_5x001_Median_Datensatzumbenennung_final_1"
+plot_title <- "Datenaugmentation (Übersicht): mAP_50 der letzten 10 Epochen"
+analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name)
+
+#########################################################################################################################
+
+
 
 
 #########################################################################################################################
