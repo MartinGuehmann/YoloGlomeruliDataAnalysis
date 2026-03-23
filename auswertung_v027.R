@@ -685,6 +685,14 @@ symbol_config <- data.frame(
   stringsAsFactors = FALSE
 )
 
+# Define the metrics
+metrics <- c(
+  mAP_50    = "mAP@50",
+  mAP_95    = "mAP@95",
+  precision = "Precision (Positiver Prädiktiver Wert)",
+  recall    = "Recall (Sensitivität)"
+)
+
 # Make vectors for training time and number of images, hard encoded, come from outside.
 # Would be better to have it in its own file.
 traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
@@ -854,12 +862,6 @@ plot_training_times(traing_times, image_numbers)
 #########################################################################################################################
 
 
-metrics <- c(
-  mAP_50    = "mAP@50",
-  mAP_95    = "mAP@95",
-  precision = "Precision (Positiver Prädiktiver Wert)",
-  recall    = "Recall (Sensitivität)"
-)
 
 for (versuch_id in names(symbol_map_experiments)) {
 
