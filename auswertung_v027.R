@@ -795,6 +795,11 @@ jobs <- list(
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
                     "020", "011")
+  ),
+  list(
+    name        = "small_augmented",
+    title       = "Augmentations of small datasets: ",
+    experiments = c("006", "014", "007")
   )
 )
 
@@ -832,30 +837,6 @@ for (metric in names(metrics)) {
     }
   }
 }
-
-#########################################################################################################################
-
-versuch_levels <- c("006", "014", "007")
-
-# Effekt der konventionellen Datenaugmentation: mAP_95, 10 Epochen (schön), 5x001, Median-Version, Datensatzumbenennung
-base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Effekt der konventionellen Datenaugmentation: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "annotated")
-
-# Effekt der konventionellen Datenaugmentation: mAP_95, 10 Epochen (schön), 5x001, Median-Version, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_95_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Einfluss der konventionellen Datenaugmentation: mAP_95 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_95", plot_title, base_file_name, "red_raw_medians")
-
-# Effekt der konventionellen Datenaugmentation (mAP_50), 10 Epochen (schön), Median-Version, Datensatzumbenennung
-base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_50_10E_5x001_Median_Datensatzumbenennung"
-plot_title <- "Effekt der konventionellen Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "annotated")
-
-# Effekt der konventionellen Datenaugmentation (mAP_50), 10 Epochen (schön), Median-Version, Datensatzumbenennung, finale Version
-base_file_name <- "Abb_Konventionelle_Datenaugmentation_mAP_50_10E_5x001_Median_Datensatzumbenennung_final"
-plot_title <- "Einfluss der konventionellen Datenaugmentation: mAP_50 der letzten 10 Epochen"
-analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mAP_50", plot_title, base_file_name, "red_raw_medians")
 
 #########################################################################################################################
 
