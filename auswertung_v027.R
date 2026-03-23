@@ -426,10 +426,10 @@ run_linear_model <- function(data,
 plot_training_times <- function(traing_times, image_numbers)
 {
   pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
-  
+
   # Ändere die Grafikparameter
   par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
-  
+
   # Plotte Trainingszeit gegen Bildanzahl
   plot(image_numbers,
        traing_times,
@@ -439,18 +439,18 @@ plot_training_times <- function(traing_times, image_numbers)
        pch = 1,
        col = 2,
        cex = 1)
-  
+
   # Füge eine Regressionslinie hinzu
   fit <- lm(traing_times ~ image_numbers)
   abline(fit)
-  
+
   # Zeige die Formel der Regressionsgerade an
   formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
   mtext(formula,
         side = 3,
         line = -12,
         cex = 0.8)
-  
+
   dev.off()
 }
 
@@ -460,7 +460,7 @@ plot_versuch <- function(data,
                          title,
                          filename,
                          outlier_filter = list(versuch="001", SuperRank=6)) {
-  
+
   # Filter data
   subdata <- subset(data, versuch == versuch_id)
   
@@ -468,14 +468,14 @@ plot_versuch <- function(data,
     subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
                            subdata$SuperRank == outlier_filter$SuperRank), ]
   }
-  
+
   # Create plot
   p <- ggplot(subdata) +
     geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
     facet_wrap(~ SuperRank, nrow = 3) +
     ggtitle(title) +
     theme(plot.title = element_text(color = "black", size = 9))
-  
+
   # Save to PDF
   pdf(filename, height = 5, width = 5)
   print(p)
@@ -513,21 +513,21 @@ plot_histogram_normality <- function(
   shapiro_df <- do.call(
     rbind,
     lapply(split(subdata_all[[metric]], subdata_all$versuch), function(x) {
-      
+
       # Shapiro requires at least 3 values
       if (length(x) < 3) {
         return(data.frame(W = NA, p_value = NA))
       }
-      
+
       test <- shapiro.test(x)
-      
+
       data.frame(
         W = as.numeric(test$statistic),
         p_value = test$p.value
       )
     })
   )
-  
+
   shapiro_df$versuch <- rownames(shapiro_df)
   rownames(shapiro_df) <- NULL
 
@@ -862,7 +862,7 @@ for (versuch_id in names(symbol_map_experiments)) {
       title = paste0("Experiment ", versuch_id, ": ", metrics[[metric]]),
       filename = paste0("Abb_Versuch_", versuch_id, "_", metric, ".pdf"),
     )
-    
+
   }
 }
 
@@ -872,9 +872,6 @@ for (versuch_id in names(symbol_map_experiments)) {
 ###################################################################################################
 
 #Statistik Teil:
-
-
-
 
 versuche <- c(
   "001","003","004","005","006","007","008","009","010",
