@@ -194,7 +194,6 @@ analyze_data <- function(data,
   )
 }
 
-
 run_linear_model <- function(data,
                              versuch_levels,
                              metric,
@@ -375,7 +374,7 @@ run_linear_model <- function(data,
   )
 
   pdf_name_facet <- paste0("Abb_LM_Koeffizienten_FACET_", metric, ".pdf")
-  
+
   p_facet <- ggplot(coef_data, aes(
     x = Trainingsdatensatzkombinationen,
     y = Koeffizienten,
@@ -404,7 +403,7 @@ run_linear_model <- function(data,
       legend.position = "none"
     ) +
     ggtitle(paste("Faceted Koeffizienten des linearen Interaktionsmodells:", metric))
-  
+
   ggsave(
     filename = pdf_name_facet,
     plot = p_facet,
@@ -424,6 +423,36 @@ run_linear_model <- function(data,
   ))
 }
 
+plot_training_times <- function(traing_times, image_numbers)
+{
+  pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
+
+  # Ändere die Grafikparameter
+  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
+
+  # Plotte Trainingszeit gegen Bildanzahl
+  plot(image_numbers,
+       traing_times,
+       ylab = "Trainingszeit in h",
+       xlab = "Anzahl der Trainingsbilder",
+       main = "Abhängigkeit der Trainingszeit von der Trainingsdatensatzgröße",
+       pch = 1,
+       col = 2,
+       cex = 1)
+
+  # Füge eine Regressionslinie hinzu
+  fit <- lm(traing_times ~ image_numbers)
+  abline(fit)
+
+  # Zeige die Formel der Regressionsgerade an
+  formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
+  mtext(formula,
+        side = 3,
+        line = -12,
+        cex = 0.8)
+
+  dev.off()
+}
 
 #################
 # Data Analysis #
@@ -694,36 +723,7 @@ analyze_data(data1df, versuch_levels, symbol_map_experiments, symbol_config, "mA
 
 #########################################################################################################################
 
-plot_training_times <- function(traing_times, image_numbers)
-{
-  pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
 
-  # Ändere die Grafikparameter
-  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
-
-  # Plotte Trainingszeit gegen Bildanzahl
-  plot(image_numbers,
-       traing_times,
-       ylab = "Trainingszeit in h",
-       xlab = "Anzahl der Trainingsbilder",
-       main = "Abhängigkeit der Trainingszeit von der Trainingsdatensatzgröße",
-       pch = 1,
-       col = 2,
-       cex = 1)
-
-  # Füge eine Regressionslinie hinzu
-  fit <- lm(traing_times ~ image_numbers)
-  abline(fit)
-
-  # Zeige die Formel der Regressionsgerade an
-  formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
-  mtext(formula,
-        side = 3,
-        line = -12,
-        cex = 0.8)
-
-  dev.off()
-}
 
 # Zusammenhang zwischen Bildanzahl und Trainingszeit
 
