@@ -599,6 +599,19 @@ plot_histogram_normality <- function(
   # Return results for further use
   return(shapiro_df)
 }
+
+file_safe_name <- function(x) {
+
+  # Replace spaces, @, and other non-alphanumeric characters with underscores
+  x <- gsub("[^[:alnum:]]+", "_", x)
+  
+  # Collapse multiple underscores
+  x <- gsub("_+", "_", x)
+  
+  # Trim leading/trailing underscores
+  x <- gsub("^_|_$", "", x)
+}
+
 #########################################################################################################################
 
 #############################################
@@ -689,8 +702,8 @@ symbol_config <- data.frame(
 metrics <- c(
   mAP_50    = "mAP@50",
   mAP_95    = "mAP@95",
-  precision = "Precision (Positiver Prädiktiver Wert)",
-  recall    = "Recall (Sensitivität)"
+  precision = "Precision",
+  recall    = "Recall"
 )
 
 # Make vectors for training time and number of images, hard encoded, come from outside.
@@ -728,6 +741,53 @@ for (metric in names(metrics)) {
 plot_training_times(traing_times, image_numbers)
 
 #########################################################################################################################
+
+jobs <- list(
+  list(
+    name        = "all",
+    title       = "All 19 experiments: ",
+    experiments = c("001", "003", "004", "012", "006", "014", "005",
+                    "015", "007", "016", "009", "008",
+                    "017", "018", "013", "019", "010", "020", "011")
+  ),
+  list(
+    name        = "augmented",
+    title       = "Original and classical augmented images: ",
+    experiments = c("001", "003", "004", "012")
+  )
+  
+)
+
+for (metric in names(metrics)) {
+  for(job in jobs) {
+    plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
+    base_file_name  <- file_safe_name(plot_title)
+
+    if(metric == "mAP_50" && job$name == "all") {
+      analyze_data(
+        data1df,
+        job$experiments,
+        symbol_map_experiments,
+        symbol_config,
+        metric,
+        plot_title,
+        base_file_name,
+        NULL
+      )
+    }
+    else {
+      analyze_data(
+        data1df,
+        job$experiments,
+        symbol_map_experiments,
+        symbol_config,
+        metric,
+        plot_title,
+        base_file_name
+      )
+    }
+  }
+}
 
 # Gesamtübersicht: 19 Experimente (mAP_95), 10 Epochen, 5x001, Median-Version, Datensatzumbenennung, finale Version, 1
 
