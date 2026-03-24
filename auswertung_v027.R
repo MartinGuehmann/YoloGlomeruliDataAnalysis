@@ -730,11 +730,12 @@ metrics <- c(
   recall    = "Recall"
 )
 
-#  Define the plot types
+# Define the plot types
+# Use Unix directory separators, Windows has no problem with that
 plot_types <- c(
-  default         = "Default_",
-  annotated       = "Annotated_",
-  red_raw_medians = "RedRawMedians_"
+  default         = "",
+  annotated       = "Annotated/",
+  red_raw_medians = "RedRawMedians/"
 )
 
 # Define the jobs for the box plots
