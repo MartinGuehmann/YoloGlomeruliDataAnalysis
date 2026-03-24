@@ -73,7 +73,7 @@ create_parent_dir <- function(path) {
 #############
 
 analyze_data <- function(data,
-                         versuch_levels,
+                         experiments,
                          symbol_map,
                          symbol_config,
                          metric,
@@ -96,11 +96,11 @@ analyze_data <- function(data,
   }
 
   # Step 3: Keep only valid versuch levels and factorize
-  subdata <- subdata[subdata$versuch %in% versuch_levels, ]
-  subdata$versuch <- factor(subdata$versuch , levels=versuch_levels)
+  subdata <- subdata[subdata$versuch %in% experiments, ]
+  subdata$versuch <- factor(subdata$versuch , levels=experiments)
 
-  # Step 4: Ensure all versuch_levels have a corresponding symbol mapping
-  missing <- setdiff(versuch_levels, names(symbol_map))
+  # Step 4: Ensure all experiments have a corresponding symbol mapping
+  missing <- setdiff(experiments, names(symbol_map))
 
   if (length(missing) > 0) {
     stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
@@ -110,11 +110,11 @@ analyze_data <- function(data,
   symbol_df <- stack(symbol_map)
   colnames(symbol_df) <- c("symbol", "versuch")
   # Keep only relevant versuch
-  symbol_df <- symbol_df[symbol_df$versuch %in% versuch_levels, ]
+  symbol_df <- symbol_df[symbol_df$versuch %in% experiments, ]
   # Join with symbol_config (safe: no duplication issue here)
   symbol_df <- merge(symbol_df, symbol_config, by = "symbol", all.x = TRUE)
   # Ensure factor levels match plot
-  symbol_df$versuch <- factor(symbol_df$versuch, levels = versuch_levels)
+  symbol_df$versuch <- factor(symbol_df$versuch, levels = experiments)
 
   # Step 6: Safety checks
   missing <- setdiff(symbol_df$symbol, symbol_config$symbol)
@@ -136,8 +136,8 @@ analyze_data <- function(data,
   subdata_median_median <- aggregate(form, data = subdata_median, median)
 
   # Step 9: Ensure median datasets have correct factor levels
-  subdata_median$versuch <- factor(subdata_median$versuch, levels = versuch_levels)
-  subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = versuch_levels)
+  subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
+  subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
 
   # Step 10: Kruskal-Wallis test across versuch
   kruskal_result <- kruskal.test(form, data = subdata)
@@ -260,7 +260,7 @@ analyze_data <- function(data,
 }
 
 run_linear_model <- function(data,
-                             versuch_levels,
+                             experiments,
                              metric,
                              outlier_filter = list(versuch="001", SuperRank=6),
                              epoch_range = c(290, 299)) {
@@ -283,7 +283,7 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 3: Keep valid versuch levels
   # ----------------------------
-  subdata$versuch <- factor(subdata$versuch, levels = versuch_levels)
+  subdata$versuch <- factor(subdata$versuch, levels = experiments)
 
   # ----------------------------
   # Step 4: Sanity checks
