@@ -117,6 +117,9 @@ analyze_data <- function(data,
   # Ensure factor levels match plot
   symbol_df$symbol <- factor(symbol_df$symbol, levels = symbol_config$symbol)
   symbol_df$versuch <- factor(symbol_df$versuch, levels = experiments)
+  # Make the legend order more robust
+  legend_order_df <- symbol_df[order(symbol_df$versuch), ]
+  legend_symbols <- unique(legend_order_df$symbol)
 
   # Step 6: Safety checks
   missing <- setdiff(symbol_df$symbol, symbol_config$symbol)
@@ -185,7 +188,8 @@ analyze_data <- function(data,
       size = 2.2
     ) +
     scale_shape_manual(
-      values = setNames(symbol_config$shape, symbol_config$symbol)
+      values = setNames(symbol_config$shape, symbol_config$symbol),
+      breaks = legend_symbols
     ) +
     labs(
       shape = "",
