@@ -559,7 +559,7 @@ plot_histogram_normality <- function(
     data,
     metric,
     metric_name,
-    filename,
+    base_filename,
     versuche,
     epoch_range = c(290, 299),
     axis_text_size = 5
@@ -606,7 +606,7 @@ plot_histogram_normality <- function(
   # ---------------------------
   write_xlsx(
     list("Shapiro-Wilk" = shapiro_df),
-    path = paste0("Shapiro_", metric, ".xlsx")
+    path = paste0(base_filename, "_Shapiro_Wilk_", metric, ".xlsx")
   )
 
   # ---------------------------
@@ -631,7 +631,7 @@ plot_histogram_normality <- function(
     )
 
   # Plot
-  pdf(filename, height = 5, width = 5)
+  pdf(paste0(base_filename, "_histogram_", metric, ".pdf"), height = 5, width = 5)
   print(p)
   dev.off()
 
@@ -811,7 +811,7 @@ for (metric in names(metrics)) {
     data = data1df,
     metric = metric,
     metric_name = metric_name,
-    filename = paste0("Histogram_allExperiments_", metric, "_10E_5x001.pdf"),
+    base_filename = paste0(output_dir, "/AllExperiments"),
     versuche = experiments
   )
 }
