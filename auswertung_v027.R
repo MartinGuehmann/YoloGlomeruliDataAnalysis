@@ -725,7 +725,7 @@ symbol_config <- data.frame(
 # Define the metrics
 metrics <- c(
   mAP_50    = "mAP@50",
-  mAP_95    = "mAP@95",
+  mAP_95    = "mAP@50-95",
   precision = "Precision",
   recall    = "Recall"
 )
