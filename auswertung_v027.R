@@ -349,8 +349,8 @@ run_linear_model <- function(data,
   coefs <- summary(lmi_model)$coefficients
 
   coef_data <- data.frame(
-    Trainingsdatensatzkombinationen = rownames(coefs),
-    Koeffizienten = coefs[, 1],
+    `Training data set combinations` = rownames(coefs),
+    Coefficients  = coefs[, 1],
     `Std. Error`  = coefs[, 2],
     `t-value`     = coefs[, 3],
     "Pr(>|t|)"    = coefs[, 4],
@@ -358,10 +358,10 @@ run_linear_model <- function(data,
   )
 
   coef_data$TermType <- dplyr::case_when(
-    coef_data$Trainingsdatensatzkombinationen == "(Intercept)" ~ "Intercept",
-    !grepl(":", coef_data$Trainingsdatensatzkombinationen) ~ "Main Effect",
+    coef_data$`Training data set combinations` == "(Intercept)" ~ "Intercept",
+    !grepl(":", coef_data$`Training data set combinations`) ~ "Main Effect",
     TRUE ~ paste0(
-      stringr::str_count(coef_data$Trainingsdatensatzkombinationen, ":") + 1,
+      stringr::str_count(coef_data$`Training data set combinations`, ":") + 1,
       "-way Interaction"
     )
   )
@@ -376,9 +376,9 @@ run_linear_model <- function(data,
     )
   )
   # Keep model order, but group by type
-  coef_data$Trainingsdatensatzkombinationen <- factor(
-    coef_data$Trainingsdatensatzkombinationen,
-    levels = coef_data$Trainingsdatensatzkombinationen
+  coef_data$`Training data set combinations` <- factor(
+    coef_data$`Training data set combinations`,
+    levels = coef_data$`Training data set combinations`
   )
   coef_data$Group <- ifelse(coef_data$TermType == "Interaction", 2,
                             ifelse(coef_data$TermType == "Main Effect", 1, 0))
@@ -414,15 +414,15 @@ run_linear_model <- function(data,
   # Step 12: Plot
   # ----------------------------
   p <- ggplot(coef_data, aes(
-    x = Trainingsdatensatzkombinationen,
-    y = Koeffizienten,
+    x = `Training data set combinations`,
+    y = Coefficients,
     fill = TermType
   )) +
     geom_bar(stat = "identity") +
     geom_errorbar(
       aes(
-        ymin = Koeffizienten - `Std. Error`,
-        ymax = Koeffizienten + `Std. Error`
+        ymin = Coefficients - `Std. Error`,
+        ymax = Coefficients + `Std. Error`
       ),
       width = 0.2
     ) +
@@ -455,15 +455,15 @@ run_linear_model <- function(data,
   pdf_name_facet <- paste0(base_file_name, metric, "_coefficents_FACET.pdf")
 
   p_facet <- ggplot(coef_data, aes(
-    x = Trainingsdatensatzkombinationen,
-    y = Koeffizienten,
+    x = `Training data set combinations`,
+    y = Coefficients,
     fill = TermType
   )) +
     geom_bar(stat = "identity") +
     geom_errorbar(
       aes(
-        ymin = Koeffizienten - `Std. Error`,
-        ymax = Koeffizienten + `Std. Error`
+        ymin = Coefficients - `Std. Error`,
+        ymax = Coefficients + `Std. Error`
       ),
       width = 0.2
     ) +
