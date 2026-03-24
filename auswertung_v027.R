@@ -794,7 +794,7 @@ image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275,
 
 # Check for normal distribution by histograms and Shapiro-Wilk test
 
-versuche <- c(
+experiments <- c(
   "001","003","004","005","006","007","008","009","010",
   "011","012","013","014","015","016","017","018","019","020"
 )
@@ -803,8 +803,8 @@ for (metric in names(metrics)) {
   plot_histogram_normality(
     data = data1df,
     metric = metric,
-    filename = paste0("Histogramm_alleVersuche_", metric, "_10E_5x001.pdf"),
-    versuche = versuche
+    filename = paste0("Histogram_allExperiments_", metric, "_10E_5x001.pdf"),
+    versuche = experiments
   )
 }
 
@@ -853,13 +853,13 @@ for (metric in names(metrics)) {
 #########################################################################################################################
 
 # Multiple linear regression for the models for all metrics to determine what has the most effect
-versuch_levels <- c("006", "014", "005",
-                    "015", "007", "016", "009", "008",
-                    "017", "018", "013", "019", "010",
-                    "020", "011")
+experiments <- c("006", "014", "005",
+                 "015", "007", "016", "009", "008",
+                 "017", "018", "013", "019", "010",
+                 "020", "011")
 
 for (metric in names(metrics)) {
-  run_linear_model(data1df, versuch_levels, metric)
+  run_linear_model(data1df, experiments, metric)
 }
 
 #########################################################################################################################
