@@ -161,10 +161,10 @@ analyze_data <- function(data,
   # Step 13: Add strength of effect size
   dunn_result$res <- dunn_result$res %>%
     mutate(effect_size_strength = case_when(
-      abs(r) < 0.1 ~ "vernachlässigbar",
-      abs(r) < 0.3 ~ "klein",
-      abs(r) < 0.5 ~ "mittel",
-      TRUE         ~ "groß"
+      abs(r) < 0.1 ~ "nelectable",
+      abs(r) < 0.3 ~ "small",
+      abs(r) < 0.5 ~ "medium",
+      TRUE         ~ "big"
     ))
 
   # Step 14: Add sample size column and reorder columns
