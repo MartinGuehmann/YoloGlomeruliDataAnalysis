@@ -582,6 +582,7 @@ plot_histogram_normality <- function(
     axis_text_size = 5
 ) {
 
+  create_parent_dir(base_filename)
   # Filter data
   subdata_all <- subset(
     data,
@@ -828,7 +829,7 @@ for (metric in names(metrics)) {
     data = data1df,
     metric = metric,
     metric_name = metric_name,
-    base_filename = paste0(output_dir, "/AllExperiments"),
+    base_filename = paste0(output_dir, "/Histograms/AllExperiments"),
     versuche = experiments
   )
 }
