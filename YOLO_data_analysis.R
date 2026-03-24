@@ -312,7 +312,7 @@ run_linear_model <- function(data,
   # Step 5: Aggregation
   # ----------------------------
   form_agg <- as.formula(
-    paste(metric, "~ OG + OG_aug + SG + SG_aug + version + Versuch")
+    paste(metric, "~ TrainTiny + TinyAug + Syn + SynAug + version + Versuch")
   )
 
   result <- aggregate(form_agg, data = subdata, FUN = median)
@@ -326,8 +326,8 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 6: Model matrices (consistency check)
   # ----------------------------
-  lm_formula  <- as.formula(paste(metric, "~ OG + OG_aug + SG + SG_aug"))
-  lmi_formula <- as.formula(paste(metric, "~ OG * OG_aug * SG * SG_aug"))
+  lm_formula  <- as.formula(paste(metric, "~ TrainTiny + TinyAug + Syn + SynAug"))
+  lmi_formula <- as.formula(paste(metric, "~ TrainTiny * TinyAug * Syn * SynAug"))
 
   # Build model matrices explicitly (important check)
   X_lm  <- model.matrix(lm_formula, data = result)
@@ -716,30 +716,30 @@ data1df <- data1_s
 
 # Mapping of versuch to symbols
 symbol_map_experiments <- list(
-  "001" = c("B6"),
-  "003" = c("DS"),
-  "004" = c("DS_b"),
-  "012" = c("DS_b", "DS_b_aug"),
-  "006" = c("OG"),
-  "014" = c("OG_aug"),
-  "005" = c("SG"),
-  "015" = c("SG_aug"),
-  "007" = c("OG","OG_aug"),
-  "016" = c("OG_aug","SG"),
-  "009" = c("SG","SG_aug"),
-  "008" = c("OG","SG"),
-  "017" = c("OG_aug","SG_aug"),
-  "018" = c("OG","SG_aug"),
-  "013" = c("OG","OG_aug","SG"),
-  "019" = c("OG_aug","SG","SG_aug"),
-  "010" = c("OG","SG","SG_aug"),
-  "020" = c("OG","OG_aug","SG_aug"),
-  "011" = c("OG","OG_aug","SG","SG_aug")
+  "001" = c("TrainSmall"),
+  "003" = c("TrainBig"),
+  "004" = c("Glo"),
+  "012" = c("Glo", "GloAug"),
+  "006" = c("TrainTiny"),
+  "014" = c("TinyAug"),
+  "005" = c("Syn"),
+  "015" = c("SynAug"),
+  "007" = c("TrainTiny","TinyAug"),
+  "016" = c("TinyAug","Syn"),
+  "009" = c("Syn","SynAug"),
+  "008" = c("TrainTiny","Syn"),
+  "017" = c("TinyAug","SynAug"),
+  "018" = c("TrainTiny","SynAug"),
+  "013" = c("TrainTiny","TinyAug","Syn"),
+  "019" = c("TinyAug","Syn","SynAug"),
+  "010" = c("TrainTiny","Syn","SynAug"),
+  "020" = c("TrainTiny","TinyAug","SynAug"),
+  "011" = c("TrainTiny","TinyAug","Syn","SynAug")
 )
 
 # Define y-positions for the symbols and their shapes
 symbol_config <- data.frame(
-  symbol = c("B6", "DS", "DS_b", "DS_b_aug", "OG", "OG_aug", "SG", "SG_aug"),
+  symbol = c("TrainSmall", "TrainBig", "Glo", "GloAug", "TrainTiny", "TinyAug", "Syn", "SynAug"),
   y      = c(1.20, 1.15,   1.10,       1.05, 1.20,     1.15, 1.10,     1.05),
   shape  = c(4   , 3   ,   1   ,       2   , 8   ,     7   , 6   ,     5   ),
   stringsAsFactors = FALSE
