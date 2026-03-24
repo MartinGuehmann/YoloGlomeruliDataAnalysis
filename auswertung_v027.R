@@ -558,11 +558,11 @@ plot_experiment <- function(data,
 plot_histogram_normality <- function(
     data,
     metric,
+    metric_name,
     filename,
     versuche,
     epoch_range = c(290, 299),
-    filter_superrank = TRUE,
-    axis_text_size = 8
+    axis_text_size = 5
 ) {
 
   # Filter data
@@ -572,13 +572,6 @@ plot_histogram_normality <- function(
       Epoche <= epoch_range[2] &
       versuch %in% versuche
   )
-
-  if (filter_superrank) {
-    subdata_all <- subset(
-      subdata_all,
-      !(versuch == "001" & SuperRank == 6)
-    )
-  }
 
   # ---------------------------
   # Shapiro-Wilk test per versuch
@@ -606,7 +599,7 @@ plot_histogram_normality <- function(
 
   # Add significance column
   alpha <- 0.05
-  shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Ja", "Nein")
+  shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Yes", "No")
 
   # ---------------------------
   # Write Excel file
@@ -624,9 +617,13 @@ plot_histogram_normality <- function(
     facet_wrap(~versuch) +
     ggtitle(
       paste0(
-        "Histogramm der ", metric,
-        "-Werte für alle Versuche in den letzten 10 Epochen"
+        "Histogram of ", metric_name,
+        "-values for all experiments of the last 10 Epochs"
       )
+    ) +
+    labs(
+      x     = metric_name,
+      y     = "Count"
     ) +
     theme(
       plot.title = element_text(color = "black", size = 9),
@@ -809,9 +806,11 @@ experiments <- c(
 )
 
 for (metric in names(metrics)) {
+  metric_name <- metrics[[metric]]
   plot_histogram_normality(
     data = data1df,
     metric = metric,
+    metric_name = metric_name,
     filename = paste0("Histogram_allExperiments_", metric, "_10E_5x001.pdf"),
     versuche = experiments
   )
