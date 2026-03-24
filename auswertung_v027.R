@@ -506,28 +506,30 @@ run_linear_model <- function(data,
   ))
 }
 
-plot_training_times <- function(traing_times, image_numbers)
+plot_training_times <- function(traing_times, image_numbers, output_dir)
 {
-  pdf("Abb_Bildanzahl_Trainingszeit.pdf",height=5, width=5)
+  output_file_name = paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
+  create_parent_dir(output_file_name)
+  pdf(output_file_name, height=5, width=5)
 
-  # Ändere die Grafikparameter
+  # Change grafics parameter
   par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
 
-  # Plotte Trainingszeit gegen Bildanzahl
+  # Plot training times versus number of images
   plot(image_numbers,
        traing_times,
-       ylab = "Trainingszeit in h",
-       xlab = "Anzahl der Trainingsbilder",
-       main = "Abhängigkeit der Trainingszeit von der Trainingsdatensatzgröße",
+       ylab = "Training time (h)",
+       xlab = "Number of training images",
+       main = "Dependency: Training time vs training data set size",
        pch = 1,
        col = 2,
        cex = 1)
 
-  # Füge eine Regressionslinie hinzu
+  # Add regression line
   fit <- lm(traing_times ~ image_numbers)
   abline(fit)
 
-  # Zeige die Formel der Regressionsgerade an
+  # Plot formula of the regress line
   formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
   mtext(formula,
         side = 3,
@@ -837,7 +839,7 @@ for (metric in names(metrics)) {
 #########################################################################################################################
 
 # Plot the relation of training time and number of training images
-plot_training_times(traing_times, image_numbers)
+plot_training_times(traing_times, image_numbers, output_dir)
 
 #########################################################################################################################
 
