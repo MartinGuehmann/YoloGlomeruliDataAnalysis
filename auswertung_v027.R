@@ -541,6 +541,8 @@ plot_versuch <- function(data,
     ggtitle(title) +
     theme(plot.title = element_text(color = "black", size = 9))
 
+  # Create parent directory if that does not exsist
+  create_parent_dir(filename)
   # Save to PDF
   pdf(filename, height = 5, width = 5)
   print(p)
@@ -874,7 +876,7 @@ for (versuch_id in names(symbol_map_experiments)) {
       versuch_id = versuch_id,
       metric = metric,
       title = paste0("Experiment ", versuch_id, ": ", metrics[[metric]]),
-      filename = paste0("Abb_Versuch_", versuch_id, "_", metric, ".pdf"),
+      filename = paste0(output_dir, "/", metric, "/MetricCurves/", "Experiment_", versuch_id, "_", metric, ".pdf"),
     )
 
   }
