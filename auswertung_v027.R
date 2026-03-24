@@ -77,6 +77,7 @@ analyze_data <- function(data,
                          symbol_map,
                          symbol_config,
                          metric,
+                         metric_name,
                          plot_title = "Plot Title",
                          base_file_name = "plot", # File name without extension
                          mode = "default",
@@ -188,7 +189,7 @@ analyze_data <- function(data,
     labs(
       shape = "",
       x     = "Experiment",
-      y     = metric
+      y     = metric_name
     ) +
     geom_hline(yintercept = 1) +
     scale_y_continuous(
@@ -821,34 +822,37 @@ plot_training_times(traing_times, image_numbers)
 for (metric in names(metrics)) {
   for(plot_type in names(plot_types)) {
       for(job in jobs) {
-      plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
-      base_file_name  <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]], file_safe_name(plot_title))
-  
-      if(metric == "mAP_50" && job$name == "all") {
-        analyze_data(
-          data1df,
-          job$experiments,
-          symbol_map_experiments,
-          symbol_config,
-          metric,
-          plot_title,
-          base_file_name,
-          plot_type,
-          NULL
-        )
-      }
-      else {
-        analyze_data(
-          data1df,
-          job$experiments,
-          symbol_map_experiments,
-          symbol_config,
-          metric,
-          plot_title,
-          base_file_name,
-          plot_type
-        )
-      }
+        metric_name     <- metrics[[metric]]
+        plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
+        base_file_name  <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]], file_safe_name(plot_title))
+
+        if(metric == "mAP_50" && job$name == "all") {
+          analyze_data(
+            data1df,
+            job$experiments,
+            symbol_map_experiments,
+            symbol_config,
+            metric,
+            metric_name,
+            plot_title,
+            base_file_name,
+            plot_type,
+            NULL
+          )
+        }
+        else {
+          analyze_data(
+            data1df,
+            job$experiments,
+            symbol_map_experiments,
+            symbol_config,
+            metric,
+            metric_name,
+            plot_title,
+            base_file_name,
+            plot_type
+          )
+        }
     }
   }
 }
