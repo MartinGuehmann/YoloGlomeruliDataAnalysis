@@ -264,8 +264,15 @@ run_linear_model <- function(data,
                              experiments,
                              metric,
                              metric_name,
+                             base_file_name,
                              outlier_filter = list(versuch="001", SuperRank=6),
                              epoch_range = c(290, 299)) {
+
+  # ----------------------------
+  # Step 0: Create output folder
+  #         if it does not exist
+  # ----------------------------
+  create_parent_dir(base_file_name)
 
   # ----------------------------
   # Step 1: Filter epochs
@@ -381,8 +388,8 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 9: File naming
   # ----------------------------
-  xlsx_name <- paste0("linear_model_results_", metric, ".xlsx")
-  pdf_name  <- paste0("Abb_LM_Koeffizienten_", metric, ".pdf")
+  xlsx_name <- paste0(base_file_name, metric, "_results.xlsx")
+  pdf_name  <- paste0(base_file_name, metric, "_coefficents.pdf")
 
   # ----------------------------
   # Step 10: Output consistency check
@@ -445,7 +452,7 @@ run_linear_model <- function(data,
     width = 5
   )
 
-  pdf_name_facet <- paste0("Abb_LM_Koeffizienten_FACET_", metric, ".pdf")
+  pdf_name_facet <- paste0(base_file_name, metric, "_coefficents_FACET.pdf")
 
   p_facet <- ggplot(coef_data, aes(
     x = Trainingsdatensatzkombinationen,
@@ -879,8 +886,10 @@ experiments <- c("006", "014", "005",
                  "017", "018", "013", "019", "010",
                  "020", "011")
 
+base_file_name <- paste0(output_dir, "/LinearModels/LinearModel_")
+
 for (metric in names(metrics)) {
-  run_linear_model(data1df, experiments, metric, metrics[[metric]])
+  run_linear_model(data1df, experiments, metric, metrics[[metric]], base_file_name)
 }
 
 #########################################################################################################################
