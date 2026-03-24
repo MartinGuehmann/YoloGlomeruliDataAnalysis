@@ -263,6 +263,7 @@ analyze_data <- function(data,
 run_linear_model <- function(data,
                              experiments,
                              metric,
+                             metric_name,
                              outlier_filter = list(versuch="001", SuperRank=6),
                              epoch_range = c(290, 299)) {
 
@@ -430,7 +431,12 @@ run_linear_model <- function(data,
       axis.text.x = element_text(angle = 45, hjust = 1),
       plot.title = element_text(size = 9)
     ) +
-    ggtitle(paste("Koeffizienten des linearen Interaktionsmodells:", metric))
+    ggtitle(title) +
+    labs(
+      x     = "Training dataset combinations",
+      y     = "Coefficients"
+    ) +
+    ggtitle(paste("Coefficients of the linear interaction model:", metric_name))
 
   ggsave(
     filename = pdf_name,
@@ -468,7 +474,11 @@ run_linear_model <- function(data,
       plot.title = element_text(size = 9),
       legend.position = "none"
     ) +
-    ggtitle(paste("Faceted Koeffizienten des linearen Interaktionsmodells:", metric))
+    labs(
+      x     = "Training dataset combinations",
+      y     = "Coefficients"
+    ) +
+    ggtitle(paste("Faceted coefficients of the linear interaction model:", metric_name))
 
   ggsave(
     filename = pdf_name_facet,
@@ -870,7 +880,7 @@ experiments <- c("006", "014", "005",
                  "020", "011")
 
 for (metric in names(metrics)) {
-  run_linear_model(data1df, experiments, metric)
+  run_linear_model(data1df, experiments, metric, metrics[[metric]])
 }
 
 #########################################################################################################################
