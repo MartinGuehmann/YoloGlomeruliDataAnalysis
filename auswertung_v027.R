@@ -523,6 +523,7 @@ plot_training_times <- function(traing_times, image_numbers)
 plot_experiment <- function(data,
                             experiment_id, 
                             metric,
+                            metric_name,
                             title,
                             filename,
                             outlier_filter = list(versuch="001", SuperRank=6)) {
@@ -540,6 +541,10 @@ plot_experiment <- function(data,
     geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
     facet_wrap(~ SuperRank, nrow = 3) +
     ggtitle(title) +
+    labs(
+      x     = "Epoch",
+      y     = metric_name
+    ) +
     theme(plot.title = element_text(color = "black", size = 9))
 
   # Create parent directory if that does not exist
@@ -876,11 +881,13 @@ for (experiment_id in names(symbol_map_experiments)) {
 
   for (metric in names(metrics)) {
 
+    metric_name <- metrics[[metric]]
     plot_experiment(
       data = data1df,
       experiment_id = experiment_id,
       metric = metric,
-      title = paste0("Experiment ", experiment_id, ": ", metrics[[metric]]),
+      metric_name = metric_name,
+      title = paste0("Experiment ", experiment_id, ": ", metric_name),
       filename = paste0(output_dir, "/", metric, "/MetricCurves/", "Experiment_", experiment_id, "_", metric, ".pdf"),
     )
 
