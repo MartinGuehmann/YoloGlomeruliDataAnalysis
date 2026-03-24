@@ -115,6 +115,7 @@ analyze_data <- function(data,
   # Join with symbol_config (safe: no duplication issue here)
   symbol_df <- merge(symbol_df, symbol_config, by = "symbol", all.x = TRUE)
   # Ensure factor levels match plot
+  symbol_df$symbol <- factor(symbol_df$symbol, levels = symbol_config$symbol)
   symbol_df$versuch <- factor(symbol_df$versuch, levels = experiments)
 
   # Step 6: Safety checks
