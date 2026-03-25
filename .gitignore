@@ -2,3 +2,4 @@
 *.xlsx
 .RData
 .Rhistory
+output
