@@ -782,7 +782,7 @@ jobs <- list(
   ),
   list(
     name        = "size",
-    title       = "Training data set sizes: ",
+    title       = "Training data set sizes 2: ",
     experiments = c("006", "001","003")
   ),
   list(
@@ -807,6 +807,38 @@ jobs <- list(
     name        = "small_combinations",
     title       = "Classical and synthetic augmentations of small datasets: ",
     experiments = c("006", "007", "008", "013", "011")
+  ),
+  list(
+    name        = "size_to_lower",
+    title       = "Training data set sizes: ",
+    experiments = c("003", "001","006")
+  ),
+  list(
+    name        = "non_annotated_removed",
+    title       = "Removing images without glomeruli: ",
+    experiments = c("003", "004")
+  ),
+  list(
+    name        = "add_augmented",
+    title       = "Conventional data augmentation: ",
+    experiments = c("004", "012")
+  ),
+  list(
+    name        = "add_augmented",
+    title       = "Conventional data augmentation: ",
+    experiments = c("006", "014", "005", "015")
+  ),
+  list(
+    name        = "add_augmented2",
+    title       = "Conventional data augmentation 2: ",
+    experiments = c("006", "014", "005", "015", "004", "012")
+  ),
+  list(
+    name        = "combinations_only",
+    title       = "Only combinations of augmentations: ",
+    experiments = c("007", "016", "009", "008",
+                    "017", "018", "013", "019", "010",
+                    "020", "011")
   )
 )
 
