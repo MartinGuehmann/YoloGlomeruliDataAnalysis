@@ -819,18 +819,18 @@ jobs <- list(
     experiments = c("003", "004")
   ),
   list(
-    name        = "add_augmented",
-    title       = "Conventional data augmentation: ",
+    name        = "add_augmented1",
+    title       = "Conventional data augmentation 1: ",
     experiments = c("004", "012")
-  ),
-  list(
-    name        = "add_augmented",
-    title       = "Conventional data augmentation: ",
-    experiments = c("006", "014", "005", "015")
   ),
   list(
     name        = "add_augmented2",
     title       = "Conventional data augmentation 2: ",
+    experiments = c("006", "014", "005", "015")
+  ),
+  list(
+    name        = "add_augmented3",
+    title       = "Conventional data augmentation 3: ",
     experiments = c("006", "014", "005", "015", "004", "012")
   ),
   list(
