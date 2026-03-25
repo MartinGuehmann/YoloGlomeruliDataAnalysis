@@ -256,9 +256,15 @@ analyze_data <- function(data,
     }
   }
 
-  # Step 18: Save plot as PDF
+  # Step 18: Save plot as PDF and SVG
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
+    plot = p,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = paste0(base_file_name, ".svg"),
     plot = p,
     height = 5,
     width = 5
