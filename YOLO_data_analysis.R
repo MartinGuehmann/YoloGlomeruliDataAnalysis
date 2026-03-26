@@ -527,7 +527,7 @@ run_linear_model <- function(data,
 
 plot_training_times <- function(traing_times, image_numbers, output_dir)
 {
-  # Build output file name (add extension .pdf)
+  # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime.svg")
 
@@ -577,7 +577,7 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
       plot.title = element_text(size = 8)
     )
 
-  # Save plot with ggsave
+  # Save plot as PDF and SVG
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in") # Set the "default" units explicitly. Quite weired that inchi-binchies are the default.
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
 }
