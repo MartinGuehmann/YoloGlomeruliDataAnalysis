@@ -570,6 +570,8 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
       y = "Training time (h)",
       title = "Dependency: Training time vs training data set size"
     ) +
+    scale_x_continuous(breaks = seq(0, max(df$Images) + 10000, by = 10000)) +   # X ticks every 10000
+    scale_y_continuous(breaks = seq(0, max(df$Time_h) + 20, by = 20)) +         # Y ticks every 20
     theme_bw() +
     theme(
       axis.text = element_text(size = 8),
