@@ -402,6 +402,7 @@ run_linear_model <- function(data,
   # ----------------------------
   xlsx_name <- paste0(base_file_name, metric, "_results.xlsx")
   pdf_name  <- paste0(base_file_name, metric, "_coefficents.pdf")
+  svg_name  <- paste0(base_file_name, metric, "_coefficents.svg")
 
   # ----------------------------
   # Step 10: Output consistency check
@@ -459,6 +460,12 @@ run_linear_model <- function(data,
 
   ggsave(
     filename = pdf_name,
+    plot = p,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = svg_name,
     plot = p,
     height = 5,
     width = 5
