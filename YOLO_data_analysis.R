@@ -553,10 +553,19 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
   y_line_at_x <- coef(fit)[1] + coef(fit)[2] * x_pos
   y_pos <- y_line_at_x - 0.05 * (max(pred_vals) - min(pred_vals))  # 5% below the line
 
+  # Compute regression line points extended into padding
+  x_range <- max(df$Images) - min(df$Images)
+  x_line <- c(
+    min(df$Images) - 0.05 * x_range,
+    max(df$Images) + 0.05 * x_range
+  )
+  y_line <- coef(fit)[1] + coef(fit)[2] * x_line
+  line_df <- data.frame(Images = x_line, Time_h = y_line)
+
   # Create ggplot
   p <- ggplot(df, aes(x = Images, y = Time_h)) +
-    geom_point(shape = 1, color = "red", size = 2) +          # Unfilled circles
-    geom_smooth(method = "lm", se = FALSE, color = "black") + # Regression line
+    geom_point(shape = 1, color = "red", size = 2) +                                           # Unfilled circles
+    geom_line(data = line_df, aes(x = Images, y = Time_h), color = "black", linewidth = 0.5) + # Regression line
     annotate(
       "text",
       x = x_pos,
@@ -570,8 +579,14 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
       y = "Training time (h)",
       title = "Dependency: Training time vs training data set size"
     ) +
-    scale_x_continuous(breaks = seq(0, max(df$Images) + 10000, by = 10000)) +   # X ticks every 10000
-    scale_y_continuous(breaks = seq(0, max(df$Time_h) + 20, by = 20)) +         # Y ticks every 20
+    scale_x_continuous(
+      breaks = seq(0, max(df$Images) + 10000, by = 10000),   # X ticks every 10000
+      expand = c(0, 0)                                       # <-- remove padding
+    ) +
+    scale_y_continuous(
+      breaks = seq(0, max(df$Time_h) + 20, by = 20),         # Regression line
+      expand = c(0, 0)                                       # <-- remove padding
+    ) +
     theme_bw() +
     theme(
       axis.text = element_text(size = 9),
