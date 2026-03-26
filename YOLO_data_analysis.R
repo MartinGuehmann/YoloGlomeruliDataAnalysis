@@ -607,6 +607,13 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
   y_line <- coef(fit)[1] + coef(fit)[2] * x_line
   line_df <- data.frame(Images = x_line, Time_h = y_line)
 
+  # Compute training time per 10,000 images
+  time_per_10000 <- coef(fit)[2] * 10000
+  efficiency_text <- paste0("ca. ", round(time_per_10000, 2), " h / 10,000 images")
+
+  # Dynamic Y position for efficiency annotation: slightly below regression formula
+  y_eff_pos <- y_pos - 0.08 * (max(pred_vals) - min(pred_vals))  # 8% below formula
+
   # Create ggplot
   p <- ggplot(df, aes(x = Images, y = Time_h)) +
     geom_point(shape = 1, color = "red", size = 2) +                                           # Unfilled circles
@@ -618,6 +625,15 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
       label = formula_text,
       hjust = 0,
       size = 3
+    ) +
+    annotate(
+      "text",
+      x = x_pos,
+      y = y_eff_pos,
+      label = efficiency_text,
+      hjust = 0,
+      size = 3,
+      color = "black"
     ) +
     labs(
       x = "Number of training images",
