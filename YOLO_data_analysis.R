@@ -527,35 +527,44 @@ run_linear_model <- function(data,
 
 plot_training_times <- function(traing_times, image_numbers, output_dir)
 {
-  output_file_name = paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
-  create_parent_dir(output_file_name)
-  pdf(output_file_name, height=5, width=5)
+  # Build output file name (add extension .pdf)
+  output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
+  output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime.svg")
 
-  # Change grafics parameter
-  par(cex.axis = 0.8, cex.lab =0.8, cex.main = 0.8, cex.sub = 0.5, las = 1)
+  # Ensure the parent directory exists
+  create_parent_dir(output_file_name_pdf)
 
-  # Plot training times versus number of images
-  plot(image_numbers,
-       traing_times,
-       ylab = "Training time (h)",
-       xlab = "Number of training images",
-       main = "Dependency: Training time vs training data set size",
-       pch = 1,
-       col = 2,
-       cex = 1)
+  # Create a data frame for ggplot
+  df <- data.frame(
+    Images = image_numbers,
+    Time_h = traing_times
+  )
 
-  # Add regression line
-  fit <- lm(traing_times ~ image_numbers)
-  abline(fit)
+  # Fit linear model for regression line
+  fit <- lm(Time_h ~ Images, data = df)
+  formula_text <- paste0("f(x) = ", round(coef(fit)[2], 3), " x + ", round(coef(fit)[1], 3))
 
-  # Plot formula of the regress line
-  formula <- paste("f(x) =", round(coef(fit)[2], digits = 3), "x +", round(coef(fit)[1], digits = 3))
-  mtext(formula,
-        side = 3,
-        line = -12,
-        cex = 0.8)
+  # Create ggplot
+  p <- ggplot(df, aes(x = Images, y = Time_h)) +
+    geom_point(color = "red", size = 2) +                       # points
+    geom_smooth(method = "lm", se = FALSE, color = "black") +   # regression line
+    labs(
+      x = "Number of training images",
+      y = "Training time (h)",
+      title = "Dependency: Training time vs training data set size",
+      subtitle = formula_text
+    ) +
+    theme_bw() +
+    theme(
+      axis.text = element_text(size = 8),
+      axis.title = element_text(size = 8),
+      plot.title = element_text(size = 8),
+      plot.subtitle = element_text(size = 6)
+    )
 
-  dev.off()
+  # Save plot with ggsave
+  ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in") # Set the "default" units explicitly. Quite weired that inchi-binchies are the default.
+  ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
 }
 
 plot_experiment <- function(data,
