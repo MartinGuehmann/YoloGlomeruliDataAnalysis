@@ -687,28 +687,29 @@ plot_histogram_normality <- function(
 #########################################################################################################################
 
 # ------------------------------------------------------------
-# Filename Parsing Reference (current rules)
+# Filename / Folder Parsing Reference (current rules)
 #
 # Rule:
-# 1. Extract experiment ID ('versuch') from characters 19-21 of the filename
+# 1. Extract experiment ID ('versuch') from the parent folder name of the results.txt file
+#    → capture the first 3 digits in the folder name
 #    → converted to numeric as 'Versuch'
-# 2. Extract version from characters 22-30
-#    → split at "/" and take first part
-#    → if empty, default to 1
-# 3. Epoch extraction from Epoch column is separate
+# 2. Extract version from the remaining digits in the folder name
+#    → if no remaining digits, default to 1
+# 3. Epoch extraction from the Epoch column is separate
 #
 # Examples:
-# Filename                              | versuch | Versuch | version | Notes
-# --------------------------------------|---------|---------|---------|-----------------------------------------------
-# "runs/train/yolov7-00110/results.txt" | "001"   | 1       | 10      | 3-digit experiment + 2-digit version
+# Folder / Filename                     | versuch | Versuch | version | Notes
+# -------------------------------------|---------|---------|---------|-----------------------------------------------
+# "runs/train/yolov7-00110/results.txt" | "001"   | 1       | 10      | experiment: first 3 digits, version: remaining digits
 # "runs/train/yolov7-0049/results.txt"  | "004"   | 4       | 9       | 3-digit experiment + 1-digit version
 # "runs/train/yolov7-005/results.txt"   | "005"   | 5       | 1       | Version missing → defaults to 1
-# "runs/train/yolov7-00501/results.txt" | "005"   | 5       | 1       | Would parse same as default (explicit 01)
+# "runs/train/yolov7-00501/results.txt" | "005"   | 5       | 1       | Explicit "01" → same as default
 #
 # Notes:
-# - The code assumes fixed-position filenames: first 3 digits = experiment
-# - Version digits follow; if missing, default = 1
-# - Changing filename conventions (e.g., fewer digits) may require updating the parsing
+# - Folder name is parsed with a regex: first 3 digits = experiment, remaining digits = version
+# - Works regardless of directory depth or folder prefix (e.g., "yolov7-")
+# - Version digits default to 1 if missing
+# - Changing the folder naming convention may require updating the regex
 # ------------------------------------------------------------
 
 # Load data
@@ -719,21 +720,32 @@ data1 <- read.csv("allresults_header_tab_final_v002.txt", sep = "\t")
 # Extract variables from filename + Epoch
 data1 <- data1 %>%
   mutate(
-    versuch  = str_sub(filename, 19, 21),                    # experiment ID: first 3 digits of filename (e.g., "001" → 1)
-    Versuch  = as.numeric(versuch),                          # numeric conversion of experiment ID
-    version  = str_sub(filename, 22, 30) %>%                 # version: digits after the first 3 digits
-      str_split("/") %>%
-      sapply(function(x) ifelse(x[1] == "", "1", x[1])) %>%  # default to 1 if no version digits
-      as.integer(),                                          # convert to numeric
-    Epoche = str_split(Epoch, "/") %>%                       # Epoch: take first number before "/"
-      sapply(function(x) x[1]) %>%
+    # Extract the folder containing the results.txt file
+    folder = basename(dirname(filename)),                 # e.g., "yolov7-00110"
+    
+    # Regex capture: first 3 digits = experiment, remaining digits = version
+    matches = str_match(folder, "(\\d{3})(\\d*)"),       # first 3 digits = experiment, remaining digits = version
+    
+    # Experiment ID
+    versuch = matches[,2],                               # first 3 digits as string
+    Versuch = as.numeric(versuch),                       # numeric conversion
+    
+    # Version number
+    version = matches[,3],                               # remaining digits after first 3
+    version = ifelse(version == "", "1", version),       # default to 1 if missing
+    version = as.integer(version),                       # numeric conversion
+    
+    # Epoch parsing
+    Epoche = str_split(Epoch, "/") %>% 
+      sapply(function(x) x[1]) %>% 
       as.integer()
-  )
+  ) %>%
+  select(-matches, -folder)                              # remove temporary helper columns used for parsing
 # Examples:
 # "yolov7-00110" → versuch=1, version=10
 # "yolov7-0049"  → versuch=4, version=9
-# "yolov7-005"   → versuch=5, version=1 (default)
-# "yolov7-00501" → versuch=5, version=1 (explicit 01, same as default)
+# "005"          → versuch=5, version=1 (default)
+# "yolo8-00501"  → versuch=5, version=1 (explicit 01, same as default)
 
 # Merge with design
 data1 <- data1 %>%
