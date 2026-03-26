@@ -785,7 +785,7 @@ plot_histogram_normality <- function(
 #
 # Examples:
 # Folder / Filename                     | versuch | Versuch | version | Notes
-# -------------------------------------|---------|---------|---------|-----------------------------------------------
+# --------------------------------------|---------|---------|---------|-----------------------------------------------
 # "runs/train/yolov7-00110/results.txt" | "001"   | 1       | 10      | experiment: first 3 digits, version: remaining digits
 # "runs/train/yolov7-0049/results.txt"  | "004"   | 4       | 9       | 3-digit experiment + 1-digit version
 # "runs/train/yolov7-005/results.txt"   | "005"   | 5       | 1       | Version missing → defaults to 1
