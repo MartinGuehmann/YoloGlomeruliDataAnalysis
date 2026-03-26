@@ -545,18 +545,18 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
   formula_text <- paste0("f(x) = ", round(coef(fit)[2], 3), " x + ", round(coef(fit)[1], 3))
 
   # Compute dynamic text position: just below regression line
-  # Use 10% down from the top of the predicted values
-  pred_max <- max(predict(fit, newdata = data.frame(Images = df$Images)))
-  pred_min <- min(predict(fit, newdata = data.frame(Images = df$Images)))
-  y_pos <- pred_max - 0.75 * (pred_max - pred_min)   # 10% below the top of the line
-
-  # X position: 70% along the x-axis (similar to original placement)
+  pred_vals <- predict(fit, newdata = data.frame(Images = df$Images))
+  # X position: 35% along the x-axis
   x_pos <- min(df$Images) + 0.35 * (max(df$Images) - min(df$Images))
+
+  # Y position: just below regression line at x_pos
+  y_line_at_x <- coef(fit)[1] + coef(fit)[2] * x_pos
+  y_pos <- y_line_at_x - 0.05 * (max(pred_vals) - min(pred_vals))  # 5% below the line
 
   # Create ggplot
   p <- ggplot(df, aes(x = Images, y = Time_h)) +
-    geom_point(shape = 1, color = "red", size = 2) +            # Unfilled circles
-    geom_smooth(method = "lm", se = FALSE, color = "black") +   # Regression line
+    geom_point(shape = 1, color = "red", size = 2) +          # Unfilled circles
+    geom_smooth(method = "lm", se = FALSE, color = "black") + # Regression line
     annotate(
       "text",
       x = x_pos,
