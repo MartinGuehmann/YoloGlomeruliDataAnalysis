@@ -574,9 +574,9 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
     scale_y_continuous(breaks = seq(0, max(df$Time_h) + 20, by = 20)) +         # Y ticks every 20
     theme_bw() +
     theme(
-      axis.text = element_text(size = 8),
-      axis.title = element_text(size = 8),
-      plot.title = element_text(size = 8)
+      axis.text = element_text(size = 9),
+      axis.title = element_text(size = 9),
+      plot.title = element_text(size = 9)
     )
 
   # Save plot as PDF and SVG
