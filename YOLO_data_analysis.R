@@ -525,6 +525,51 @@ run_linear_model <- function(data,
   ))
 }
 
+# ------------------------------------------------------------
+# Plot Training Time vs. Number of Images
+#
+# Description:
+# Creates a scatter plot of training time (in hours) versus the
+# number of training images, including a linear regression line
+# and its formula. The plot is saved as both PDF and SVG.
+#
+# The regression line is extended to the plot boundaries to
+# visually match base R behavior, while ensuring that data points
+# are not clipped. Axis ticks are displayed at fixed intervals.
+#
+# Parameters:
+# - traing_times   : Numeric vector
+#                    Training durations in hours (y-axis values).
+#
+# - image_numbers  : Numeric vector
+#                    Number of training images (x-axis values).
+#
+# - output_dir     : Character string
+#                    Directory where the output files will be saved.
+#                    The function will create the directory if needed.
+#
+# Output:
+# - Saves two files in the specified output directory:
+#     * "NumberOfImages_TraingTime.pdf"
+#     * "NumberOfImages_TraingTime.svg"
+#
+# Details:
+# - Points are plotted as unfilled red circles.
+# - A linear regression model (lm) is fitted and drawn as a line.
+# - The regression formula is displayed inside the plot area,
+#   slightly below the regression line.
+# - Axis ticks:
+#     * X-axis: every 10,000 images
+#     * Y-axis: every 20 hours
+# - Plot dimensions are 5x5 inches.
+#
+# Notes:
+# - The function assumes that 'traing_times' and 'image_numbers'
+#   are of equal length and correspond element-wise.
+# - Uses ggplot2 for plotting and ggsave() for file output.
+# - Output units are explicitly set to inches for consistency.
+#
+# ------------------------------------------------------------
 plot_training_times <- function(traing_times, image_numbers, output_dir)
 {
   # Build output file names
