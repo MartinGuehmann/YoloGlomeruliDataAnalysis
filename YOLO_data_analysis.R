@@ -544,22 +544,37 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
   fit <- lm(Time_h ~ Images, data = df)
   formula_text <- paste0("f(x) = ", round(coef(fit)[2], 3), " x + ", round(coef(fit)[1], 3))
 
+  # Compute dynamic text position: just below regression line
+  # Use 10% down from the top of the predicted values
+  pred_max <- max(predict(fit, newdata = data.frame(Images = df$Images)))
+  pred_min <- min(predict(fit, newdata = data.frame(Images = df$Images)))
+  y_pos <- pred_max - 0.75 * (pred_max - pred_min)   # 10% below the top of the line
+
+  # X position: 70% along the x-axis (similar to original placement)
+  x_pos <- min(df$Images) + 0.35 * (max(df$Images) - min(df$Images))
+
   # Create ggplot
   p <- ggplot(df, aes(x = Images, y = Time_h)) +
-    geom_point(color = "red", size = 2) +                       # points
-    geom_smooth(method = "lm", se = FALSE, color = "black") +   # regression line
+    geom_point(shape = 1, color = "red", size = 2) +            # Unfilled circles
+    geom_smooth(method = "lm", se = FALSE, color = "black") +   # Regression line
+    annotate(
+      "text",
+      x = x_pos,
+      y = y_pos,
+      label = formula_text,
+      hjust = 0,
+      size = 3
+    ) +
     labs(
       x = "Number of training images",
       y = "Training time (h)",
-      title = "Dependency: Training time vs training data set size",
-      subtitle = formula_text
+      title = "Dependency: Training time vs training data set size"
     ) +
     theme_bw() +
     theme(
       axis.text = element_text(size = 8),
       axis.title = element_text(size = 8),
-      plot.title = element_text(size = 8),
-      plot.subtitle = element_text(size = 6)
+      plot.title = element_text(size = 8)
     )
 
   # Save plot with ggsave
