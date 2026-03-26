@@ -679,6 +679,31 @@ plot_histogram_normality <- function(
 
 #########################################################################################################################
 
+# ------------------------------------------------------------
+# Filename Parsing Reference (current rules)
+#
+# Rule:
+# 1. Extract experiment ID ('versuch') from characters 19-21 of the filename
+#    → converted to numeric as 'Versuch'
+# 2. Extract version from characters 22-30
+#    → split at "/" and take first part
+#    → if empty, default to 1
+# 3. Epoch extraction from Epoch column is separate
+#
+# Examples:
+# Filename                              | versuch | Versuch | version | Notes
+# --------------------------------------|---------|---------|---------|-----------------------------------------------
+# "runs/train/yolov7-00110/results.txt" | "001"   | 1       | 10      | 3-digit experiment + 2-digit version
+# "runs/train/yolov7-0049/results.txt"  | "004"   | 4       | 9       | 3-digit experiment + 1-digit version
+# "runs/train/yolov7-005/results.txt"   | "005"   | 5       | 1       | Version missing → defaults to 1
+# "runs/train/yolov7-00501/results.txt" | "005"   | 5       | 1       | Would parse same as default (explicit 01)
+#
+# Notes:
+# - The code assumes fixed-position filenames: first 3 digits = experiment
+# - Version digits follow; if missing, default = 1
+# - Changing filename conventions (e.g., fewer digits) may require updating the parsing
+# ------------------------------------------------------------
+
 # Load data
 Design <- read_excel("Design2.xlsx")
 
@@ -687,18 +712,21 @@ data1 <- read.csv("allresults_header_tab_final_v002.txt", sep = "\t")
 # Extract variables from filename + Epoch
 data1 <- data1 %>%
   mutate(
-    versuch  = str_sub(filename, 19, 21),
-    Versuch  = as.numeric(versuch),
-
-    version = str_sub(filename, 22, 30) %>%
+    versuch  = str_sub(filename, 19, 21),               # experiment ID: first 3 digits of filename (e.g., "001" → 1)
+    Versuch  = as.numeric(versuch),                     # numeric conversion of experiment ID
+    version = str_sub(filename, 22, 30) %>%            # version: digits after the first 3 digits
       str_split("/") %>%
-      sapply(function(x) ifelse(x[1] == "", "1", x[1])) %>%
-      as.integer(),
-
-    Epoche = str_split(Epoch, "/") %>%
+      sapply(function(x) ifelse(x[1] == "", "1", x[1])) %>%  # default to 1 if no version digits
+      as.integer(),                                     # convert to numeric
+    Epoche = str_split(Epoch, "/") %>%                  # Epoch: take first number before "/"
       sapply(function(x) x[1]) %>%
       as.integer()
   )
+# Examples:
+# "yolov7-00110" → versuch=1, version=10
+# "yolov7-0049"  → versuch=4, version=9
+# "yolov7-005"   → versuch=5, version=1 (default)
+# "yolov7-00501" → versuch=5, version=1 (explicit 01, same as default)
   
 # Merge with design
 data1 <- data1 %>%
