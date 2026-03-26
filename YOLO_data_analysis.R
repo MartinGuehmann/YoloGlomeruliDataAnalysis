@@ -718,6 +718,10 @@ data1df <- data1 %>%
   mutate(SuperRank = dense_rank(version)) %>%
   ungroup()
 
+# Quick sanity check
+count(data1df, versuch)
+summary(data1df$Epoche)
+
 #########################################################################################################################
 
 # Mapping of versuch to symbols
