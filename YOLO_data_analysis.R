@@ -712,13 +712,13 @@ data1 <- read.csv("allresults_header_tab_final_v002.txt", sep = "\t")
 # Extract variables from filename + Epoch
 data1 <- data1 %>%
   mutate(
-    versuch  = str_sub(filename, 19, 21),               # experiment ID: first 3 digits of filename (e.g., "001" → 1)
-    Versuch  = as.numeric(versuch),                     # numeric conversion of experiment ID
-    version = str_sub(filename, 22, 30) %>%            # version: digits after the first 3 digits
+    versuch  = str_sub(filename, 19, 21),                    # experiment ID: first 3 digits of filename (e.g., "001" → 1)
+    Versuch  = as.numeric(versuch),                          # numeric conversion of experiment ID
+    version  = str_sub(filename, 22, 30) %>%                 # version: digits after the first 3 digits
       str_split("/") %>%
       sapply(function(x) ifelse(x[1] == "", "1", x[1])) %>%  # default to 1 if no version digits
-      as.integer(),                                     # convert to numeric
-    Epoche = str_split(Epoch, "/") %>%                  # Epoch: take first number before "/"
+      as.integer(),                                          # convert to numeric
+    Epoche = str_split(Epoch, "/") %>%                       # Epoch: take first number before "/"
       sapply(function(x) x[1]) %>%
       as.integer()
   )
@@ -727,14 +727,14 @@ data1 <- data1 %>%
 # "yolov7-0049"  → versuch=4, version=9
 # "yolov7-005"   → versuch=5, version=1 (default)
 # "yolov7-00501" → versuch=5, version=1 (explicit 01, same as default)
-  
+
 # Merge with design
 data1 <- data1 %>%
   inner_join(Design, by = "Versuch")
 
 # Compute max epoch per (versuch, version)
 data1df <- data1 %>%
-  group_by(versuch,version) %>%
+  group_by(versuch, version) %>%
   mutate(MaxValue = max(Epoche, na.rm = TRUE)) %>%
   ungroup() %>%
 
