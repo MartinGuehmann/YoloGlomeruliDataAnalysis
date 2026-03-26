@@ -690,7 +690,7 @@ plot_histogram_normality <- function(
 # Filename / Folder Parsing Reference (current rules)
 #
 # Rule:
-# 1. Extract experiment ID ('versuch') from the parent folder name of the results.txt file
+# 1. Extract experiment ID ('versuch') from the parent folder name of the file e.g. results.txt
 #    → capture the first 3 digits in the folder name
 #    → converted to numeric as 'Versuch'
 # 2. Extract version from the remaining digits in the folder name
@@ -704,11 +704,13 @@ plot_histogram_normality <- function(
 # "runs/train/yolov7-0049/results.txt"  | "004"   | 4       | 9       | 3-digit experiment + 1-digit version
 # "runs/train/yolov7-005/results.txt"   | "005"   | 5       | 1       | Version missing → defaults to 1
 # "runs/train/yolov7-00501/results.txt" | "005"   | 5       | 1       | Explicit "01" → same as default
+# "runs/train/yolov7-00110/shshsgd"     | "001"   | 1       | 10      | filename can be anything; only folder matters
 #
 # Notes:
-# - Folder name is parsed with a regex: first 3 digits = experiment, remaining digits = version
-# - Works regardless of directory depth or folder prefix (e.g., "yolov7-")
+# - Only the **parent folder** of the file is used for parsing; full path or filename does not matter
+# - Regex: first 3 digits = experiment, remaining digits = version
 # - Version digits default to 1 if missing
+# - Works regardless of directory depth, folder prefix, or arbitrary filename
 # - Changing the folder naming convention may require updating the regex
 # ------------------------------------------------------------
 
@@ -721,26 +723,26 @@ data1 <- read.csv("allresults_header_tab_final_v002.txt", sep = "\t")
 data1 <- data1 %>%
   mutate(
     # Extract the folder containing the results.txt file
-    folder = basename(dirname(filename)),                 # e.g., "yolov7-00110"
-    
+    folder = basename(dirname(filename)),                 # For instance yolov7-00110"
+
     # Regex capture: first 3 digits = experiment, remaining digits = version
-    matches = str_match(folder, "(\\d{3})(\\d*)"),       # first 3 digits = experiment, remaining digits = version
-    
+    matches = str_match(folder, "(\\d{3})(\\d*)"),       # First 3 digits = experiment, remaining digits = version
+
     # Experiment ID
-    versuch = matches[,2],                               # first 3 digits as string
-    Versuch = as.numeric(versuch),                       # numeric conversion
-    
+    versuch = matches[,2],                               # First 3 digits as string
+    Versuch = as.numeric(versuch),                       # Numeric conversion
+
     # Version number
-    version = matches[,3],                               # remaining digits after first 3
-    version = ifelse(version == "", "1", version),       # default to 1 if missing
-    version = as.integer(version),                       # numeric conversion
-    
+    version = matches[,3],                               # Remaining digits after first 3
+    version = ifelse(version == "", "1", version),       # Default to 1 if missing
+    version = as.integer(version),                       # Numeric conversion
+
     # Epoch parsing
     Epoche = str_split(Epoch, "/") %>% 
       sapply(function(x) x[1]) %>% 
       as.integer()
   ) %>%
-  select(-matches, -folder)                              # remove temporary helper columns used for parsing
+  select(-matches, -folder)                              # Remove temporary helper columns used for parsing
 # Examples:
 # "yolov7-00110" → versuch=1, version=10
 # "yolov7-0049"  → versuch=4, version=9
