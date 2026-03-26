@@ -20,6 +20,7 @@ library(tidyr)
 library(readxl)
 library(writexl)
 library(FSA)
+library(stringr)
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
@@ -678,50 +679,44 @@ plot_histogram_normality <- function(
 
 #########################################################################################################################
 
-# Load and prepare main data
-exceldata <- read_excel("Design2.xlsx")
-Design <- data.frame(exceldata)
+# Load data
+Design <- read_excel("Design2.xlsx")
 
-data <- read.csv ("allresults_header_tab_final_v002.txt",sep="\t")
-data1 <- data.frame(data)
-data1$versuch <- substr(data1$filename,19,21)
+data1 <- read.csv("allresults_header_tab_final_v002.txt", sep = "\t")
 
-data1$Versuch <- as.numeric(data1$versuch)
+# Extract variables from filename + Epoch
+data1 <- data1 %>%
+  mutate(
+    versuch  = str_sub(filename, 19, 21),
+    Versuch  = as.numeric(versuch),
 
-tmp <- merge(data1, Design, by='Versuch')
+    version = str_sub(filename, 22, 30) %>%
+      str_split("/") %>%
+      sapply(function(x) ifelse(x[1] == "", "1", x[1])) %>%
+      as.integer(),
 
-data1 <- tmp
-
-for (i in 1:dim(data1)[1]){
-  ver <- substr(data1$filename[i],22,30)
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
-  if (s ==""){
-    s="1"
-  }
-  data1$version[i] <- strtoi(s)
-}
-for (i in 1:dim(data1)[1]){
-  ver <- data1$Epoch[i]
-  vers <- strsplit(ver,split="/")
-  a<- vers
-  s <- a[[1]][1]
+    Epoche = str_split(Epoch, "/") %>%
+      sapply(function(x) x[1]) %>%
+      as.integer()
+  )
   
-  data1$Epoche[i] <- strtoi(s)
-}
+# Merge with design
+data1 <- data1 %>%
+  inner_join(Design, by = "Versuch")
 
-data1_f <- data1 %>%
+# Compute max epoch per (versuch, version)
+data1df <- data1 %>%
   group_by(versuch,version) %>%
-  mutate(MaxValue = max(Epoche))
+  mutate(MaxValue = max(Epoche, na.rm = TRUE)) %>%
+  ungroup() %>%
 
-subset_ff <- subset(data1_f,MaxValue > 290)
+  # Filter long enough runs
+  filter(MaxValue > 290) %>%
 
-data1_s <- subset_ff%>%
+  # Rank versions within experiment
   group_by(versuch) %>%
-  mutate(SuperRank = dense_rank(version))
-
-data1df <- data1_s
+  mutate(SuperRank = dense_rank(version)) %>%
+  ungroup()
 
 #########################################################################################################################
 
