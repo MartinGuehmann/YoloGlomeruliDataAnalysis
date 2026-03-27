@@ -398,6 +398,9 @@ analyze_data <- function(data,
     height = 5,
     width = 5
   )
+
+  # Step 19: Return plot object explicitly (invisible)
+  return(invisible(p))
 }
 
 run_linear_model <- function(data,
