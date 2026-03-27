@@ -163,12 +163,28 @@ analyze_data <- function(data,
 
     mw_result <- wilcox.test(x, y, exact = FALSE)
 
-    # Create data frame
+    # Effect size r = Z / sqrt(N)
+    # Calculate Z approximation for Wilcoxon
+    W <- as.numeric(mw_result$statistic)
+    n <- length(x) + length(y)
+    # approximate Z using normal approximation
+    # Note: wilcox.test does not return Z, so we compute it:
+    U <- W
+    mu_U <- length(x)*length(y)/2
+    sigma_U <- sqrt(length(x)*length(y)*(length(x)+length(y)+1)/12)
+    Z <- (U - mu_U)/sigma_U
+    r <- Z / sqrt(n)
+
+    # Create data frame with separate group columns
     mann_whitney_df <- data.frame(
       Group1 = groups[1],
+      Median1 = median(x),
       Group2 = groups[2],
-      W = mw_result$statistic,
+      Median2 = median(y),
+      W = W,
+      r = r,
       p.value = mw_result$p.value,
+      significant = ifelse(mw_result$p.value < 0.05, "Yes", "No"),
       method = mw_result$method
     )
 
