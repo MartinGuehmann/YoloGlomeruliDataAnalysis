@@ -104,7 +104,7 @@ create_parent_dir <- function(path) {
 #' @param outlier_filter Optional list specifying outliers to remove, with elements `versuch` and `SuperRank` (default `list(versuch="001", SuperRank=6)`).
 #' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include (default `c(290, 299)`).
 #'
-#' @return Invisibly returns the ggplot object.  
+#' @return Invisibly returns the ggplot object.
 #'         Saves the following files to disk (prefix given by `base_file_name`):
 #'         \itemize{
 #'           \item Excel sheets:
@@ -301,8 +301,56 @@ analyze_data <- function(data,
     # Reorder columns for clarity
     select(Group1, Group2, Z, P.unadj, P.adj, n, r, significant, effect_size_strength)
 
-  # Step 15: Export Kruskal-Wallis, Dunn, and optional Mann-Whitney results to excel
-  data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
+  # Step 14b: Create Dunn matrices (p-values and significance)
+  groups <- levels(subdata$versuch)
+  
+  # Initialize matrices
+  p_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
+                     dimnames=list(groups, groups))
+  
+  sig_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
+                       dimnames=list(groups, groups))
+  
+  # Fill matrices
+  for(i in 1:nrow(dunn_result$res)) {
+    g1 <- dunn_result$res$Group1[i]
+    g2 <- dunn_result$res$Group2[i]
+    p  <- dunn_result$res$P.adj[i]
+    
+    # Fill p-value matrix
+    p_matrix[g1, g2] <- p
+    p_matrix[g2, g1] <- p
+    
+    # Determine significance level
+    sig <- ifelse(p < 0.001, "***",
+                  ifelse(p < 0.01, "**",
+                         ifelse(p < 0.05, "*", "ns")))
+    
+    # Fill significance matrix
+    sig_matrix[g1, g2] <- sig
+    sig_matrix[g2, g1] <- sig
+  }
+  
+  # Fill diagonal with "-"
+  diag(p_matrix) <- NA
+  diag(sig_matrix) <- "-"
+  
+  # Optional: replace NA in p_matrix diagonal with "-"
+  p_matrix_display <- p_matrix
+  diag(p_matrix_display) <- "-"
+  
+  # Convert to data frames for Excel
+  p_matrix_df <- as.data.frame(p_matrix_display)
+  sig_matrix_df <- as.data.frame(sig_matrix)
+
+  # Step 15: Export Kruskal-Wallis, Dunn (column and different matrix formats),
+  #          and optional Mann-Whitney results to excel
+  data_to_write <- list(
+    "Kruskal-Wallis" = kruskal_df,
+    "Dunn Test" = dunn_result$res,
+    "Dunn Matrix (p)" = p_matrix_df,
+    "Dunn Matrix (sig)" = sig_matrix_df
+  )
   if(!is.null(mann_whitney_df)) {
     data_to_write[["Mann-Whitney"]] <- mann_whitney_df
   }
