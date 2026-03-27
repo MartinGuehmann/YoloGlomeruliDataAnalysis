@@ -233,20 +233,27 @@ analyze_data <- function(data,
     groups <- levels(subdata$versuch)
     x <- subdata[[metric]][subdata$versuch == groups[1]]
     y <- subdata[[metric]][subdata$versuch == groups[2]]
-
-    # Mann-Whitney/Wilcoxon rank sum test, two-sided by default
+    
+    # Mann-Whitney/Wilcoxon rank sum test
+    # Note: This is a two-sided test by default (alternative = "two.sided")
     mw_result <- wilcox.test(x, y, exact = FALSE)
 
     # Effect size r = Z / sqrt(N)
-    # Calculate Z approximation for Wilcoxon
+    # We approximate Z from the U statistic using the normal approximation.
+    # This corresponds to the same two-sided hypothesis test as reported by wilcox.test.
     W <- as.numeric(mw_result$statistic)
     n <- length(x) + length(y)
-    # approximate Z using normal approximation
-    # Note: wilcox.test does not return Z, so we compute it:
+
+    # Convert W to U (same here) and compute expected value and variance under H0
     U <- W
     mu_U <- length(x)*length(y)/2
     sigma_U <- sqrt(length(x)*length(y)*(length(x)+length(y)+1)/12)
+
+    # Z-score (signed; direction depends on group ordering)
     Z <- (U - mu_U)/sigma_U
+
+    # Effect size (note: magnitude is typically interpreted, sign depends on group order)
+    # Interpretation: |r| indicates effect size magnitude; sign depends on group order
     r <- Z / sqrt(n)
 
     # Create data frame with separate group columns
