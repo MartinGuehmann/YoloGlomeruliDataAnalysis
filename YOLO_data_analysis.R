@@ -303,58 +303,88 @@ analyze_data <- function(data,
 
   # Step 14b: Create Dunn matrices (p-values and significance)
   groups <- levels(subdata$versuch)
-  
+
   # Initialize matrices
   p_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
                      dimnames=list(groups, groups))
-  
+
   sig_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
                        dimnames=list(groups, groups))
-  
+
   # Fill matrices
   for(i in 1:nrow(dunn_result$res)) {
     g1 <- dunn_result$res$Group1[i]
     g2 <- dunn_result$res$Group2[i]
     p  <- dunn_result$res$P.adj[i]
-    
+
     # Fill p-value matrix
     p_matrix[g1, g2] <- p
     p_matrix[g2, g1] <- p
-    
+
     # Determine significance level
     sig <- ifelse(p < 0.001, "***",
                   ifelse(p < 0.01, "**",
                          ifelse(p < 0.05, "*", "ns")))
-    
+
     # Fill significance matrix
     sig_matrix[g1, g2] <- sig
     sig_matrix[g2, g1] <- sig
   }
-  
+
   # Fill diagonal with "-"
   diag(p_matrix) <- NA
   diag(sig_matrix) <- "-"
-  
+
   # Optional: replace NA in p_matrix diagonal with "-"
   p_matrix_display <- p_matrix
   diag(p_matrix_display) <- "-"
-  
+
   # Convert to data frames for Excel
   p_matrix_df <- as.data.frame(p_matrix_display)
   sig_matrix_df <- as.data.frame(sig_matrix)
 
-  # Step 15: Export Kruskal-Wallis, Dunn (column and different matrix formats),
-  #          and optional Mann-Whitney results to excel
-  data_to_write <- list(
-    "Kruskal-Wallis" = kruskal_df,
-    "Dunn Test" = dunn_result$res,
-    "Dunn Matrix (p)" = p_matrix_df,
-    "Dunn Matrix (sig)" = sig_matrix_df
+  # Step 15: Export results to Excel with openxlsx
+  wb <- openxlsx::createWorkbook()
+
+  # --- Kruskal-Wallis ---
+  openxlsx::addWorksheet(wb, "Kruskal-Wallis")
+  openxlsx::writeData(wb, "Kruskal-Wallis", kruskal_df)
+
+  # --- Dunn Test (table) ---
+  openxlsx::addWorksheet(wb, "Dunn Test")
+  openxlsx::writeData(wb, "Dunn Test", dunn_result$res)
+
+  # --- Dunn Matrix (p-values) ---
+  openxlsx::addWorksheet(wb, "Dunn Matrix (p)")
+  openxlsx::writeData(wb, "Dunn Matrix (p)", p_matrix_df, rowNames = TRUE)
+
+  # Apply numeric formatting (3 decimals)
+  p_style <- openxlsx::createStyle(numFmt = "0.000")
+
+  openxlsx::addStyle(
+    wb, "Dunn Matrix (p)", p_style,
+    rows = 2:(nrow(p_matrix_df) + 1),
+    cols = 2:(ncol(p_matrix_df) + 1),
+    gridExpand = TRUE
   )
+
+  # --- Dunn Matrix (significance) ---
+  openxlsx::addWorksheet(wb, "Dunn Matrix (sig)")
+  openxlsx::writeData(wb, "Dunn Matrix (sig)", sig_matrix_df, rowNames = TRUE)
+
+  # --- Optional Mann-Whitney ---
   if(!is.null(mann_whitney_df)) {
-    data_to_write[["Mann-Whitney"]] <- mann_whitney_df
+    openxlsx::addWorksheet(wb, "Mann-Whitney")
+    openxlsx::writeData(wb, "Mann-Whitney", mann_whitney_df)
   }
-  write_xlsx(data_to_write, paste0(base_file_name, ".xlsx"))
+
+  # --- Auto column width ---
+  for(sheet in openxlsx::sheets(wb)) {
+    openxlsx::setColWidths(wb, sheet, cols = 1:20, widths = "auto")
+  }
+
+  # Save workbook
+  openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
 
   # Step 16: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
