@@ -79,9 +79,9 @@ create_parent_dir <- function(path) {
 #' 
 #' 1. Filtering data to a specified epoch range and removing specified outliers.
 #' 2. Computing medians per SuperRank and median-of-medians per experiment.
-#' 3. Performing Kruskal-Wallis tests across experiments (groups).
-#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons.
-#' 5. Optionally performing Mann-Whitney U tests for 2-group subsets, saved in a separate Excel sheet.
+#' 3. Performing Kruskal-Wallis tests across experiments (groups), **two-sided by default**.
+#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons, **two-sided by default**.
+#' 5. Optionally performing Mann-Whitney U tests for 2-group subsets, **two-sided by default**, saved in a separate Excel sheet.
 #' 6. Calculating effect sizes (r) and significance labels.
 #' 7. Generating boxplots with optional median annotations and raw median points.
 #' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
@@ -109,9 +109,9 @@ create_parent_dir <- function(path) {
 #'         \itemize{
 #'           \item Excel sheets:
 #'             \describe{
-#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and p-value.}
-#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and adjusted p-values, sample size, effect size r, significance, and effect size strength.}
-#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
+#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and **two-sided** p-value.}
+#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and adjusted **two-sided** p-values, sample size, effect size r, significance, and effect size strength.}
+#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, **two-sided** p-value, significance, and method.}
 #'             }
 #'           \item Plots: PDF and SVG boxplots with optional annotations as defined by `mode`.
 #'         }
@@ -119,8 +119,8 @@ create_parent_dir <- function(path) {
 #' @details
 #' The function is designed to handle multiple experiments (groups) robustly:
 #' - Kruskal-Wallis and Dunn's post-hoc tests are always performed across the selected experiments.
-#'   - For comparisons with exactly two groups, the Kruskal-Wallis test produces a p-value identical to the Mann-Whitney U test.
-#'   - Dunn's test similarly produces the same p-value as Mann-Whitney for a single pair of groups.
+#'   - For comparisons with exactly two groups, the Kruskal-Wallis test produces a **two-sided** p-value identical to the Mann-Whitney U test.
+#'   - Dunn's test similarly produces the same **two-sided** p-value as Mann-Whitney for a single pair of groups.
 #' - For 2-group comparisons, an additional Mann-Whitney U test is performed and stored in a separate sheet for clarity.
 #' - For 3 or more groups, only Kruskal-Wallis and Dunn's tests are used for statistical inference.
 #' - Effect sizes (r) are computed as Z / sqrt(n), where n is the number of observations.
@@ -141,7 +141,7 @@ create_parent_dir <- function(path) {
 #' @seealso \code{\link[stats]{kruskal.test}}, \code{\link[FSA]{dunnTest}}, \code{\link[stats]{wilcox.test}}
 #' @import ggplot2
 #' @importFrom dplyr group_by summarise mutate
-#' @importFrom tidyr stack
+#' @importFrom tidyr stack separate
 #' @importFrom openxlsx write.xlsx
 #' @importFrom FSA dunnTest
 #' @export
@@ -218,6 +218,7 @@ analyze_data <- function(data,
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
 
   # Step 10a: Kruskal-Wallis test across versuch
+  # Note: Kruskal-Wallis is two-sided by default
   kruskal_result <- kruskal.test(form, data = subdata)
   kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                            parameter = kruskal_result$parameter,
@@ -233,6 +234,7 @@ analyze_data <- function(data,
     x <- subdata[[metric]][subdata$versuch == groups[1]]
     y <- subdata[[metric]][subdata$versuch == groups[2]]
 
+    # Mann-Whitney/Wilcoxon rank sum test, two-sided by default
     mw_result <- wilcox.test(x, y, exact = FALSE)
 
     # Effect size r = Z / sqrt(N)
@@ -265,6 +267,7 @@ analyze_data <- function(data,
   }
 
   # Step 11: Dunn's pairwise post-hoc test with Bonferroni correction
+  # Note: Dunn's test produces two-sided p-values by default
   dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
 
   # Step 12: Calculate effect size r and add significance
