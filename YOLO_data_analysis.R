@@ -118,8 +118,11 @@ create_parent_dir <- function(path) {
 #'
 #' @details
 #' The function is designed to handle multiple experiments (groups) robustly:
-#' - For 2-group comparisons, the Mann-Whitney U test is used for clarity, and its results are stored in a separate sheet.
-#' - For 3 or more groups, Kruskal-Wallis and Dunn's post-hoc test with Bonferroni correction are applied.
+#' - Kruskal-Wallis and Dunn's post-hoc tests are always performed across the selected experiments.
+#'   - For comparisons with exactly two groups, the Kruskal-Wallis test produces a p-value identical to the Mann-Whitney U test.
+#'   - Dunn's test similarly produces the same p-value as Mann-Whitney for a single pair of groups.
+#' - For 2-group comparisons, an additional Mann-Whitney U test is performed and stored in a separate sheet for clarity.
+#' - For 3 or more groups, only Kruskal-Wallis and Dunn's tests are used for statistical inference.
 #' - Effect sizes (r) are computed as Z / sqrt(n), where n is the number of observations.
 #' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
 #'
