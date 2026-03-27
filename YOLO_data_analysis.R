@@ -211,9 +211,13 @@ analyze_data <- function(data,
       TRUE         ~ "big"
     ))
 
-  # Step 14: Add sample size column and reorder columns
+  # Step 14: Add sample size column, reorder columns, and split Comparison into Group1/Group2
   dunn_result$res$n <- n
-  dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
+  # Split 'Comparison' into two separate columns
+  dunn_result$res <- dunn_result$res %>%
+    tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
+    # Reorder columns for clarity
+    select(Group1, Group2, Z, P.unadj, P.adj, n, r, significant, effect_size_strength)
 
   # Step 15: Export Kruskal-Wallis, Dunn, and optional Mann-Whitney results to excel
   data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
