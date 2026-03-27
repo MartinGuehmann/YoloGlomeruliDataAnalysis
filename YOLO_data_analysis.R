@@ -233,8 +233,8 @@ analyze_data <- function(data,
     groups <- levels(subdata$versuch)
     x <- subdata[[metric]][subdata$versuch == groups[1]]
     y <- subdata[[metric]][subdata$versuch == groups[2]]
-    
-    # Mann-Whitney/Wilcoxon rank sum test
+
+    # Mann-Whitney U test (implemented as Wilcoxon rank-sum test in R)
     # Note: This is a two-sided test by default (alternative = "two.sided")
     mw_result <- wilcox.test(x, y, exact = FALSE)
 
