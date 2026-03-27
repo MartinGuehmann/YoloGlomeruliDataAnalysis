@@ -378,6 +378,27 @@ analyze_data <- function(data,
     openxlsx::writeData(wb, "Mann-Whitney", mann_whitney_df)
   }
 
+  # --- Highlight significant cells
+  sig_highlight <- openxlsx::createStyle(bgFill = "#DCE6F1")
+
+  openxlsx::conditionalFormatting(
+    wb, "Dunn Matrix (p)",
+    cols = 2:(ncol(p_matrix_df)+1),
+    rows = 2:(nrow(p_matrix_df)+1),
+    rule = "<0.05",
+    style = sig_highlight
+  )
+
+  # --- Highlight diagonal
+  diag_style <- openxlsx::createStyle(fgFill = "#EEEEEE")
+
+  for(i in 1:nrow(p_matrix_df)) {
+    openxlsx::addStyle(
+      wb, "Dunn Matrix (p)", diag_style,
+      rows = i+1, cols = i+1, gridExpand = FALSE
+    )
+  }
+
   # --- Auto column width ---
   for(sheet in openxlsx::sheets(wb)) {
     openxlsx::setColWidths(wb, sheet, cols = 1:20, widths = "auto")
