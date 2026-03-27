@@ -145,13 +145,36 @@ analyze_data <- function(data,
   subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
 
-  # Step 10: Kruskal-Wallis test across versuch
+  # Step 10a: Kruskal-Wallis test across versuch
   kruskal_result <- kruskal.test(form, data = subdata)
   kruskal_df <- data.frame(statistic = kruskal_result$statistic,
                            parameter = kruskal_result$parameter,
                            p.value = kruskal_result$p.value,
                            method = kruskal_result$method,
                            data.name = kruskal_result$data.name)
+
+  # Step 10b: Optional Mann-Whitney U test for exactly 2 groups
+  group_count <- length(unique(subdata$versuch))
+  if(group_count == 2) {
+
+    groups <- levels(subdata$versuch)
+    x <- subdata[[metric]][subdata$versuch == groups[1]]
+    y <- subdata[[metric]][subdata$versuch == groups[2]]
+
+    mw_result <- wilcox.test(x, y, exact = FALSE)
+
+    # Create data frame
+    mann_whitney_df <- data.frame(
+      Group1 = groups[1],
+      Group2 = groups[2],
+      W = mw_result$statistic,
+      p.value = mw_result$p.value,
+      method = mw_result$method
+    )
+
+  } else {
+    mann_whitney_df <- NULL
+  }
 
   # Step 11: Dunn's pairwise post-hoc test with Bonferroni correction
   dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
@@ -176,8 +199,11 @@ analyze_data <- function(data,
   dunn_result$res$n <- n
   dunn_result$res <- dunn_result$res[, c("Comparison", "Z", "P.unadj", "P.adj", "n", "r", "significant", "effect_size_strength")]
 
-  # Step 15: Export Kruskal-Wallis and Dunn results to XLSX
+  # Step 15: Export Kruskal-Wallis, Dunn, and optional Mann-Whitney results to excel
   data_to_write <- list("Kruskal-Wallis" = kruskal_df, "Dunn Test" = dunn_result$res)
+  if(!is.null(mann_whitney_df)) {
+    data_to_write[["Mann-Whitney"]] <- mann_whitney_df
+  }
   write_xlsx(data_to_write, paste0(base_file_name, ".xlsx"))
 
   # Step 16: Create Plot
