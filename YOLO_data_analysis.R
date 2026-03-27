@@ -161,7 +161,7 @@ analyze_data <- function(data,
   n <- nrow(model.frame(form, data = subdata))
   dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
   alpha <- 0.05
-  dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Ja", "Nein")
+  dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Yes", "No")
 
   # Step 13: Add strength of effect size
   dunn_result$res <- dunn_result$res %>%
