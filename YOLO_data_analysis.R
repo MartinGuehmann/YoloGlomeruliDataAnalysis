@@ -86,10 +86,16 @@ create_parent_dir <- function(path) {
 #' 7. Generating boxplots with optional median annotations and raw median points.
 #' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
 #'
-#' @param data A data frame containing raw experimental data. Must include columns for `versuch`, `Epoche`, `SuperRank`, and the metric.
-#' @param experiments A character vector of experiment names (`versuch`) to include in the analysis.
-#' @param symbol_map A named list mapping experiment names to plotting symbols (e.g., letters or shapes).
-#' @param symbol_config A data frame with plotting symbol configuration, including shape and y-axis positions for the symbols.
+#' @param data A data frame containing raw experimental data. Must include columns for `versuch` (experiment name), `Epoche` (epoch number), `SuperRank` (replicate rank), and the metric specified in `metric`.
+#' @param experiments A character vector of experiment names (`versuch`) to include in the analysis. This defines the order of experiments in plots and tests.
+#' @param symbol_map A named list mapping experiment names to plotting symbols (e.g., letters or codes). Each element name must match an entry in `experiments`. Example: `list("Small"="A", "Medium"="B")`.
+#' @param symbol_config A data frame configuring symbol display. Must contain at least the following columns:
+#'   \describe{
+#'     \item{symbol}{Symbol code, matching values in `symbol_map`.}
+#'     \item{shape}{Integer or character representing the shape for ggplot2 `scale_shape_manual`.}
+#'     \item{y}{Numeric y-axis position for placing symbols above boxplots.}
+#'   }
+#'   Each `symbol` in `symbol_map` must have a corresponding row in `symbol_config`.
 #' @param metric A string specifying the column name of the metric to analyze.
 #' @param metric_name A string used as the y-axis label in plots.
 #' @param plot_title Optional string for the plot title (default `"Plot Title"`).
