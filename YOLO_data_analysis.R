@@ -73,6 +73,63 @@ create_parent_dir <- function(path) {
 # Functions #
 #############
 
+#' Analyze experimental data with non-parametric tests and annotated plots
+#'
+#' This function performs a full workflow for experimental metrics, including:
+#' 
+#' 1. Filtering data to a specified epoch range and removing specified outliers.
+#' 2. Computing medians per SuperRank and median-of-medians per experiment.
+#' 3. Performing Kruskal-Wallis tests across experiments (groups).
+#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons.
+#' 5. Optionally performing Mann-Whitney U tests for 2-group subsets, saved in a separate Excel sheet.
+#' 6. Calculating effect sizes (r) and significance labels.
+#' 7. Generating boxplots with optional median annotations and raw median points.
+#' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
+#'
+#' @param data A data frame containing raw experimental data. Must include columns for `versuch`, `Epoche`, `SuperRank`, and the metric.
+#' @param experiments A character vector of experiment names (`versuch`) to include in the analysis.
+#' @param symbol_map A named list mapping experiment names to plotting symbols (e.g., letters or shapes).
+#' @param symbol_config A data frame with plotting symbol configuration, including shape and y-axis positions for the symbols.
+#' @param metric A string specifying the column name of the metric to analyze.
+#' @param metric_name A string used as the y-axis label in plots.
+#' @param plot_title Optional string for the plot title (default `"Plot Title"`).
+#' @param base_file_name Base file name (without extension) for saved plots and Excel sheets (default `"plot"`).
+#' @param mode Optional plotting mode. `"default"` creates plain boxplots, `"annotated"` adds median-of-medians points and labels, `"red_raw_medians"` overlays raw median points in red.
+#' @param outlier_filter Optional list specifying outliers to remove, with elements `versuch` and `SuperRank` (default `list(versuch="001", SuperRank=6)`).
+#' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include (default `c(290, 299)`).
+#'
+#' @return Invisibly returns the ggplot object.  
+#'         Saves the following files to disk (prefix given by `base_file_name`):
+#'         \itemize{
+#'           \item Excel sheets:
+#'             \describe{
+#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and p-value.}
+#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and adjusted p-values, sample size, effect size r, significance, and effect size strength.}
+#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
+#'             }
+#'           \item Plots: PDF and SVG boxplots with optional annotations as defined by `mode`.
+#'         }
+#'
+#' @details
+#' The function is designed to handle multiple experiments (groups) robustly:
+#' - For 2-group comparisons, the Mann-Whitney U test is used for clarity, and its results are stored in a separate sheet.
+#' - For 3 or more groups, Kruskal-Wallis and Dunn's post-hoc test with Bonferroni correction are applied.
+#' - Effect sizes (r) are computed as Z / sqrt(n), where n is the number of observations.
+#' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
+#'
+#' @examples
+#' # Run analysis on small subset
+#' analyze_data(
+#'   data = my_data,
+#'   experiments = c("Small", "Medium", "Medium+Aug"),
+#'   symbol_map = list("Small"="A", "Medium"="B", "Medium+Aug"="C"),
+#'   symbol_config = symbol_config_df,
+#'   metric = "accuracy",
+#'   metric_name = "Accuracy",
+#'   plot_title = "YOLO Training Performance"
+#' )
+#'
+#' @export
 analyze_data <- function(data,
                          experiments,
                          symbol_map,
