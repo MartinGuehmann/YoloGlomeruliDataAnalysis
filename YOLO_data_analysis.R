@@ -118,7 +118,7 @@ create_parent_dir <- function(path) {
 #' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
 #'
 #' @examples
-#' # Run analysis on small subset
+#' # Run analysis on a small subset
 #' analyze_data(
 #'   data = my_data,
 #'   experiments = c("Small", "Medium", "Medium+Aug"),
@@ -129,6 +129,7 @@ create_parent_dir <- function(path) {
 #'   plot_title = "YOLO Training Performance"
 #' )
 #'
+#' @seealso \code{\link[stats]{kruskal.test}}, \code{\link[FSA]{dunnTest}}, \code{\link[stats]{wilcox.test}}
 #' @export
 analyze_data <- function(data,
                          experiments,
