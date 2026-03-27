@@ -136,6 +136,11 @@ create_parent_dir <- function(path) {
 #' )
 #'
 #' @seealso \code{\link[stats]{kruskal.test}}, \code{\link[FSA]{dunnTest}}, \code{\link[stats]{wilcox.test}}
+#' @import ggplot2
+#' @importFrom dplyr group_by summarise mutate
+#' @importFrom tidyr stack
+#' @importFrom openxlsx write.xlsx
+#' @importFrom FSA dunnTest
 #' @export
 analyze_data <- function(data,
                          experiments,
