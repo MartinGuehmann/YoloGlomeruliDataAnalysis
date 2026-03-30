@@ -541,11 +541,6 @@ analyze_data <- function(data,
       breaks = 0:3,
       labels = c("ns", "*", "**", "***")
     ) +
-    geom_text(aes(label = ifelse(is.na(Significance), "-", 
-                                 ifelse(Significance==0,"ns",
-                                        ifelse(Significance==1,"*",
-                                               ifelse(Significance==2,"**","***"))))),
-              color = "black", size = 4) +
     theme_minimal() +
     labs(title = "Dunn Post-Hoc Significance Heatmap") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
