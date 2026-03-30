@@ -517,7 +517,7 @@ analyze_data <- function(data,
     width = 5
   )
 
-  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side, squares, spread vertically)
+  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side, squares, spread horizontally with extra spacing)
   # a: Convert significance to numeric
   sig_numeric <- sig_matrix_df
   sig_numeric[sig_numeric == "-"] <- NA
@@ -551,15 +551,14 @@ analyze_data <- function(data,
   # Factor levels
   symbol_side$Group <- factor(symbol_side$Group, levels = levels(sig_melt$Group))
 
-  # Spread symbols vertically in their own column (0 = bottom, 1 = top)
+  # Spread symbols horizontally in their own column to the right
+  last_tile_x <- length(levels(sig_melt$Comparison))
+  symbol_spacing <- 0.8  # total width of symbol column
   symbol_side <- symbol_side %>%
     group_by(Group) %>%
-    mutate(ypos = as.numeric(Group) - 0.4 + seq(0, 0.8, length.out = length(symbol))) %>%
+    mutate(xpos = last_tile_x + 1 + seq(0, symbol_spacing, length.out = length(symbol)),  # horizontal spread
+           ypos = as.numeric(Group)) %>%
     ungroup()
-
-  # Place symbols in a dedicated extra column to the right of heatmap
-  symbol_column <- length(levels(sig_melt$Comparison)) + 1
-  symbol_side$xpos <- symbol_column
 
   # Heatmap plot
   heatmap_plot <- ggplot() +
@@ -575,11 +574,11 @@ analyze_data <- function(data,
     geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
     scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
-    # x-axis: extend to include symbol column
+    # x-axis: extend to include wider symbol column
     scale_x_continuous(
-      breaks = 1:symbol_column,
+      breaks = 1:(last_tile_x + 1),
       labels = c(levels(sig_melt$Comparison), "Symbols"),
-      expand = c(0,0)
+      expand = c(0.05,0.05)  # small extra spacing to prevent clipping
     ) +
     scale_y_continuous(
       breaks = 1:length(levels(sig_melt$Group)),
@@ -595,13 +594,13 @@ analyze_data <- function(data,
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
     plot = heatmap_plot,
-    width = 8,
+    width = 11,  # wider to fit symbols
     height = 5
   )
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.svg"),
     plot = heatmap_plot,
-    width = 8,
+    width = 11,  # wider to fit symbols
     height = 5
   )
 
