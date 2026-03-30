@@ -333,19 +333,10 @@ analyze_data <- function(data,
   }
 
   # Fill diagonal with "-"
-  diag(p_matrix) <- NA
   diag(sig_matrix) <- "-"
 
   # Convert to data frames for Excel
   p_matrix_df <- as.data.frame(p_matrix)
-  # Convert to numeric except diagonal
-  for (i in seq_len(nrow(p_matrix_df))) {
-    for (j in seq_len(ncol(p_matrix_df))) {
-      if (i != j) {
-        p_matrix_df[i, j] <- as.numeric(p_matrix_df[i, j])
-      }
-    }
-  }
 
   sig_matrix_df <- as.data.frame(sig_matrix)
 
@@ -362,36 +353,44 @@ analyze_data <- function(data,
 
   # --- Dunn Matrix (p-values) ---
   openxlsx::addWorksheet(wb, "Dunn Matrix (p)")
-  openxlsx::writeData(wb, "Dunn Matrix (p)", p_matrix_df, rowNames = TRUE)
-
-  # Apply numeric formatting (3 decimals)
-  p_style <- openxlsx::createStyle(numFmt = "0.00E+00")
-
-  for (i in seq_len(nrow(p_matrix_df))) {
-    openxlsx::addStyle(
-      wb,
-      sheet = "Dunn Matrix (p)",
-      style = p_style,
-      rows = i + 1,
-      cols = setdiff(2:(ncol(p_matrix_df) + 1), i + 1),
-      gridExpand = FALSE
-    )
-  }
-
-  # --- Dunn Matrix (significance) ---
-  openxlsx::addWorksheet(wb, "Dunn Matrix (sig)")
   openxlsx::writeData(
     wb,
     "Dunn Matrix (p)",
     p_matrix_df,
     rowNames = TRUE,
-    keepNA = TRUE
+    keepNA = FALSE
   )
+
+  # Apply numeric formatting (3 decimals)
+  p_style <- openxlsx::createStyle(numFmt = "0.00E+00;-0.00E+00;\"-\"")
+
+  openxlsx::addStyle(
+    wb,
+    sheet = "Dunn Matrix (p)",
+    style = p_style,
+    rows = 2:(nrow(p_matrix_df) + 1),
+    cols = 2:(ncol(p_matrix_df) + 1),
+    gridExpand = TRUE
+  )
+
+  # --- Dunn Matrix (significance) ---
+  openxlsx::addWorksheet(wb, "Dunn Matrix (sig)")
+  openxlsx::writeData(wb, "Dunn Matrix (sig)", sig_matrix_df, rowNames = TRUE)
 
   # --- Optional Mann-Whitney ---
   if(!is.null(mann_whitney_df)) {
     openxlsx::addWorksheet(wb, "Mann-Whitney")
     openxlsx::writeData(wb, "Mann-Whitney", mann_whitney_df)
+  }
+
+  for(i in seq_len(nrow(p_matrix_df))) {
+    openxlsx::writeData(
+      wb,
+      "Dunn Matrix (p)",
+      "-",
+      startRow = i + 1,
+      startCol = i + 1
+    )
   }
 
   # --- Highlight significant cells
