@@ -535,7 +535,7 @@ analyze_data <- function(data,
   heatmap_plot <- ggplot(sig_melt, aes(x = Comparison, y = Group, fill = Significance)) +
     geom_tile(color = "white") +
     scale_fill_gradientn(
-      colors = c("white", "lightblue", "dodgerblue", "navy"),
+      colors = c("white", "#FFC0C0", "#FF6666", "#990000"), # light to dark red
       limits = c(0, 3),
       na.value = "grey90",
       breaks = 0:3,
