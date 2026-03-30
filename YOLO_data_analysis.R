@@ -21,6 +21,7 @@ library(readxl)
 library(writexl)
 library(FSA)
 library(stringr)
+library(openxlsx)
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
@@ -403,6 +404,10 @@ analyze_data <- function(data,
   for(sheet in openxlsx::sheets(wb)) {
     openxlsx::setColWidths(wb, sheet, cols = 1:20, widths = "auto")
   }
+
+  # Freeze header row and column
+  openxlsx::freezePane(wb, "Dunn Matrix (p)", firstRow = TRUE, firstCol = TRUE)
+  openxlsx::freezePane(wb, "Dunn Matrix (sig)", firstRow = TRUE, firstCol = TRUE)
 
   # Save workbook
   openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
