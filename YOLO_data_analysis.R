@@ -360,7 +360,7 @@ analyze_data <- function(data,
   openxlsx::writeData(wb, "Dunn Matrix (p)", p_matrix_df, rowNames = TRUE)
 
   # Apply numeric formatting (3 decimals)
-  p_style <- openxlsx::createStyle(numFmt = "0.000")
+  p_style <- openxlsx::createStyle(numFmt = "0.00E+00")
 
   openxlsx::addStyle(
     wb, "Dunn Matrix (p)", p_style,
