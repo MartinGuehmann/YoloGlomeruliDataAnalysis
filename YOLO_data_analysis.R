@@ -531,7 +531,11 @@ analyze_data <- function(data,
   # Melt for ggplot
   sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", variable.name = "Comparison", value.name = "Significance")
 
-  # Heatmap plot
+  # Fix factor levels to match original experiment order
+  sig_melt$Group      <- factor(sig_melt$Group, levels = groups)
+  sig_melt$Comparison <- factor(sig_melt$Comparison, levels = groups)
+
+  # Heatmap plot with red scale, no asterisks on tiles
   heatmap_plot <- ggplot(sig_melt, aes(x = Comparison, y = Group, fill = Significance)) +
     geom_tile(color = "white") +
     scale_fill_gradientn(
