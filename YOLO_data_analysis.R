@@ -516,7 +516,54 @@ analyze_data <- function(data,
     width = 5
   )
 
-  # Step 19: Return plot object explicitly (invisible)
+  # Step 19: Dunn Significance Heatmap
+  # Convert significance to numeric
+  sig_numeric <- sig_matrix_df
+  sig_numeric[sig_numeric == "-"] <- NA
+  sig_numeric[sig_numeric == "ns"] <- 0
+  sig_numeric[sig_numeric == "*"]  <- 1
+  sig_numeric[sig_numeric == "**"] <- 2
+  sig_numeric[sig_numeric == "***"]<- 3
+  sig_numeric <- apply(sig_numeric, 2, as.numeric)
+  sig_numeric <- as.data.frame(sig_numeric)
+  sig_numeric$Group <- rownames(sig_numeric)
+
+  # Melt for ggplot
+  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", variable.name = "Comparison", value.name = "Significance")
+
+  # Heatmap plot
+  heatmap_plot <- ggplot(sig_melt, aes(x = Comparison, y = Group, fill = Significance)) +
+    geom_tile(color = "white") +
+    scale_fill_gradientn(
+      colors = c("white", "lightblue", "dodgerblue", "navy"),
+      limits = c(0, 3),
+      na.value = "grey90",
+      breaks = 0:3,
+      labels = c("ns", "*", "**", "***")
+    ) +
+    geom_text(aes(label = ifelse(is.na(Significance), "-", 
+                                 ifelse(Significance==0,"ns",
+                                        ifelse(Significance==1,"*",
+                                               ifelse(Significance==2,"**","***"))))),
+              color = "black", size = 4) +
+    theme_minimal() +
+    labs(title = "Dunn Post-Hoc Significance Heatmap") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  ggsave(
+    filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5
+  )
+  ggsave(
+    filename = paste0(base_file_name, "_dunn_heatmap.svg"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5
+  )
+
+  # Step 20: Return plot object explicitly (invisible)
   return(invisible(p))
 }
 
