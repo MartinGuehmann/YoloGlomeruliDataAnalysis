@@ -534,8 +534,8 @@ analyze_data <- function(data,
   sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", 
                              variable.name = "Comparison", value.name = "Significance")
 
-  # Ensure ordering matches original experiment order
-  sig_melt$Group <- factor(sig_melt$Group, levels = rownames(sig_matrix_df))
+  # Ensure ordering matches original experiment order and the excel order
+  sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
   sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
 
   # Heatmap plot with red scale, no asterisks on tiles
