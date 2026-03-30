@@ -22,6 +22,7 @@ library(writexl)
 library(FSA)
 library(stringr)
 library(openxlsx)
+library(reshape2)
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
@@ -516,31 +517,54 @@ analyze_data <- function(data,
     width = 5
   )
 
-  # Step 19: Dunn Significance Heatmap
-  # Convert significance to numeric
+  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side, squares, spread vertically)
+  # a: Convert significance to numeric
   sig_numeric <- sig_matrix_df
   sig_numeric[sig_numeric == "-"] <- NA
   sig_numeric[sig_numeric == "ns"] <- 0
   sig_numeric[sig_numeric == "*"]  <- 1
   sig_numeric[sig_numeric == "**"] <- 2
   sig_numeric[sig_numeric == "***"]<- 3
-  sig_numeric <- apply(sig_numeric, 2, as.numeric)
-  sig_numeric <- as.data.frame(sig_numeric)
+  sig_numeric <- as.data.frame(apply(sig_numeric, 2, as.numeric))
 
   # Add Group names explicitly from rownames
   sig_numeric$Group <- rownames(sig_matrix_df)
 
   # Melt for ggplot
-  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", 
+  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group",
                              variable.name = "Comparison", value.name = "Significance")
 
   # Ensure ordering matches original experiment order and the excel order
   sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
   sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
 
-  # Heatmap plot with red scale, no asterisks on tiles
-  heatmap_plot <- ggplot(sig_melt, aes(x = Comparison, y = Group, fill = Significance)) +
-    geom_tile(color = "white") +
+  # b: Prepare symbol positions
+  symbol_side <- data.frame(
+    Group = rep(names(symbol_map), lengths(symbol_map)),
+    symbol = unlist(symbol_map),
+    stringsAsFactors = FALSE
+  )
+  
+  # Merge with shape info
+  symbol_side <- merge(symbol_side, symbol_config, by = "symbol", all.x = TRUE)
+
+  # Factor levels
+  symbol_side$Group <- factor(symbol_side$Group, levels = levels(sig_melt$Group))
+
+  # Spread symbols vertically in their own column (0 = bottom, 1 = top)
+  symbol_side <- symbol_side %>%
+    group_by(Group) %>%
+    mutate(ypos = as.numeric(Group) - 0.4 + seq(0, 0.8, length.out = length(symbol))) %>%
+    ungroup()
+
+  # Place symbols in a dedicated extra column to the right of heatmap
+  symbol_column <- length(levels(sig_melt$Comparison)) + 1
+  symbol_side$xpos <- symbol_column
+
+  # Heatmap plot
+  heatmap_plot <- ggplot() +
+    geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
+              color = "white") +
     scale_fill_gradientn(
       colors = c("white", "#FFC0C0", "#FF6666", "#990000"), # light to dark red
       limits = c(0, 3),
@@ -548,20 +572,36 @@ analyze_data <- function(data,
       breaks = 0:3,
       labels = c("ns", "*", "**", "***")
     ) +
+    geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
+               size = 3, color = "black") +
+    scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
+    # x-axis: extend to include symbol column
+    scale_x_continuous(
+      breaks = 1:symbol_column,
+      labels = c(levels(sig_melt$Comparison), "Symbols"),
+      expand = c(0,0)
+    ) +
+    scale_y_continuous(
+      breaks = 1:length(levels(sig_melt$Group)),
+      labels = levels(sig_melt$Group),
+      expand = c(0,0)
+    ) +
+    coord_fixed(ratio = 1) +  # <- ensures square tiles
     theme_minimal() +
     labs(title = "Dunn Post-Hoc Significance Heatmap") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+  # d: Save plots
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
     plot = heatmap_plot,
-    width = 6,
+    width = 8,
     height = 5
   )
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.svg"),
     plot = heatmap_plot,
-    width = 6,
+    width = 8,
     height = 5
   )
 
