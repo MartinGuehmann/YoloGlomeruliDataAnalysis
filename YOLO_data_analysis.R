@@ -526,14 +526,17 @@ analyze_data <- function(data,
   sig_numeric[sig_numeric == "***"]<- 3
   sig_numeric <- apply(sig_numeric, 2, as.numeric)
   sig_numeric <- as.data.frame(sig_numeric)
-  sig_numeric$Group <- rownames(sig_numeric)
+
+  # Add Group names explicitly from rownames
+  sig_numeric$Group <- rownames(sig_matrix_df)
 
   # Melt for ggplot
-  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", variable.name = "Comparison", value.name = "Significance")
+  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group", 
+                             variable.name = "Comparison", value.name = "Significance")
 
-  # Fix factor levels to match original experiment order
-  sig_melt$Group      <- factor(sig_melt$Group, levels = groups)
-  sig_melt$Comparison <- factor(sig_melt$Comparison, levels = groups)
+  # Ensure ordering matches original experiment order
+  sig_melt$Group <- factor(sig_melt$Group, levels = rownames(sig_matrix_df))
+  sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
 
   # Heatmap plot with red scale, no asterisks on tiles
   heatmap_plot <- ggplot(sig_melt, aes(x = Comparison, y = Group, fill = Significance)) +
