@@ -341,7 +341,7 @@ analyze_data <- function(data,
   diag(p_matrix_display) <- "-"
 
   # Convert to data frames for Excel
-  p_matrix_df <- as.data.frame(p_matrix_display)
+  p_matrix_df <- as.data.frame(lapply(as.data.frame(p_matrix), as.numeric))
   sig_matrix_df <- as.data.frame(sig_matrix)
 
   # Step 15: Export results to Excel with openxlsx
