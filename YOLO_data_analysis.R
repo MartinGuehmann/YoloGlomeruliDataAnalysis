@@ -567,7 +567,7 @@ analyze_data <- function(data,
 
   # b2: Prepare top annotation symbols (same spread logic, rotated above heatmap)
   top_symbols <- symbol_side %>%
-    # keep one row per symbol
+    # Keep one row per symbol
     group_by(Group) %>%
     mutate(
       xpos = as.numeric(factor(Group, levels = colnames(sig_matrix_df))), # Align above each heatmap column
@@ -577,7 +577,7 @@ analyze_data <- function(data,
 
   # Heatmap plot with symbols in the same panel
   heatmap_plot <- ggplot() +
-    # heatmap tiles
+    # Heatmap tiles
     geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
               color = "white") +
     scale_fill_gradientn(
@@ -587,13 +587,13 @@ analyze_data <- function(data,
       breaks = 0:3,
       labels = c("ns", "*", "**", "***")
     ) +
-    # right-side symbols
+    # Right-side symbols
     geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
-    # top symbols above heatmap
+    # Top symbols above heatmap
     geom_point(data = top_symbols, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
-    # shape legend mapping
+    # Shape legend mapping
     scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
     # x-axis (heatmap columns)
     scale_x_continuous(
@@ -607,7 +607,7 @@ analyze_data <- function(data,
       labels = levels(sig_melt$Group),
       expand = c(0, 0)
     ) +
-    # ensure square tiles and expand y-limits to fit top symbols
+    # Ensure square tiles and expand y-limits to fit top symbols
     coord_fixed(
       ratio = 1,
       xlim = c(0.5, max(symbol_side$xpos) + 0.5),
