@@ -553,10 +553,10 @@ analyze_data <- function(data,
 
   # Spread symbols horizontally in their own column to the right
   last_tile_x <- length(levels(sig_melt$Comparison))
-  symbol_spacing <- 2.4  # total width of symbol column
+  symbol_col_width <- 2.4  # Total width of symbol column
   symbol_side <- symbol_side %>%
     group_by(Group) %>%
-    mutate(xpos = last_tile_x + 1 + seq(0, symbol_spacing, length.out = length(symbol)),  # horizontal spread
+    mutate(xpos = last_tile_x + 1 + seq(0, symbol_col_width, length.out = length(symbol)),  # horizontal spread
            ypos = as.numeric(Group)) %>%
     ungroup()
 
