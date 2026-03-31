@@ -518,7 +518,7 @@ analyze_data <- function(data,
     width = 5
   )
 
-  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread horizontally with extra spacing)
+  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   # a: Convert significance to numeric
   sig_numeric <- sig_matrix_df
   sig_numeric[sig_numeric == "-"] <- NA
@@ -539,7 +539,7 @@ analyze_data <- function(data,
   sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
   sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
 
-  # b: Prepare symbol positions for side (right) symbols
+  # b: Prepare symbol positions for right-side
   symbol_side <- data.frame(
     Group = rep(names(symbol_map), lengths(symbol_map)),
     symbol = unlist(symbol_map),
@@ -565,14 +565,15 @@ analyze_data <- function(data,
     ) %>%
     ungroup()
 
-  # b2: Prepare top annotation symbols
+  # b2: Prepare top annotation symbols (same spread logic, rotated above heatmap)
   top_symbols <- symbol_side %>%
-    # Align horizontally with heatmap columns
+    # keep one row per symbol
+    group_by(Group) %>%
     mutate(
-      xpos = as.numeric(sig_melt$Comparison[match(Group, sig_melt$Group)]),
-      # Place slightly above top row, scaled by y offsets
-      ypos = length(levels(sig_melt$Group)) + 1 + (y - 1) * 0.3
-    )
+      xpos = as.numeric(Group),                          # Align above each heatmap column
+      ypos = last_tile_x + x_offset - (y - 1) * x_scale, # spread symbols vertically using y-offset
+    ) %>%
+    ungroup()
 
   # Heatmap plot with symbols in the same panel
   heatmap_plot <- ggplot() +
