@@ -553,11 +553,14 @@ analyze_data <- function(data,
 
   # Spread symbols horizontally in their own column to the right
   last_tile_x <- length(levels(sig_melt$Comparison))
-  symbol_col_width <- 2.4  # Total width of symbol column
+  x_scale <- 20   # controls how wide the symbols spread
+
   symbol_side <- symbol_side %>%
     group_by(Group) %>%
-    mutate(xpos = last_tile_x + 1 + seq(0, symbol_col_width, length.out = length(symbol)),  # horizontal spread
-           ypos = as.numeric(Group)) %>%
+    mutate(
+      xpos = last_tile_x + 5 - (y - 1) * x_scale,
+      ypos = as.numeric(Group)
+    ) %>%
     ungroup()
 
   # Heatmap plot
@@ -585,7 +588,7 @@ analyze_data <- function(data,
       labels = levels(sig_melt$Group),
       expand = c(0, 0)
     ) +
-    coord_fixed(ratio = 1) +  # <- ensures square tiles
+    coord_fixed(ratio = 1, xlim = c(0.5, max(symbol_side$xpos) + 0.5))
     theme_minimal() +
     labs(title = "Dunn Post-Hoc Significance Heatmap") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
