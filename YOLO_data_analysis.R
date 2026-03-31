@@ -454,6 +454,7 @@ analyze_data <- function(data,
     ggtitle(plot_title) +
     theme(
       plot.title = element_text(color = "black", size = 9, hjust = 0.5),
+      plot.title.position = "plot",
       axis.text.x = element_text(size = 6),
       panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
       panel.grid.minor.y = element_blank()
@@ -626,7 +627,8 @@ analyze_data <- function(data,
       legend.margin = margin(t = 10, r = 10, b = 10, l = 10),      # Adds padding around legend box
       legend.spacing.y = unit(0.5, "cm"),                          # Increases vertical spacing between items
       legend.spacing.x = unit(0.5, "cm"),                          # Increases horizontal spacing between items
-      plot.title = element_text(hjust = 0.5)                       # Center the plot title
+      plot.title = element_text(hjust = 0.5),                      # Center the plot title
+      plot.title.position = "plot"
     )
 
   # d: Save plots
