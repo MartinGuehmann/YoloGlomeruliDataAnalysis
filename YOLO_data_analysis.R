@@ -518,7 +518,7 @@ analyze_data <- function(data,
     width = 5
   )
 
-  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side, squares, spread horizontally with extra spacing)
+  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread horizontally with extra spacing)
   # a: Convert significance to numeric
   sig_numeric <- sig_matrix_df
   sig_numeric[sig_numeric == "-"] <- NA
@@ -539,7 +539,7 @@ analyze_data <- function(data,
   sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
   sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
 
-  # b: Prepare symbol positions
+  # b: Prepare symbol positions for side (right) symbols
   symbol_side <- data.frame(
     Group = rep(names(symbol_map), lengths(symbol_map)),
     symbol = unlist(symbol_map),
@@ -565,6 +565,15 @@ analyze_data <- function(data,
     ) %>%
     ungroup()
 
+  # b2: Prepare top annotation symbols
+  top_symbols <- symbol_side %>%
+    # Align horizontally with heatmap columns
+    mutate(
+      xpos = as.numeric(sig_melt$Comparison[match(Group, sig_melt$Group)]),
+      # Place slightly above top row, scaled by y offsets
+      ypos = length(levels(sig_melt$Group)) + 1 + (y - 1) * 0.3
+    )
+
   # Heatmap plot with symbols in the same panel
   heatmap_plot <- ggplot() +
     # heatmap tiles
@@ -577,21 +586,32 @@ analyze_data <- function(data,
       breaks = 0:3,
       labels = c("ns", "*", "**", "***")
     ) +
-    # symbols
+    # right-side symbols
     geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
+    # top symbols above heatmap
+    geom_point(data = top_symbols, aes(x = xpos, y = ypos, shape = symbol),
+               size = 3, color = "black") +
+    # shape legend mapping
     scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
+    # x-axis (heatmap columns)
     scale_x_continuous(
       breaks = 1:last_tile_x,
       labels = levels(sig_melt$Comparison),
       expand = c(0, 0)
     ) +
+    # y-axis (heatmap rows)
     scale_y_continuous(
       breaks = 1:length(levels(sig_melt$Group)),
       labels = levels(sig_melt$Group),
       expand = c(0, 0)
     ) +
-    coord_fixed(ratio = 1, xlim = c(0.5, max(symbol_side$xpos) + 0.5)) +  # extend x-limits to fit symbols
+    # ensure square tiles and expand y-limits to fit top symbols
+    coord_fixed(
+      ratio = 1,
+      xlim = c(0.5, max(symbol_side$xpos) + 0.5),
+      ylim = c(0.5, length(levels(sig_melt$Group)) + 2)
+    ) +
     theme_minimal() +
     labs(
       title = "Dunn Post-Hoc Significance Heatmap",
