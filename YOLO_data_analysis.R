@@ -598,7 +598,11 @@ analyze_data <- function(data,
     geom_point(data = top_symbols, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
     # Shape legend mapping
-    scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
+    scale_shape_manual(
+      values = setNames(symbol_config$shape, symbol_config$symbol),
+      breaks = legend_symbols,
+      na.translate = FALSE
+    ) +
     # x-axis (heatmap columns)
     scale_x_continuous(
       breaks = 1:last_tile_x,
