@@ -615,7 +615,7 @@ analyze_data <- function(data,
     ) +
     theme_minimal() +
     labs(
-      title = "Dunn Post-Hoc Significance Heatmap",
+      title = paste0(plot_title, " Significance Heatmap"),
       x = "Experiment",
       y = "Experiment"
     ) +
