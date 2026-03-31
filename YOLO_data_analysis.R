@@ -23,6 +23,7 @@ library(FSA)
 library(stringr)
 library(openxlsx)
 library(reshape2)
+library(patchwork)
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
@@ -544,7 +545,7 @@ analyze_data <- function(data,
     symbol = unlist(symbol_map),
     stringsAsFactors = FALSE
   )
-  
+
   # Merge with shape info
   symbol_side <- merge(symbol_side, symbol_config, by = "symbol", all.x = TRUE)
 
@@ -553,18 +554,20 @@ analyze_data <- function(data,
 
   # Spread symbols horizontally in their own column to the right
   last_tile_x <- length(levels(sig_melt$Comparison))
-  x_scale <- 20   # controls how wide the symbols spread
+  x_scale <- 20   # Controls how wide the symbols spread using y-offset as scaling
+  x_offset <- 5   # Horizontal offset for symbols to the right of tiles
 
   symbol_side <- symbol_side %>%
     group_by(Group) %>%
     mutate(
-      xpos = last_tile_x + 5 - (y - 1) * x_scale,
+      xpos = last_tile_x + x_offset - (y - 1) * x_scale,
       ypos = as.numeric(Group)
     ) %>%
     ungroup()
 
-  # Heatmap plot
+  # Heatmap plot with symbols in the same panel
   heatmap_plot <- ggplot() +
+    # heatmap tiles
     geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
               color = "white") +
     scale_fill_gradientn(
@@ -574,13 +577,13 @@ analyze_data <- function(data,
       breaks = 0:3,
       labels = c("ns", "*", "**", "***")
     ) +
+    # symbols
     geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
                size = 3, color = "black") +
     scale_shape_manual(values = setNames(symbol_config$shape, symbol_config$symbol), na.translate = FALSE) +
-    # x-axis: extend to include wider symbol column
     scale_x_continuous(
-      breaks = 1:(last_tile_x + 1),
-      labels = c(levels(sig_melt$Comparison), "Symbols"),
+      breaks = 1:last_tile_x,
+      labels = levels(sig_melt$Comparison),
       expand = c(0, 0)
     ) +
     scale_y_continuous(
@@ -588,10 +591,14 @@ analyze_data <- function(data,
       labels = levels(sig_melt$Group),
       expand = c(0, 0)
     ) +
-    coord_fixed(ratio = 1, xlim = c(0.5, max(symbol_side$xpos) + 0.5))
+    coord_fixed(ratio = 1, xlim = c(0.5, max(symbol_side$xpos) + 0.5)) +  # extend x-limits to fit symbols
     theme_minimal() +
     labs(title = "Dunn Post-Hoc Significance Heatmap") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA)
+    )
 
   # d: Save plots
   ggsave(
@@ -603,7 +610,7 @@ analyze_data <- function(data,
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.svg"),
     plot = heatmap_plot,
-    width = 11,  # wider to fit symbols
+    width = 11,
     height = 5
   )
 
