@@ -611,7 +611,7 @@ analyze_data <- function(data,
     coord_fixed(
       ratio = 1,
       xlim = c(0.5, max(symbol_side$xpos) + 0.5),
-      ylim = c(0.5, length(levels(sig_melt$Group)) + 2)
+      ylim = c(0.5, max(top_symbols$ypos) + 0.5)
     ) +
     theme_minimal() +
     labs(
