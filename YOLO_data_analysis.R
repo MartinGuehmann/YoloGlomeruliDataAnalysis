@@ -593,7 +593,11 @@ analyze_data <- function(data,
     ) +
     coord_fixed(ratio = 1, xlim = c(0.5, max(symbol_side$xpos) + 0.5)) +  # extend x-limits to fit symbols
     theme_minimal() +
-    labs(title = "Dunn Post-Hoc Significance Heatmap") +
+    labs(
+      title = "Dunn Post-Hoc Significance Heatmap",
+      x = "Experiment",
+      y = "Experiment"
+    ) +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       panel.grid = element_blank(),
