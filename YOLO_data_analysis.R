@@ -597,7 +597,10 @@ analyze_data <- function(data,
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       panel.grid = element_blank(),
-      panel.background = element_rect(fill = "white", color = NA)
+      panel.background = element_rect(fill = "white", color = NA),
+      legend.margin = margin(t = 10, r = 10, b = 10, l = 10),    # adds padding around legend box
+      legend.spacing.y = unit(0.5, "cm"),                         # increases vertical spacing between items
+      legend.spacing.x = unit(0.5, "cm")                          # increases horizontal spacing between items
     )
 
   # d: Save plots
