@@ -635,13 +635,13 @@ analyze_data <- function(data,
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
     plot = heatmap_plot,
-    width = 11,  # wider to fit symbols
+    width = 6,
     height = 5
   )
   ggsave(
     filename = paste0(base_file_name, "_dunn_heatmap.svg"),
     plot = heatmap_plot,
-    width = 11,
+    width = 6,
     height = 5
   )
 
