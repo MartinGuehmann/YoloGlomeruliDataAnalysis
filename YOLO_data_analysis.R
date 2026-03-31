@@ -427,6 +427,8 @@ analyze_data <- function(data,
   # Save workbook
   openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
 
+  breaks_main <- as.numeric(sprintf("%.1f", seq(0, 1, 0.1)))
+
   # Step 16: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.2, width = 0.6) +
@@ -446,10 +448,11 @@ analyze_data <- function(data,
     ) +
     geom_hline(yintercept = 1) +
     scale_y_continuous(
-      limits       = c(0, 1.25),
-      expand       = c(0, 0),
-      breaks       = seq(0, 1, 0.1),
-      minor_breaks = seq(0, 1, 0.01)
+      limits = c(0, 1.25),
+      expand = c(0, 0),
+      breaks = breaks_main,
+      labels = breaks_main,
+      minor_breaks = NULL
     ) +
     ggtitle(plot_title) +
     theme(
