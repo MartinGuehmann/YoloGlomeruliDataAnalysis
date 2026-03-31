@@ -570,8 +570,8 @@ analyze_data <- function(data,
     # keep one row per symbol
     group_by(Group) %>%
     mutate(
-      xpos = as.numeric(Group),                          # Align above each heatmap column
-      ypos = last_tile_x + x_offset - (y - 1) * x_scale, # spread symbols vertically using y-offset
+      xpos = as.numeric(factor(Group, levels = colnames(sig_matrix_df))), # Align above each heatmap column
+      ypos = last_tile_x + x_offset - (y - 1) * x_scale,                  # spread symbols vertically using y-offset
     ) %>%
     ungroup()
 
