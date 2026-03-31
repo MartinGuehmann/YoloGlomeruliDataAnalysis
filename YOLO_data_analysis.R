@@ -578,12 +578,12 @@ analyze_data <- function(data,
     scale_x_continuous(
       breaks = 1:(last_tile_x + 1),
       labels = c(levels(sig_melt$Comparison), "Symbols"),
-      expand = c(0.05,0.05)  # small extra spacing to prevent clipping
+      expand = c(0, 0)
     ) +
     scale_y_continuous(
       breaks = 1:length(levels(sig_melt$Group)),
       labels = levels(sig_melt$Group),
-      expand = c(0,0)
+      expand = c(0, 0)
     ) +
     coord_fixed(ratio = 1) +  # <- ensures square tiles
     theme_minimal() +
