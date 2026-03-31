@@ -555,12 +555,12 @@ analyze_data <- function(data,
   # Spread symbols horizontally in their own column to the right
   last_tile_x <- length(levels(sig_melt$Comparison))
   x_scale <- 20   # Controls how wide the symbols spread using y-offset as scaling
-  x_offset <- 5   # Horizontal offset for symbols to the right of tiles
+  x_offset <- 0   # Horizontal offset for symbols to the right of tiles
 
   symbol_side <- symbol_side %>%
     group_by(Group) %>%
     mutate(
-      xpos = last_tile_x + x_offset - (y - 1) * x_scale,
+      xpos = last_tile_x + x_offset + (y - 1) * x_scale,
       ypos = as.numeric(Group)
     ) %>%
     ungroup()
@@ -571,7 +571,7 @@ analyze_data <- function(data,
     group_by(Group) %>%
     mutate(
       xpos = as.numeric(factor(Group, levels = colnames(sig_matrix_df))), # Align above each heatmap column
-      ypos = last_tile_x + x_offset - (y - 1) * x_scale,                  # spread symbols vertically using y-offset
+      ypos = last_tile_x + x_offset + (y - 1) * x_scale,                  # spread symbols vertically using y-offset
     ) %>%
     ungroup()
 
