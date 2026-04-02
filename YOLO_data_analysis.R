@@ -85,7 +85,7 @@ create_parent_dir <- function(path) {
 #' 3. Using a Kruskal-Wallis test to compare experiments (groups), reporting two-sided p-values.
 #' 4. Following up with Dunn's post-hoc test with Bonferroni correction for multiple comparisons, reporting two-sided p-values.
 #' 5. Optionally using a Mann-Whitney U test (Wilcoxon rank-sum) for 2-group cases, reporting a two-sided p-value, saved in a separate Excel sheet.
-#' 6. Calculating effect sizes (r) and significance labels.
+#' 6. Calculating effect sizes (r) for each pairwise comparison using the pairwise sample size (`n_pair`), along with significance labels and effect size strength.
 #' 7. Generating boxplots with optional median annotations and raw median points.
 #' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
 #'
@@ -113,7 +113,7 @@ create_parent_dir <- function(path) {
 #'           \item Excel sheets:
 #'             \describe{
 #'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and p-value.}
-#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and Bonferroni-adjusted p-values, total sample size, effect size r, significance, and effect size strength.}
+#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and Bonferroni-adjusted p-values, pairwise sample size (`n_pair`), effect size r, significance, and effect size strength.}
 #'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
 #'             }
 #'           \item Plots: PDF and SVG boxplots with optional annotations as defined by `mode`.
@@ -126,7 +126,7 @@ create_parent_dir <- function(path) {
 #'   - The Kruskal-Wallis test is mathematically related to the Mann-Whitney U test, but p-values may differ slightly due to implementation details (e.g., tie handling and approximations).
 #'   - An additional Mann-Whitney U test is computed explicitly for clarity and reported separately.
 #' - For three or more groups, inference is based on Kruskal-Wallis followed by Dunn's test.
-#' - Effect sizes are computed as r = Z / sqrt(n), where n is the total number of observations used in the test.
+#' - Effect sizes for Dunn's test are computed as r = Z / sqrt(n_pair), where n_pair is the number of observations in the pairwise comparison.
 #' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
 #'
 #' @examples
