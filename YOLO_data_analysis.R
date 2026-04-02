@@ -52,6 +52,27 @@ output_dir <- paste0(script_dir, "/output")
 # Helper functions #
 ####################
 
+#' Convert a string to a file-safe name (without extension)
+#'
+#' This helper function takes a character string and converts it into a file-system-safe
+#' name by replacing spaces and non-alphanumeric characters with underscores. Multiple
+#' consecutive underscores are collapsed into one, and leading/trailing underscores are removed.
+#' 
+#' Note: This function does **not** preserve file extensions. Extensions should be added
+#' after sanitizing the main name.
+#'
+#' @param x A character string to be sanitized for use as a file name.
+#'
+#' @return A character string safe to use as a file name (excluding any file extension).
+#'
+#' @examples
+#' # Convert a regular string to a file-safe version
+#' file_safe_name("My File 2026")
+#' # Returns: "My_File_2026"
+#'
+#' # Add extension afterwards
+#' paste0(file_safe_name("My File 2026"), ".xlsx")
+#' # Returns: "My_File_2026.xlsx"
 file_safe_name <- function(x) {
   
   # Replace spaces, @, and other non-alphanumeric characters with underscores
@@ -64,6 +85,23 @@ file_safe_name <- function(x) {
   x <- gsub("^_|_$", "", x)
 }
 
+#' Ensure parent directory exists for a given file path
+#'
+#' This helper function checks whether the parent directory of a specified file path exists.
+#' If it does not exist, the function creates the parent directory (including any missing
+#' intermediate directories). No warnings are shown if the directory already exists.
+#'
+#' @param path A string specifying the file path for which the parent directory should exist.
+#'
+#' @return Invisibly returns `NULL`. The main effect is that the parent directory is created
+#'   if it does not already exist.
+#'
+#' @examples
+#' # Ensure the parent directory exists before saving a plot
+#' create_parent_dir("results/plots/my_plot.pdf")
+#'
+#' # Works for nested directories as well
+#' create_parent_dir("data/output/2026/summary.xlsx")
 create_parent_dir <- function(path) {
 
   parent_dir <- dirname(path)
