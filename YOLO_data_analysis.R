@@ -82,9 +82,9 @@ create_parent_dir <- function(path) {
 #' 
 #' 1. Filtering data to a specified epoch range and removing specified outliers.
 #' 2. Computing medians per SuperRank and median-of-medians per experiment.
-#' 3. Performing a Kruskal-Wallis test across experiments (groups), reporting two-sided p-values.
-#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons, reporting two-sided p-values.
-#' 5. Optionally performing a Mann-Whitney U test (Wilcoxon rank-sum) for 2-group cases, reporting a two-sided p-value, saved in a separate Excel sheet.
+#' 3. Using a Kruskal-Wallis test to compare experiments (groups), reporting two-sided p-values.
+#' 4. Following up with Dunn's post-hoc test with Bonferroni correction for multiple comparisons, reporting two-sided p-values.
+#' 5. Optionally using a Mann-Whitney U test (Wilcoxon rank-sum) for 2-group cases, reporting a two-sided p-value, saved in a separate Excel sheet.
 #' 6. Calculating effect sizes (r) and significance labels.
 #' 7. Generating boxplots with optional median annotations and raw median points.
 #' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
