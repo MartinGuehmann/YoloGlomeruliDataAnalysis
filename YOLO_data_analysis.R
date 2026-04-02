@@ -82,9 +82,9 @@ create_parent_dir <- function(path) {
 #' 
 #' 1. Filtering data to a specified epoch range and removing specified outliers.
 #' 2. Computing medians per SuperRank and median-of-medians per experiment.
-#' 3. Performing Kruskal-Wallis tests across experiments (groups), **two-sided by default**.
-#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons, **two-sided by default**.
-#' 5. Optionally performing Mann-Whitney U tests for 2-group subsets, **two-sided by default**, saved in a separate Excel sheet.
+#' 3. Performing a Kruskal-Wallis test across experiments (groups), reporting two-sided p-values.
+#' 4. Performing Dunn's post-hoc test with Bonferroni correction for multiple comparisons, reporting two-sided p-values.
+#' 5. Optionally performing a Mann-Whitney U test (Wilcoxon rank-sum) for 2-group cases, reporting a two-sided p-value, saved in a separate Excel sheet.
 #' 6. Calculating effect sizes (r) and significance labels.
 #' 7. Generating boxplots with optional median annotations and raw median points.
 #' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
@@ -112,21 +112,21 @@ create_parent_dir <- function(path) {
 #'         \itemize{
 #'           \item Excel sheets:
 #'             \describe{
-#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and **two-sided** p-value.}
-#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and adjusted **two-sided** p-values, sample size, effect size r, significance, and effect size strength.}
-#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, **two-sided** p-value, significance, and method.}
+#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and p-value.}
+#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and Bonferroni-adjusted p-values, total sample size, effect size r, significance, and effect size strength.}
+#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
 #'             }
 #'           \item Plots: PDF and SVG boxplots with optional annotations as defined by `mode`.
 #'         }
 #'
 #' @details
 #' The function is designed to handle multiple experiments (groups) robustly:
-#' - Kruskal-Wallis and Dunn's post-hoc tests are always performed across the selected experiments.
-#'   - For comparisons with exactly two groups, the Kruskal-Wallis test produces a **two-sided** p-value identical to the Mann-Whitney U test.
-#'   - Dunn's test similarly produces the same **two-sided** p-value as Mann-Whitney for a single pair of groups.
-#' - For 2-group comparisons, an additional Mann-Whitney U test is performed and stored in a separate sheet for clarity.
-#' - For 3 or more groups, only Kruskal-Wallis and Dunn's tests are used for statistical inference.
-#' - Effect sizes (r) are computed as Z / sqrt(n), where n is the number of observations.
+#' - The Kruskal-Wallis test and Dunn's post-hoc test are always performed across the selected experiments.
+#' - For two-group comparisons:
+#'   - The Kruskal-Wallis test is mathematically related to the Mann-Whitney U test, but p-values may differ slightly due to implementation details (e.g., tie handling and approximations).
+#'   - An additional Mann-Whitney U test is computed explicitly for clarity and reported separately.
+#' - For three or more groups, inference is based on Kruskal-Wallis followed by Dunn's test.
+#' - Effect sizes are computed as r = Z / sqrt(n), where n is the total number of observations used in the test.
 #' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
 #'
 #' @examples
