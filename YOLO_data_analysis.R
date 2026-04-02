@@ -72,6 +72,53 @@ create_parent_dir <- function(path) {
   }
 }
 
+#' Filter experimental data by experiment, epoch range, and optional outliers
+#'
+#' This helper function subsets a data frame of experimental metrics to include only the
+#' specified experiments and epochs. It can also remove a specified outlier. The `versuch`
+#' column is converted to a factor with levels matching the order of `experiments`.
+#'
+#' @param data A data frame containing experimental data. Must include at least the columns
+#'   `versuch` (experiment name), `Epoche` (epoch number), and `SuperRank` (replicate rank).
+#' @param experiments Character vector of experiment names (`versuch`) to include in the subset.
+#'   Rows with other experiments are discarded.
+#' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include.
+#' @param outlier_filter Optional list specifying a single outlier to remove. Should have elements
+#'   `versuch` and `SuperRank`. If `NULL` (default), no outliers are removed.
+#'
+#' @return A subset of `data` containing only rows from the specified `experiments` and
+#'   within the specified `epoch_range`, with the specified outlier removed (if provided).
+#'   The `versuch` column is returned as a factor with levels corresponding to `experiments`.
+#'
+#' @examples
+#' # Keep only epochs 289-299 for specified experiments
+#' filtered <- filter_data(my_data, experiments = c("001","002","003"), epoch_range = c(289, 299))
+#'
+#' # Remove a specific outlier
+#' filtered <- filter_data(
+#'   my_data,
+#'   experiments = c("001","002","003"),
+#'   epoch_range = c(289, 299),
+#'   outlier_filter = list(versuch = "001", SuperRank = 6)
+#' )
+filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
+
+  # Step 1: Filter data to include only the specified epochs
+  subdata <- data[data$Epoche >= epoch_range[1] & data$Epoche <= epoch_range[2], ]
+
+  # Step 2: Remove outliers (specific versuch and SuperRank)
+  if (!is.null(outlier_filter)) {
+    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch &
+                           subdata$SuperRank == outlier_filter$SuperRank), ]
+  }
+
+  # Step 3: Keep only valid versuch levels and factorize
+  subdata <- subdata[subdata$versuch %in% experiments, ]
+  subdata$versuch <- factor(subdata$versuch , levels=experiments)
+
+  return(subdata)
+}
+
 #############
 # Functions #
 #############
@@ -163,18 +210,8 @@ analyze_data <- function(data,
   # Step 0: Create the parent dir of the output file if it does not exsist
   create_parent_dir(base_file_name)
 
-  # Step 1: Filter data to include only the last 10 epochs
-  subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
-
-  # Step 2: Remove outliers (specific versuch and SuperRank)
-  if (!is.null(outlier_filter)) {
-    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
-                           subdata$SuperRank == outlier_filter$SuperRank), ]
-  }
-
-  # Step 3: Keep only valid versuch levels and factorize
-  subdata <- subdata[subdata$versuch %in% experiments, ]
-  subdata$versuch <- factor(subdata$versuch , levels=experiments)
+  # Step 1: Filter data for epochs, outliers, and experiments
+  subdata <- filter_data(data, experiments, epoch_range, outlier_filter)
 
   # Step 4: Ensure all experiments have a corresponding symbol mapping
   missing <- setdiff(experiments, names(symbol_map))
