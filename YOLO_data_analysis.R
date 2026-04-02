@@ -276,33 +276,30 @@ analyze_data <- function(data,
     mann_whitney_df <- NULL
   }
 
-  # Step 11: Dunn's pairwise post-hoc test with Bonferroni correction
-  # Note: Dunn's test produces two-sided p-values by default
-  dunn_result <- dunnTest(form, data=subdata, method="bonferroni")
+  # Step 11–14: Dunn's pairwise post-hoc test with Bonferroni correction and effect sizes
+  alpha <- 0.05  # significance threshold
 
-  # Step 12: Calculate effect size r and add significance
-  # n is the number of observation, one observation from each epoch, per experiment per repetitions
-  n <- nrow(model.frame(form, data = subdata))
-  dunn_result$res$r <- dunn_result$res$Z / sqrt(n)
-  alpha <- 0.05
-  dunn_result$res$significant <- ifelse(dunn_result$res$P.adj < alpha, "Yes", "No")
+  dunn_result <- dunnTest(form, data = subdata, method = "bonferroni")
 
-  # Step 13: Add strength of effect size
   dunn_result$res <- dunn_result$res %>%
-    mutate(effect_size_strength = case_when(
-      abs(r) < 0.1 ~ "nelectable",
-      abs(r) < 0.3 ~ "small",
-      abs(r) < 0.5 ~ "medium",
-      TRUE         ~ "big"
-    ))
-
-  # Step 14: Add sample size column, reorder columns, and split Comparison into Group1/Group2
-  dunn_result$res$n <- n
-  # Split 'Comparison' into two separate columns
-  dunn_result$res <- dunn_result$res %>%
+    # Split 'Comparison' into Group1 and Group2 first
     tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
+    # Compute pairwise sample size, effect size r, significance, and strength
+    rowwise() %>%
+    mutate(
+      n_pair = sum(subdata$versuch %in% c(Group1, Group2)),
+      r = Z / sqrt(n_pair),
+      significant = ifelse(P.adj < alpha, "Yes", "No"),
+      effect_size_strength = case_when(
+        abs(r) < 0.1 ~ "negligible",
+        abs(r) < 0.3 ~ "small",
+        abs(r) < 0.5 ~ "medium",
+        TRUE         ~ "big"
+      )
+    ) %>%
+    ungroup() %>%
     # Reorder columns for clarity
-    select(Group1, Group2, Z, P.unadj, P.adj, n, r, significant, effect_size_strength)
+    select(Group1, Group2, Z, P.unadj, P.adj, n_pair, r, significant, effect_size_strength)
 
   # Step 14b: Create Dunn matrices (p-values and significance)
   groups <- levels(subdata$versuch)
