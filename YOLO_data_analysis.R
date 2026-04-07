@@ -433,6 +433,178 @@ create_dunn_heatmap_plot <- function(
   return(invisible(heatmap_plot))
 }
 
+#' Create a Boxplot with Optional Symbol Annotations
+#'
+#' Generates a boxplot of a given metric across experimental groups, optionally overlaying
+#' individual symbols, median-of-medians points, and raw medians for annotated visualizations.
+#' The y-axis is formatted with fixed breaks (0.0, 0.1, …, 1.0) to avoid floating-point artifacts.
+#'
+#' @param subdata_median Data frame containing the main metric values per experimental group
+#'   (versuch). Typically computed as the median per SuperRank per versuch.
+#' @param subdata_median_median Data frame with median-of-medians per versuch. Used for optional
+#'   annotations in `"annotated"` mode.
+#' @param symbol_df Data frame containing symbols to plot per group, with columns:
+#'   - `versuch`: experiment name
+#'   - `y`: y-position of symbol
+#'   - `symbol`: symbol identifier
+#' @param symbol_config Data frame describing symbols, with at least columns:
+#'   - `symbol`: symbol name
+#'   - `shape`: integer or character code for ggplot2 shapes
+#' @param legend_symbols Character vector of symbols to display in the legend, in plotting order.
+#' @param metric Character, the column name in `subdata_median` containing the values to plot.
+#' @param metric_name Character, label for the y-axis.
+#' @param base_file_name Character, base file name (without extension) to save the plot as PDF and SVG.
+#' @param plot_title Character, title of the plot. Defaults to `"Plot Title"`.
+#' @param mode Character, plotting mode. Options:
+#'   - `"default"`: only boxplot and symbols
+#'   - `"annotated"`: overlays median-of-medians points (blue) with numeric labels and red raw medians
+#'   - `"red_raw_medians"`: overlays only red raw median points
+#'
+#' @return A `ggplot` object representing the boxplot. Also saves the plot as PDF and SVG
+#'   using `base_file_name`.
+#'
+#' @note The y-axis is scaled from 0 to 1.25 with breaks explicitly formatted as 0.0, 0.1, … 1.0
+#'   to avoid machine precision artifacts in axis labels.
+#'
+#' @examples
+#' \dontrun{
+#' # Example with dummy data
+#' subdata_median <- data.frame(
+#'   versuch = factor(c("A","B","C"), levels = c("A","B","C")),
+#'   value = c(0.5, 0.7, 0.6)
+#' )
+#' subdata_median_median <- subdata_median
+#' symbol_df <- data.frame(versuch = c("A","B","C"), y = c(0.55, 0.75, 0.65), symbol = c("s1","s2","s3"))
+#' symbol_config <- data.frame(symbol = c("s1","s2","s3"), shape = c(15,16,17))
+#' legend_symbols <- c("s1","s2","s3")
+#'
+#' create_boxplot(
+#'   subdata_median,
+#'   subdata_median_median,
+#'   symbol_df,
+#'   symbol_config,
+#'   legend_symbols,
+#'   metric = "value",
+#'   metric_name = "Metric Value",
+#'   base_file_name = "my_boxplot",
+#'   plot_title = "Example Boxplot",
+#'   mode = "annotated"
+#' )
+#' }
+create_boxplot <- function(subdata_median,
+                           subdata_median_median,
+                           symbol_df,
+                           symbol_config,
+                           legend_symbols,
+                           metric,
+                           metric_name,
+                           base_file_name,
+                           plot_title = "Plot Title",
+                           mode = "default") {
+
+  # Step 0: Create the parent dir of the output file if it does not exsist
+  create_parent_dir(base_file_name)
+
+  # Step 1: Create the main breaks, make sure it is 0.0, 0.1 etc instead of next machine number
+  breaks_main <- as.numeric(sprintf("%.1f", seq(0, 1, 0.1)))
+
+  # Step 2: Create Plot
+  p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
+    geom_boxplot(outlier.colour = "black", outlier.size = 0.2, width = 0.6) +
+    geom_point(
+      data = symbol_df,
+      aes(x = versuch, y = y, shape = symbol),
+      size = 2.2
+    ) +
+    scale_shape_manual(
+      values = setNames(symbol_config$shape, symbol_config$symbol),
+      breaks = legend_symbols
+    ) +
+    labs(
+      shape = "",
+      x     = "Experiment",
+      y     = metric_name
+    ) +
+    geom_hline(yintercept = 1) +
+    scale_y_continuous(
+      limits = c(0, 1.25),
+      expand = c(0, 0),
+      breaks = breaks_main,
+      labels = breaks_main,
+      minor_breaks = NULL
+    ) +
+    ggtitle(plot_title) +
+    theme(
+      plot.title = element_text(color = "black", size = 9, hjust = 0.5),
+      plot.title.position = "plot",
+      axis.text.x = element_text(size = 6),
+      panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
+      panel.grid.minor.y = element_blank()
+    )
+
+  # Step 3: Add optional annotations
+  if (isTRUE(mode != "default")) {
+
+    max_df <- subdata_median %>%
+      dplyr::group_by(versuch) %>%
+      dplyr::summarise(y_max = max(.data[[metric]], na.rm = TRUE))
+
+    label_offset_factor <- 0.08
+
+    offset <- label_offset_factor * diff(range(subdata_median[[metric]], na.rm = TRUE))
+    max_df$y_label <- max_df$y_max + offset
+
+    max_df$median_value <- subdata_median_median[[metric]][
+      match(max_df$versuch, subdata_median_median$versuch)
+    ]
+
+      if (mode == "annotated") {
+      p <- p +
+        # Blue median-of-medians points
+        stat_summary(
+          fun = median,
+          geom = "point",
+          color = "blue",
+          size = 2.5
+        ) +
+        # Blue median labels
+        geom_text(
+          data = max_df,
+          aes(x = versuch, y = y_label, label = round(median_value, 3)),
+          color = "blue",
+          size = 3
+        )
+    }
+    if (mode == "annotated" || mode == "red_raw_medians" ) {
+      p <- p +
+        # Red raw medians
+        geom_point(
+          data = subdata_median,
+          aes(x = versuch, y = .data[[metric]]),
+          color = "red",
+          size = 0.5
+        )
+    }
+  }
+
+  # Step 4: Save plot as PDF and SVG
+  ggsave(
+    filename = paste0(base_file_name, ".pdf"),
+    plot = p,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = paste0(base_file_name, ".svg"),
+    plot = p,
+    height = 5,
+    width = 5
+  )
+
+  # Step 5: Return plot object explicitly (invisible)
+  return(invisible(p))
+}
+
 #############
 # Functions #
 #############
@@ -750,109 +922,26 @@ analyze_data <- function(data,
   # Save workbook
   openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
 
-  breaks_main <- as.numeric(sprintf("%.1f", seq(0, 1, 0.1)))
-
   # Step 16: Create Plot
-  p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
-    geom_boxplot(outlier.colour = "black", outlier.size = 0.2, width = 0.6) +
-    geom_point(
-      data = symbol_df,
-      aes(x = versuch, y = y, shape = symbol),
-      size = 2.2
-    ) +
-    scale_shape_manual(
-      values = setNames(symbol_config$shape, symbol_config$symbol),
-      breaks = legend_symbols
-    ) +
-    labs(
-      shape = "",
-      x     = "Experiment",
-      y     = metric_name
-    ) +
-    geom_hline(yintercept = 1) +
-    scale_y_continuous(
-      limits = c(0, 1.25),
-      expand = c(0, 0),
-      breaks = breaks_main,
-      labels = breaks_main,
-      minor_breaks = NULL
-    ) +
-    ggtitle(plot_title) +
-    theme(
-      plot.title = element_text(color = "black", size = 9, hjust = 0.5),
-      plot.title.position = "plot",
-      axis.text.x = element_text(size = 6),
-      panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
-      panel.grid.minor.y = element_blank()
-    )
-
-  # Step 17: Add optional annotations
-  if (isTRUE(mode != "default")) {
-
-    max_df <- subdata_median %>%
-      dplyr::group_by(versuch) %>%
-      dplyr::summarise(y_max = max(.data[[metric]], na.rm = TRUE))
-
-    label_offset_factor <- 0.08
-
-    offset <- label_offset_factor * diff(range(subdata_median[[metric]], na.rm = TRUE))
-    max_df$y_label <- max_df$y_max + offset
-
-    max_df$median_value <- subdata_median_median[[metric]][
-      match(max_df$versuch, subdata_median_median$versuch)
-    ]
-
-      if (mode == "annotated") {
-      p <- p +
-        # Blue median-of-medians points
-        stat_summary(
-          fun = median,
-          geom = "point",
-          color = "blue",
-          size = 2.5
-        ) +
-        # Blue median labels
-        geom_text(
-          data = max_df,
-          aes(x = versuch, y = y_label, label = round(median_value, 3)),
-          color = "blue",
-          size = 3
-        )
-    }
-    if (mode == "annotated" || mode == "red_raw_medians" ) {
-      p <- p +
-        # Red raw medians
-        geom_point(
-          data = subdata_median,
-          aes(x = versuch, y = .data[[metric]]),
-          color = "red",
-          size = 0.5
-        )
-    }
-  }
-
-  # Step 18: Save plot as PDF and SVG
-  ggsave(
-    filename = paste0(base_file_name, ".pdf"),
-    plot = p,
-    height = 5,
-    width = 5
-  )
-  ggsave(
-    filename = paste0(base_file_name, ".svg"),
-    plot = p,
-    height = 5,
-    width = 5
-  )
+  p <- create_boxplot(subdata_median,
+                      subdata_median_median,
+                      symbol_df,
+                      symbol_config,
+                      legend_symbols,
+                      metric,
+                      metric_name,
+                      base_file_name,
+                      plot_title,
+                      mode)
 
   # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   heatmap_plot <- create_dunn_heatmap_plot(
-    sig_matrix_df = sig_matrix_df,
-    symbol_map = symbol_map,
-    symbol_config = symbol_config,
+    sig_matrix_df  = sig_matrix_df,
+    symbol_map     = symbol_map,
+    symbol_config  = symbol_config,
     legend_symbols = legend_symbols,
     base_file_name = base_file_name,
-    plot_title = plot_title
+    plot_title     = plot_title
   )
 
   # Step 20: Return plot object explicitly (invisible)
