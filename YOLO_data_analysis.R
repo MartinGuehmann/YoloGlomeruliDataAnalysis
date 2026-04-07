@@ -441,10 +441,13 @@ create_dunn_heatmap_plot <- function(
 #' individual symbols, median-of-medians points, and raw medians for annotated visualizations.
 #' The y-axis is formatted with fixed breaks (0.0, 0.1, …, 1.0) to avoid floating-point artifacts.
 #'
-#' @param subdata_median Data frame containing the main metric values per experimental group
-#'   (versuch). Typically computed as the median per SuperRank per versuch.
-#' @param subdata_median_median Data frame with median-of-medians per versuch. Used for optional
-#'   annotations in `"annotated"` mode.
+#' @param subdata Data frame containing raw values per experimental group and SuperRank.
+#'   Must contain at least:
+#'   - `versuch`: factor or character identifying the experiment
+#'   - `SuperRank`: numeric grouping variable for median calculation
+#'   - `metric` column (as specified in `metric` argument)
+#' @param experiments Character vector specifying the order of experimental groups (versuch).
+#'   Used to set factor levels for correct boxplot order.
 #' @param symbol_df Data frame containing symbols to plot per group, with columns:
 #'   - `versuch`: experiment name
 #'   - `y`: y-position of symbol
@@ -470,22 +473,25 @@ create_dunn_heatmap_plot <- function(
 #'
 #' @examples
 #' \dontrun{
-#' # Example with dummy data
-#' subdata_median <- data.frame(
-#'   versuch = factor(c("A","B","C"), levels = c("A","B","C")),
-#'   value = c(0.5, 0.7, 0.6)
+#'   versuch = c("A","B","C"),
+#'   y = c(0.55,0.75,0.65),
+#'   symbol = c("s1","s2","s3")
 #' )
-#' subdata_median_median <- subdata_median
-#' symbol_df <- data.frame(versuch = c("A","B","C"), y = c(0.55, 0.75, 0.65), symbol = c("s1","s2","s3"))
-#' symbol_config <- data.frame(symbol = c("s1","s2","s3"), shape = c(15,16,17))
+#' 
+#' symbol_config <- data.frame(
+#'   symbol = c("s1","s2","s3"),
+#'   shape = c(15,16,17)
+#' )
+#' 
 #' legend_symbols <- c("s1","s2","s3")
-#'
+#' 
+#' # --- Call the function ---
 #' create_boxplot(
-#'   subdata_median,
-#'   subdata_median_median,
-#'   symbol_df,
-#'   symbol_config,
-#'   legend_symbols,
+#'   subdata = subdata,
+#'   experiments = c("A","B","C"),
+#'   symbol_df = symbol_df,
+#'   symbol_config = symbol_config,
+#'   legend_symbols = legend_symbols,
 #'   metric = "value",
 #'   metric_name = "Metric Value",
 #'   base_file_name = "my_boxplot",
