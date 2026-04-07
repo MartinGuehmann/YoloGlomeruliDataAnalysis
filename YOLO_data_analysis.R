@@ -495,8 +495,8 @@ create_dunn_heatmap_plot <- function(
 #' }
 #'
 #' @export
-create_boxplot <- function(subdata_median,
-                           subdata_median_median,
+create_boxplot <- function(subdata,
+                           experiments,
                            symbol_df,
                            symbol_config,
                            legend_symbols,
@@ -512,7 +512,21 @@ create_boxplot <- function(subdata_median,
   # Step 1: Create the main breaks, make sure it is 0.0, 0.1 etc instead of next machine number
   breaks_main <- as.numeric(sprintf("%.1f", seq(0, 1, 0.1)))
 
-  # Step 2: Create Plot
+  # Step 2: Compute median per SuperRank for each versuch
+  form <- as.formula(paste(metric, "~ versuch + SuperRank"))
+  subdata_median <- aggregate(form, data = subdata, median)
+  
+  # Step 3: Compute median of medians per versuch
+  form <- as.formula(
+    paste(metric, "~ versuch")
+  )
+  subdata_median_median <- aggregate(form, data = subdata_median, median)
+  
+  # Step 4: Ensure median datasets have correct factor levels
+  subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
+  subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
+
+  # Step 5: Create Plot
   p <- ggplot(subdata_median, aes(x = versuch, y = .data[[metric]])) + 
     geom_boxplot(outlier.colour = "black", outlier.size = 0.2, width = 0.6) +
     geom_point(
@@ -546,7 +560,7 @@ create_boxplot <- function(subdata_median,
       panel.grid.minor.y = element_blank()
     )
 
-  # Step 3: Add optional annotations
+  # Step 6: Add optional annotations
   if (isTRUE(mode != "default")) {
 
     max_df <- subdata_median %>%
@@ -591,7 +605,7 @@ create_boxplot <- function(subdata_median,
     }
   }
 
-  # Step 4: Save plot as PDF and SVG
+  # Step 7: Save plot as PDF and SVG
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
     plot = p,
@@ -605,7 +619,7 @@ create_boxplot <- function(subdata_median,
     width = 5
   )
 
-  # Step 5: Return plot object explicitly (invisible)
+  # Step 8: Return plot object explicitly (invisible)
   return(invisible(p))
 }
 
@@ -1036,20 +1050,6 @@ analyze_data <- function(data,
   symbol_df <- symbols$symbol_df
   legend_symbols <- symbols$legend_symbols
 
-  # Step 7: Compute median per SuperRank for each versuch
-  form <- as.formula(paste(metric, "~ versuch + SuperRank"))
-  subdata_median <- aggregate(form, data = subdata, median)
-
-  # Step 8: Compute median of medians per versuch
-  form <- as.formula(
-    paste(metric, "~ versuch")
-  )
-  subdata_median_median <- aggregate(form, data = subdata_median, median)
-
-  # Step 9: Ensure median datasets have correct factor levels
-  subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
-  subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
-
   # Step 10: Compute statistics
   stats           <- compute_statistics(subdata, metric, experiments)
   kruskal_df      <- stats$kruskal_df
@@ -1068,8 +1068,8 @@ analyze_data <- function(data,
                              mann_whitney_df = stats$mann_whitney_df)
 
   # Step 16: Create Plot
-  p <- create_boxplot(subdata_median,
-                      subdata_median_median,
+  p <- create_boxplot(subdata,
+                      experiments,
                       symbol_df,
                       symbol_config,
                       legend_symbols,
