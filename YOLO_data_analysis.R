@@ -288,6 +288,8 @@ prepare_symbol_data <- function(symbol_map, symbol_config, experiments) {
 #'   base_file_name = "example_heatmap"
 #' )
 #' print(heatmap_plot)
+#'
+#' @export
 create_dunn_heatmap_plot <- function(
     sig_matrix_df,
     symbol_map,
@@ -491,6 +493,8 @@ create_dunn_heatmap_plot <- function(
 #'   mode = "annotated"
 #' )
 #' }
+#'
+#' @export
 create_boxplot <- function(subdata_median,
                            subdata_median_median,
                            symbol_df,
@@ -603,6 +607,181 @@ create_boxplot <- function(subdata_median,
 
   # Step 5: Return plot object explicitly (invisible)
   return(invisible(p))
+}
+
+#' Compute Statistical Tests and Effect Sizes
+#'
+#' This function performs multiple statistical analyses on a dataset for a given metric:
+#' 
+#' 1. **Kruskal-Wallis test** across the factor `versuch`.
+#' 2. **Optional Mann-Whitney U test** if exactly 2 levels are present in `versuch`.
+#'    - Computes effect size `r` using normal approximation of the U statistic.
+#' 3. **Dunn's post-hoc pairwise test** with Bonferroni correction.
+#'    - Computes effect size `r` for each pair.
+#'    - Categorizes effect size strength as negligible, small, medium, or big.
+#' 4. Generates **Dunn matrices** for adjusted p-values and significance symbols.
+#'
+#' @param subdata A `data.frame` containing the data. Must include columns:
+#'   - `versuch` (factor or character) representing experimental groups.
+#'   - The column corresponding to the `metric` parameter.
+#' @param metric A `string` specifying the name of the numeric column in `subdata` to analyze.
+#' @param experiments A character vector of experimental group names. Determines factor levels.
+#' @param alpha Numeric. Significance threshold for Dunn test effect size categorization. Default is 0.05.
+#'
+#' @return A `list` with the following elements:
+#' \describe{
+#'   \item{kruskal_df}{`data.frame` with Kruskal-Wallis test results (statistic, df, p-value, method, data.name).}
+#'   \item{mann_whitney_df}{`data.frame` with Mann-Whitney U test results if 2 groups exist, otherwise `NULL`. Columns include Group1, Median1, Group2, Median2, W statistic, effect size r, p-value, significance, and method.}
+#'   \item{dunn_result}{Dunn test object containing pairwise comparisons with Bonferroni-adjusted p-values and effect sizes.}
+#'   \item{p_matrix_df}{`data.frame` representing pairwise Bonferroni-adjusted p-values in matrix form.}
+#'   \item{sig_matrix_df}{`data.frame` representing pairwise significance symbols ("***", "**", "*", "ns") in matrix form.}
+#' }
+#'
+#' @details
+#' - Effect size `r` for Mann-Whitney U is computed as Z / sqrt(N), where Z is approximated from the U statistic.
+#' - Effect sizes for Dunn pairwise tests are categorized according to common thresholds:
+#'   - |r| < 0.1 → negligible
+#'   - |r| < 0.3 → small
+#'   - |r| < 0.5 → medium
+#'   - |r| ≥ 0.5 → big
+#' - The function is suitable for datasets with 2 or more experimental groups.
+#'
+#' @examples
+#' \dontrun{
+#'   stats <- compute_statistics(subdata = my_data,
+#'                               metric = "accuracy",
+#'                               experiments = c("ExpA", "ExpB", "ExpC"))
+#'   stats$kruskal_df
+#'   stats$mann_whitney_df
+#'   stats$p_matrix_df
+#' }
+#'
+#' @export
+compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
+
+  # Step 1: Create formula
+  form <- as.formula(paste(metric, "~ versuch"))
+
+  # Step 2: Kruskal-Wallis test across versuch
+  # Note: Kruskal-Wallis is two-sided by default
+  kruskal_result <- kruskal.test(form, data = subdata)
+  kruskal_df <- data.frame(statistic = kruskal_result$statistic,
+                           parameter = kruskal_result$parameter,
+                           p.value = kruskal_result$p.value,
+                           method = kruskal_result$method,
+                           data.name = kruskal_result$data.name)
+
+  # Step 3: Optional Mann-Whitney U test for exactly 2 groups
+  group_count <- length(unique(subdata$versuch))
+  if(group_count == 2) {
+
+    groups <- levels(subdata$versuch)
+    x <- subdata[[metric]][subdata$versuch == groups[1]]
+    y <- subdata[[metric]][subdata$versuch == groups[2]]
+
+    # Mann-Whitney U test (implemented as Wilcoxon rank-sum test in R)
+    # Note: This is a two-sided test by default (alternative = "two.sided")
+    mw_result <- wilcox.test(x, y, exact = FALSE)
+
+    # Effect size r = Z / sqrt(N)
+    # We approximate Z from the U statistic using the normal approximation.
+    # This corresponds to the same two-sided hypothesis test as reported by wilcox.test.
+    W <- as.numeric(mw_result$statistic)
+    n <- length(x) + length(y)
+
+    # Convert W to U (same here) and compute expected value and variance under H0
+    U <- W
+    mu_U <- length(x)*length(y)/2
+    sigma_U <- sqrt(length(x)*length(y)*(length(x)+length(y)+1)/12)
+
+    # Z-score (signed; direction depends on group ordering)
+    Z <- (U - mu_U)/sigma_U
+
+    # Effect size (note: magnitude is typically interpreted, sign depends on group order)
+    # Interpretation: |r| indicates effect size magnitude; sign depends on group order
+    r <- Z / sqrt(n)
+
+    # Create data frame with separate group columns
+    mann_whitney_df <- data.frame(
+      Group1 = groups[1],
+      Median1 = median(x),
+      Group2 = groups[2],
+      Median2 = median(y),
+      W = W,
+      r = r,
+      p.value = mw_result$p.value,
+      significant = ifelse(mw_result$p.value < 0.05, "Yes", "No"),
+      method = mw_result$method
+    )
+
+  } else {
+    mann_whitney_df <- NULL
+  }
+
+  # Step 4: Dunn's pairwise post-hoc test with Bonferroni correction and effect sizes
+  dunn_result <- dunnTest(form, data = subdata, method = "bonferroni")
+
+  dunn_result$res <- dunn_result$res %>%
+    # Split 'Comparison' into Group1 and Group2 first
+    tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
+    # Compute pairwise sample size, effect size r, significance, and strength
+    rowwise() %>%
+    mutate(
+      n_pair = sum(subdata$versuch %in% c(Group1, Group2)),
+      r = Z / sqrt(n_pair),
+      significant = ifelse(P.adj < alpha, "Yes", "No"),
+      effect_size_strength = case_when(
+        abs(r) < 0.1 ~ "negligible",
+        abs(r) < 0.3 ~ "small",
+        abs(r) < 0.5 ~ "medium",
+        TRUE         ~ "big"
+      )
+    ) %>%
+    ungroup() %>%
+    # Reorder columns for clarity
+    select(Group1, Group2, Z, P.unadj, P.adj, n_pair, r, significant, effect_size_strength)
+
+  # Step 5: Create Dunn matrices (p-values and significance)
+  groups <- levels(subdata$versuch)
+
+  # Initialize matrices
+  p_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
+                     dimnames=list(groups, groups))
+
+  sig_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
+                       dimnames=list(groups, groups))
+
+  # Fill matrices
+  for(i in 1:nrow(dunn_result$res)) {
+    g1 <- dunn_result$res$Group1[i]
+    g2 <- dunn_result$res$Group2[i]
+    p  <- dunn_result$res$P.adj[i]
+
+    # Fill p-value matrix
+    p_matrix[g1, g2] <- p
+    p_matrix[g2, g1] <- p
+
+    # Determine significance level
+    sig <- ifelse(p < 0.001, "***",
+                  ifelse(p < 0.01, "**",
+                         ifelse(p < 0.05, "*", "ns")))
+
+    # Fill significance matrix
+    sig_matrix[g1, g2] <- sig
+    sig_matrix[g2, g1] <- sig
+  }
+
+  # Fill diagonal with "-"
+  diag(sig_matrix) <- "-"
+
+  # Step 5: Return results
+  return(list(
+    kruskal_df = kruskal_df,
+    mann_whitney_df = mann_whitney_df,
+    dunn_result = dunn_result,
+    p_matrix_df = as.data.frame(p_matrix),
+    sig_matrix_df = as.data.frame(sig_matrix)
+  ))
 }
 
 #############
@@ -718,123 +897,12 @@ analyze_data <- function(data,
   subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
 
-  # Step 10a: Kruskal-Wallis test across versuch
-  # Note: Kruskal-Wallis is two-sided by default
-  kruskal_result <- kruskal.test(form, data = subdata)
-  kruskal_df <- data.frame(statistic = kruskal_result$statistic,
-                           parameter = kruskal_result$parameter,
-                           p.value = kruskal_result$p.value,
-                           method = kruskal_result$method,
-                           data.name = kruskal_result$data.name)
-
-  # Step 10b: Optional Mann-Whitney U test for exactly 2 groups
-  group_count <- length(unique(subdata$versuch))
-  if(group_count == 2) {
-
-    groups <- levels(subdata$versuch)
-    x <- subdata[[metric]][subdata$versuch == groups[1]]
-    y <- subdata[[metric]][subdata$versuch == groups[2]]
-
-    # Mann-Whitney U test (implemented as Wilcoxon rank-sum test in R)
-    # Note: This is a two-sided test by default (alternative = "two.sided")
-    mw_result <- wilcox.test(x, y, exact = FALSE)
-
-    # Effect size r = Z / sqrt(N)
-    # We approximate Z from the U statistic using the normal approximation.
-    # This corresponds to the same two-sided hypothesis test as reported by wilcox.test.
-    W <- as.numeric(mw_result$statistic)
-    n <- length(x) + length(y)
-
-    # Convert W to U (same here) and compute expected value and variance under H0
-    U <- W
-    mu_U <- length(x)*length(y)/2
-    sigma_U <- sqrt(length(x)*length(y)*(length(x)+length(y)+1)/12)
-
-    # Z-score (signed; direction depends on group ordering)
-    Z <- (U - mu_U)/sigma_U
-
-    # Effect size (note: magnitude is typically interpreted, sign depends on group order)
-    # Interpretation: |r| indicates effect size magnitude; sign depends on group order
-    r <- Z / sqrt(n)
-
-    # Create data frame with separate group columns
-    mann_whitney_df <- data.frame(
-      Group1 = groups[1],
-      Median1 = median(x),
-      Group2 = groups[2],
-      Median2 = median(y),
-      W = W,
-      r = r,
-      p.value = mw_result$p.value,
-      significant = ifelse(mw_result$p.value < 0.05, "Yes", "No"),
-      method = mw_result$method
-    )
-
-  } else {
-    mann_whitney_df <- NULL
-  }
-
-  # Step 11–14: Dunn's pairwise post-hoc test with Bonferroni correction and effect sizes
-  alpha <- 0.05  # significance threshold
-
-  dunn_result <- dunnTest(form, data = subdata, method = "bonferroni")
-
-  dunn_result$res <- dunn_result$res %>%
-    # Split 'Comparison' into Group1 and Group2 first
-    tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
-    # Compute pairwise sample size, effect size r, significance, and strength
-    rowwise() %>%
-    mutate(
-      n_pair = sum(subdata$versuch %in% c(Group1, Group2)),
-      r = Z / sqrt(n_pair),
-      significant = ifelse(P.adj < alpha, "Yes", "No"),
-      effect_size_strength = case_when(
-        abs(r) < 0.1 ~ "negligible",
-        abs(r) < 0.3 ~ "small",
-        abs(r) < 0.5 ~ "medium",
-        TRUE         ~ "big"
-      )
-    ) %>%
-    ungroup() %>%
-    # Reorder columns for clarity
-    select(Group1, Group2, Z, P.unadj, P.adj, n_pair, r, significant, effect_size_strength)
-
-  # Step 14b: Create Dunn matrices (p-values and significance)
-  groups <- levels(subdata$versuch)
-
-  # Initialize matrices
-  p_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
-                     dimnames=list(groups, groups))
-
-  sig_matrix <- matrix(NA, nrow=length(groups), ncol=length(groups),
-                       dimnames=list(groups, groups))
-
-  # Fill matrices
-  for(i in 1:nrow(dunn_result$res)) {
-    g1 <- dunn_result$res$Group1[i]
-    g2 <- dunn_result$res$Group2[i]
-    p  <- dunn_result$res$P.adj[i]
-
-    # Fill p-value matrix
-    p_matrix[g1, g2] <- p
-    p_matrix[g2, g1] <- p
-
-    # Determine significance level
-    sig <- ifelse(p < 0.001, "***",
-                  ifelse(p < 0.01, "**",
-                         ifelse(p < 0.05, "*", "ns")))
-
-    # Fill significance matrix
-    sig_matrix[g1, g2] <- sig
-    sig_matrix[g2, g1] <- sig
-  }
-
-  # Fill diagonal with "-"
-  diag(sig_matrix) <- "-"
-
-  # Convert to data frames for Excel
-  p_matrix_df <- as.data.frame(p_matrix)
-  sig_matrix_df <- as.data.frame(sig_matrix)
+  stats           <- compute_statistics(subdata, metric, experiments)
+  kruskal_df      <- stats$kruskal_df
+  mann_whitney_df <- stats$mann_whitney_df
+  dunn_result     <- stats$dunn_result
+  p_matrix_df     <- stats$p_matrix_df
+  sig_matrix_df   <- stats$sig_matrix_df
 
   # Step 15: Export results to Excel with openxlsx
   wb <- openxlsx::createWorkbook()
