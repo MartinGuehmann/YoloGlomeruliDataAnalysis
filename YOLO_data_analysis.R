@@ -164,8 +164,8 @@ filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
 #' Prepare Symbol Data for Plotting
 #'
 #' This function takes a mapping of symbols to experiments and a symbol configuration
-#' and returns a structured list suitable for plotting. It also performs safety checks
-#' to ensure that all experiments have a corresponding symbol mapping and that all symbols
+#' and returns a structured list suitable for plotting. It also checks
+#' that all experiments have a corresponding symbol mapping and that all symbols
 #' have defined y-positions.
 #'
 #' @param symbol_map A named list mapping experiments (names) to symbols (vector of strings).
@@ -631,7 +631,7 @@ create_boxplot <- function(subdata,
 
 #' Compute Statistical Tests and Effect Sizes
 #'
-#' This function performs multiple statistical analyses on a dataset for a given metric:
+#' This function applies multiple statistical analyses on a dataset for a given metric:
 #' 
 #' 1. **Kruskal-Wallis test** across the factor `versuch`.
 #' 2. **Optional Mann-Whitney U test** if exactly 2 levels are present in `versuch`.
@@ -963,7 +963,7 @@ export_statistics_to_excel <- function(base_file_name,
 
 #' Analyze experimental data with non-parametric tests and annotated plots
 #'
-#' This function performs a full workflow for experimental metrics, including:
+#' This function executes a full workflow for experimental metrics, including:
 #' 
 #' 1. Filtering data to a specified epoch range and removing specified outliers.
 #' 2. Computing medians per SuperRank and median-of-medians per experiment.
@@ -1006,7 +1006,7 @@ export_statistics_to_excel <- function(base_file_name,
 #'
 #' @details
 #' The function is designed to handle multiple experiments (groups) robustly:
-#' - The Kruskal-Wallis test and Dunn's post-hoc test are always performed across the selected experiments.
+#' - The Kruskal-Wallis test and Dunn's post-hoc test are always applied across the selected experiments.
 #' - For two-group comparisons:
 #'   - The Kruskal-Wallis test is mathematically related to the Mann-Whitney U test, but p-values may differ slightly due to implementation details (e.g., tie handling and approximations).
 #'   - An additional Mann-Whitney U test is computed explicitly for clarity and reported separately.
