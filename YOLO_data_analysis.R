@@ -784,6 +784,159 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
   ))
 }
 
+#' Export statistical results to Excel
+#'
+#' This function takes the results of non-parametric statistical tests and
+#' exports them to an Excel workbook. The workbook includes separate sheets
+#' for the Kruskal-Wallis test, Dunn's post-hoc pairwise comparisons, Dunn
+#' p-value and significance matrices, and optionally the Mann-Whitney U test
+#' if two groups are compared.
+#'
+#' @param base_file_name character. The base path and file name for the Excel
+#'   workbook, without the ".xlsx" extension. The workbook will be saved as
+#'   `paste0(base_file_name, ".xlsx")`.
+#' @param kruskal_df data.frame. Output of the Kruskal-Wallis test. Must contain
+#'   columns such as statistic, parameter, p.value, method, and data.name.
+#' @param dunn_result list. Output from `dunnTest()`, must include `res` data frame
+#'   containing pairwise comparisons, unadjusted and adjusted p-values, and effect sizes.
+#' @param p_matrix_df data.frame. Square matrix of pairwise Dunn adjusted p-values.
+#'   Rows and columns correspond to factor levels in the data.
+#' @param sig_matrix_df data.frame. Square matrix of significance symbols for Dunn
+#'   pairwise tests (e.g., "*", "**", "***", "ns"). Same dimensions as `p_matrix_df`.
+#' @param mann_whitney_df data.frame or NULL. Optional Mann-Whitney U test results
+#'   when exactly two groups are compared. Includes W statistic, effect size r, p-value,
+#'   median values for each group, and significance flag.
+#'
+#' @details
+#' The Excel workbook structure:
+#' \describe{
+#'   \item{Kruskal-Wallis}{Summary of Kruskal-Wallis test results.}
+#'   \item{Dunn Test}{Pairwise Dunn post-hoc comparisons table.}
+#'   \item{Dunn Matrix (p)}{Matrix of Dunn adjusted p-values. Significant values
+#'         (p < 0.05) are highlighted in blue. Diagonal cells are filled with "-".}
+#'   \item{Dunn Matrix (sig)}{Matrix of significance symbols corresponding to
+#'         the Dunn p-value matrix. Diagonal cells are "-".}
+#'   \item{Mann-Whitney}{Optional sheet for Mann-Whitney U test if two groups
+#'         are compared.}
+#' }
+#'
+#' Numeric formatting for the Dunn p-value matrix is scientific notation with
+#' 3 decimal places. Column widths are auto-adjusted, and header rows and first
+#' columns are frozen for easier navigation.
+#'
+#' @examples
+#' \dontrun{
+#' # Assume you have a filtered dataset `subdata`, a metric `metric`, and experiment levels
+#' experiments <- c("Exp1", "Exp2", "Exp3")
+#' metric <- "value"
+#' 
+#' # Compute statistics
+#' stats <- compute_statistics(subdata, metric, experiments)
+#' 
+#' # Export results to Excel
+#' export_statistics_to_excel(
+#'   base_file_name = "results/statistics_summary",
+#'   kruskal_df      = stats$kruskal_df,
+#'   dunn_result     = stats$dunn_result,
+#'   p_matrix_df     = stats$p_matrix_df,
+#'   sig_matrix_df   = stats$sig_matrix_df,
+#'   mann_whitney_df = stats$mann_whitney_df
+#' )
+#' }
+#'
+#' @export
+export_statistics_to_excel <- function(base_file_name,
+                                       kruskal_df,
+                                       dunn_result,
+                                       p_matrix_df,
+                                       sig_matrix_df,
+                                       mann_whitney_df = NULL) {
+    wb <- openxlsx::createWorkbook()
+
+  # --- Kruskal-Wallis ---
+  openxlsx::addWorksheet(wb, "Kruskal-Wallis")
+  openxlsx::writeData(wb, "Kruskal-Wallis", kruskal_df)
+
+  # --- Dunn Test (table) ---
+  openxlsx::addWorksheet(wb, "Dunn Test")
+  openxlsx::writeData(wb, "Dunn Test", dunn_result$res)
+
+  # --- Dunn Matrix (p-values) ---
+  openxlsx::addWorksheet(wb, "Dunn Matrix (p)")
+  openxlsx::writeData(
+    wb,
+    "Dunn Matrix (p)",
+    p_matrix_df,
+    rowNames = TRUE,
+    keepNA = FALSE
+  )
+
+  # Apply numeric formatting (3 decimals)
+  p_style <- openxlsx::createStyle(numFmt = "0.00E+00;-0.00E+00;\"-\"")
+
+  openxlsx::addStyle(
+    wb,
+    sheet = "Dunn Matrix (p)",
+    style = p_style,
+    rows = 2:(nrow(p_matrix_df) + 1),
+    cols = 2:(ncol(p_matrix_df) + 1),
+    gridExpand = TRUE
+  )
+
+  # --- Dunn Matrix (significance) ---
+  openxlsx::addWorksheet(wb, "Dunn Matrix (sig)")
+  openxlsx::writeData(wb, "Dunn Matrix (sig)", sig_matrix_df, rowNames = TRUE)
+
+  # --- Optional Mann-Whitney ---
+  if(!is.null(mann_whitney_df)) {
+    openxlsx::addWorksheet(wb, "Mann-Whitney")
+    openxlsx::writeData(wb, "Mann-Whitney", mann_whitney_df)
+  }
+
+  for(i in seq_len(nrow(p_matrix_df))) {
+    openxlsx::writeData(
+      wb,
+      "Dunn Matrix (p)",
+      "-",
+      startRow = i + 1,
+      startCol = i + 1
+    )
+  }
+
+  # --- Highlight significant cells
+  sig_highlight <- openxlsx::createStyle(bgFill = "#DCE6F1")
+
+  openxlsx::conditionalFormatting(
+    wb, "Dunn Matrix (p)",
+    cols = 2:(ncol(p_matrix_df)+1),
+    rows = 2:(nrow(p_matrix_df)+1),
+    rule = "<0.05",
+    style = sig_highlight
+  )
+
+  # --- Highlight diagonal
+  diag_style <- openxlsx::createStyle(fgFill = "#EEEEEE")
+
+  for(i in 1:nrow(p_matrix_df)) {
+    openxlsx::addStyle(
+      wb, "Dunn Matrix (p)", diag_style,
+      rows = i+1, cols = i+1, gridExpand = FALSE
+    )
+  }
+
+  # --- Auto column width ---
+  for(sheet in openxlsx::sheets(wb)) {
+    openxlsx::setColWidths(wb, sheet, cols = 1:20, widths = "auto")
+  }
+
+  # --- Freeze header row and column ---
+  openxlsx::freezePane(wb, "Dunn Matrix (p)", firstRow = TRUE, firstCol = TRUE)
+  openxlsx::freezePane(wb, "Dunn Matrix (sig)", firstRow = TRUE, firstCol = TRUE)
+
+  # --- Save workbook ---
+  openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
+}
+
 #############
 # Functions #
 #############
@@ -897,6 +1050,7 @@ analyze_data <- function(data,
   subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
 
+  # Step 10: Compute statistics
   stats           <- compute_statistics(subdata, metric, experiments)
   kruskal_df      <- stats$kruskal_df
   mann_whitney_df <- stats$mann_whitney_df
@@ -904,91 +1058,14 @@ analyze_data <- function(data,
   p_matrix_df     <- stats$p_matrix_df
   sig_matrix_df   <- stats$sig_matrix_df
 
+
   # Step 15: Export results to Excel with openxlsx
-  wb <- openxlsx::createWorkbook()
-
-  # --- Kruskal-Wallis ---
-  openxlsx::addWorksheet(wb, "Kruskal-Wallis")
-  openxlsx::writeData(wb, "Kruskal-Wallis", kruskal_df)
-
-  # --- Dunn Test (table) ---
-  openxlsx::addWorksheet(wb, "Dunn Test")
-  openxlsx::writeData(wb, "Dunn Test", dunn_result$res)
-
-  # --- Dunn Matrix (p-values) ---
-  openxlsx::addWorksheet(wb, "Dunn Matrix (p)")
-  openxlsx::writeData(
-    wb,
-    "Dunn Matrix (p)",
-    p_matrix_df,
-    rowNames = TRUE,
-    keepNA = FALSE
-  )
-
-  # Apply numeric formatting (3 decimals)
-  p_style <- openxlsx::createStyle(numFmt = "0.00E+00;-0.00E+00;\"-\"")
-
-  openxlsx::addStyle(
-    wb,
-    sheet = "Dunn Matrix (p)",
-    style = p_style,
-    rows = 2:(nrow(p_matrix_df) + 1),
-    cols = 2:(ncol(p_matrix_df) + 1),
-    gridExpand = TRUE
-  )
-
-  # --- Dunn Matrix (significance) ---
-  openxlsx::addWorksheet(wb, "Dunn Matrix (sig)")
-  openxlsx::writeData(wb, "Dunn Matrix (sig)", sig_matrix_df, rowNames = TRUE)
-
-  # --- Optional Mann-Whitney ---
-  if(!is.null(mann_whitney_df)) {
-    openxlsx::addWorksheet(wb, "Mann-Whitney")
-    openxlsx::writeData(wb, "Mann-Whitney", mann_whitney_df)
-  }
-
-  for(i in seq_len(nrow(p_matrix_df))) {
-    openxlsx::writeData(
-      wb,
-      "Dunn Matrix (p)",
-      "-",
-      startRow = i + 1,
-      startCol = i + 1
-    )
-  }
-
-  # --- Highlight significant cells
-  sig_highlight <- openxlsx::createStyle(bgFill = "#DCE6F1")
-
-  openxlsx::conditionalFormatting(
-    wb, "Dunn Matrix (p)",
-    cols = 2:(ncol(p_matrix_df)+1),
-    rows = 2:(nrow(p_matrix_df)+1),
-    rule = "<0.05",
-    style = sig_highlight
-  )
-
-  # --- Highlight diagonal
-  diag_style <- openxlsx::createStyle(fgFill = "#EEEEEE")
-
-  for(i in 1:nrow(p_matrix_df)) {
-    openxlsx::addStyle(
-      wb, "Dunn Matrix (p)", diag_style,
-      rows = i+1, cols = i+1, gridExpand = FALSE
-    )
-  }
-
-  # --- Auto column width ---
-  for(sheet in openxlsx::sheets(wb)) {
-    openxlsx::setColWidths(wb, sheet, cols = 1:20, widths = "auto")
-  }
-
-  # Freeze header row and column
-  openxlsx::freezePane(wb, "Dunn Matrix (p)", firstRow = TRUE, firstCol = TRUE)
-  openxlsx::freezePane(wb, "Dunn Matrix (sig)", firstRow = TRUE, firstCol = TRUE)
-
-  # Save workbook
-  openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
+  export_statistics_to_excel(base_file_name,
+                             kruskal_df      = stats$kruskal_df,
+                             dunn_result     = stats$dunn_result,
+                             p_matrix_df     = stats$p_matrix_df,
+                             sig_matrix_df   = stats$sig_matrix_df,
+                             mann_whitney_df = stats$mann_whitney_df)
 
   # Step 16: Create Plot
   p <- create_boxplot(subdata_median,
