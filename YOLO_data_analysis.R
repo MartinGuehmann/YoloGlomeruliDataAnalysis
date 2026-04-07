@@ -1056,7 +1056,7 @@ analyze_data <- function(data,
   symbol_df <- symbols$symbol_df
   legend_symbols <- symbols$legend_symbols
 
-  # Step 10: Compute statistics
+  # Step 3: Compute statistics
   stats           <- compute_statistics(subdata, metric, experiments)
   kruskal_df      <- stats$kruskal_df
   mann_whitney_df <- stats$mann_whitney_df
@@ -1065,7 +1065,7 @@ analyze_data <- function(data,
   sig_matrix_df   <- stats$sig_matrix_df
 
 
-  # Step 15: Export results to Excel with openxlsx
+  # Step 4: Export results to Excel with openxlsx
   export_statistics_to_excel(base_file_name,
                              kruskal_df      = stats$kruskal_df,
                              dunn_result     = stats$dunn_result,
@@ -1073,7 +1073,7 @@ analyze_data <- function(data,
                              sig_matrix_df   = stats$sig_matrix_df,
                              mann_whitney_df = stats$mann_whitney_df)
 
-  # Step 16: Create Plot
+  # Step 5: Create Plot
   p <- create_boxplot(subdata,
                       experiments,
                       symbol_df,
@@ -1085,7 +1085,7 @@ analyze_data <- function(data,
                       plot_title,
                       mode)
 
-  # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
+  # Step 6: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   heatmap_plot <- create_dunn_heatmap_plot(
     sig_matrix_df  = sig_matrix_df,
     symbol_map     = symbol_map,
@@ -1095,7 +1095,7 @@ analyze_data <- function(data,
     plot_title     = plot_title
   )
 
-  # Step 20: Return plot object explicitly (invisible)
+  # Step 7: Return plot object explicitly (invisible)
   return(invisible(p))
 }
 
