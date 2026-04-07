@@ -760,6 +760,7 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 3: Keep valid versuch levels
   # ----------------------------
+#  subdata <- subdata[subdata$versuch %in% experiments, ] # This is used here, otherwise we could just use filter_data
   subdata$versuch <- factor(subdata$versuch, levels = experiments)
 
   # ----------------------------
