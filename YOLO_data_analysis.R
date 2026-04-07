@@ -157,6 +157,87 @@ filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
   return(subdata)
 }
 
+#' Prepare Symbol Data for Plotting
+#'
+#' This function takes a mapping of symbols to experiments and a symbol configuration
+#' and returns a structured list suitable for plotting. It also performs safety checks
+#' to ensure that all experiments have a corresponding symbol mapping and that all symbols
+#' have defined y-positions.
+#'
+#' @param symbol_map A named list mapping experiments (names) to symbols (vector of strings).
+#'                   Example: list("exp1" = c("A", "B"), "exp2" = c("C"))
+#' @param symbol_config A data.frame containing symbol properties. Must include at least:
+#'                      - symbol: the symbol name (string)
+#'                      - y: numeric y-position for plotting
+#'                      - shape: shape code for plotting (optional)
+#' @param experiments Character vector of experiments to include. Only these experiments
+#'                    are retained from the symbol_map.
+#'
+#' @return A named list with two elements:
+#' \describe{
+#'   \item{symbol_df}{A data.frame with columns:
+#'     - symbol: symbol name
+#'     - versuch: experiment name (factor, ordered as in `experiments`)
+#'     - y: y-position for plotting
+#'     - shape: optional shape for plotting
+#'   }
+#'   \item{legend_symbols}{A character vector of symbols, ordered for use in legends.}
+#' }
+#'
+#' @examples
+#' symbol_map <- list("001" = c("A", "B"), "002" = c("C"))
+#' symbol_config <- data.frame(
+#'   symbol = c("A", "B", "C"),
+#'   y = c(0.2, 0.5, 0.8),
+#'   shape = c(21, 22, 23)
+#' )
+#' experiments <- c("001", "002")
+#' symbols <- prepare_symbol_data(symbol_map, symbol_config, experiments)
+#' symbols$symbol_df       # the symbol dataset for plotting
+#' symbols$legend_symbols  # ordered symbols for legend
+#'
+#' @export
+prepare_symbol_data <- function(symbol_map, symbol_config, experiments) {
+
+  # Step 1: Ensure all experiments have a corresponding symbol mapping
+  missing <- setdiff(experiments, names(symbol_map))
+
+  if (length(missing) > 0) {
+    stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
+  }
+
+  # Step 2: Create symbol dataset (independent of main data)
+  symbol_df <- stack(symbol_map)
+  colnames(symbol_df) <- c("symbol", "versuch")
+  # Keep only relevant versuch
+  symbol_df <- symbol_df[symbol_df$versuch %in% experiments, ]
+  # Join with symbol_config (safe: no duplication issue here)
+  symbol_df <- merge(symbol_df, symbol_config, by = "symbol", all.x = TRUE)
+  # Ensure factor levels match plot
+  symbol_df$symbol <- factor(symbol_df$symbol, levels = symbol_config$symbol)
+  symbol_df$versuch <- factor(symbol_df$versuch, levels = experiments)
+  # Make the legend order more robust
+  legend_order_df <- symbol_df[order(symbol_df$versuch), ]
+  legend_symbols <- unique(legend_order_df$symbol)
+
+  # Step 3: Safety checks
+  missing <- setdiff(symbol_df$symbol, symbol_config$symbol)
+  if (length(missing) > 0) {
+    stop("Missing symbol_config entries for: ", paste(missing, collapse = ", "))
+  }
+  if (any(is.na(symbol_df$y))) {
+    stop("Some symbols have no y-position defined")
+  }
+
+  # Step 4: Prepare for return
+  symbols <- list(
+    symbol_df = symbol_df,
+    legend_symbols = legend_symbols
+  )
+
+  return(symbols)
+}
+
 #############
 # Functions #
 #############
@@ -251,35 +332,10 @@ analyze_data <- function(data,
   # Step 1: Filter data for epochs, outliers, and experiments
   subdata <- filter_data(data, experiments, epoch_range, outlier_filter)
 
-  # Step 4: Ensure all experiments have a corresponding symbol mapping
-  missing <- setdiff(experiments, names(symbol_map))
-
-  if (length(missing) > 0) {
-    stop(paste("Missing symbol_map entries for:", paste(missing, collapse=", ")))
-  }
-
-  # Step 5: Create symbol dataset (independent of main data)
-  symbol_df <- stack(symbol_map)
-  colnames(symbol_df) <- c("symbol", "versuch")
-  # Keep only relevant versuch
-  symbol_df <- symbol_df[symbol_df$versuch %in% experiments, ]
-  # Join with symbol_config (safe: no duplication issue here)
-  symbol_df <- merge(symbol_df, symbol_config, by = "symbol", all.x = TRUE)
-  # Ensure factor levels match plot
-  symbol_df$symbol <- factor(symbol_df$symbol, levels = symbol_config$symbol)
-  symbol_df$versuch <- factor(symbol_df$versuch, levels = experiments)
-  # Make the legend order more robust
-  legend_order_df <- symbol_df[order(symbol_df$versuch), ]
-  legend_symbols <- unique(legend_order_df$symbol)
-
-  # Step 6: Safety checks
-  missing <- setdiff(symbol_df$symbol, symbol_config$symbol)
-  if (length(missing) > 0) {
-    stop("Missing symbol_config entries for: ", paste(missing, collapse = ", "))
-  }
-  if (any(is.na(symbol_df$y))) {
-    stop("Some symbols have no y-position defined")
-  }
+  # Step 2: Create symbol dataset (independent of main data)
+  symbols <- prepare_symbol_data(symbol_map, symbol_config, experiments)
+  symbol_df <- symbols$symbol_df
+  legend_symbols <- symbols$legend_symbols
 
   # Step 7: Compute median per SuperRank for each versuch
   form <- as.formula(paste(metric, "~ versuch + SuperRank"))
