@@ -157,6 +157,10 @@ filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
   return(subdata)
 }
 
+################
+# Subfunctions #
+################
+
 #' Prepare Symbol Data for Plotting
 #'
 #' This function takes a mapping of symbols to experiments and a symbol configuration
@@ -236,6 +240,197 @@ prepare_symbol_data <- function(symbol_map, symbol_config, experiments) {
   )
 
   return(symbols)
+}
+
+#' Create a Dunn Test Significance Heatmap with Symbols
+#'
+#' Generates a `ggplot` heatmap showing pairwise Dunn test significance between experiments.
+#' Significance annotations are shown in tiles ("-", "ns", "*", "**", "***"), and symbols 
+#' can be mapped to the rows and columns to indicate experimental groups. 
+#' The function also saves the plot to PDF and SVG files.
+#'
+#' @param sig_matrix_df A data frame containing significance annotations for each pairwise
+#'   comparison. Rows and columns should be experiments. Allowed values: "-", "ns", "*", "**", "***".
+#' @param symbol_map A named list mapping experiment names to vectors of symbol names
+#'   for annotation on the heatmap edges (right side and top).
+#' @param symbol_config A data frame describing each symbol, with at least columns:
+#'   - `symbol`: symbol name
+#'   - `shape`: integer or character code for ggplot2 shapes
+#'   - `y`: numeric y-position for placement along axes
+#' @param legend_symbols A character vector of symbols to show in the plot legend, in plotting order.
+#' @param base_file_name Character, the base file name (without extension) to save the heatmap plots as PDF and SVG.
+#' @param plot_title Character, the title of the heatmap plot. Default is `"Heatmap"`.
+#'
+#' @return Invisibly returns a `ggplot` object representing the Dunn significance heatmap with symbols.
+#'   The function also saves the heatmap to PDF and SVG files using `base_file_name`.
+#'
+#' @examples
+#' # Example: simple 3x3 Dunn matrix with symbols
+#' sig_matrix <- data.frame(
+#'   A = c("-", "*", "ns"),
+#'   B = c("*", "-", "**"),
+#'   C = c("ns", "**", "-")
+#' )
+#' rownames(sig_matrix) <- c("A", "B", "C")
+#' symbol_map <- list(A = c("s1"), B = c("s2"), C = c("s3"))
+#' symbol_config <- data.frame(
+#'   symbol = c("s1", "s2", "s3"),
+#'   shape = c(15, 16, 17),
+#'   y = c(1, 2, 3)
+#' )
+#' legend_symbols <- c("s1", "s2", "s3")
+#'
+#' heatmap_plot <- create_dunn_heatmap_plot(
+#'   sig_matrix_df = sig_matrix,
+#'   symbol_map = symbol_map,
+#'   symbol_config = symbol_config,
+#'   legend_symbols = legend_symbols,
+#'   base_file_name = "example_heatmap"
+#' )
+#' print(heatmap_plot)
+create_dunn_heatmap_plot <- function(
+    sig_matrix_df,
+    symbol_map,
+    symbol_config,
+    legend_symbols,
+    base_file_name,
+    plot_title = "Heatmap"
+) {
+
+  # Step 0: Create the parent dir of the output file if it does not exsist
+  create_parent_dir(base_file_name)
+
+    # Step 1: Convert significance to numeric
+  sig_numeric <- sig_matrix_df
+  sig_numeric[sig_numeric == "-"] <- NA
+  sig_numeric[sig_numeric == "ns"] <- 0
+  sig_numeric[sig_numeric == "*"]  <- 1
+  sig_numeric[sig_numeric == "**"] <- 2
+  sig_numeric[sig_numeric == "***"]<- 3
+  sig_numeric <- as.data.frame(apply(sig_numeric, 2, as.numeric))
+
+  # Add Group names explicitly from rownames
+  sig_numeric$Group <- rownames(sig_matrix_df)
+
+  # Melt for ggplot
+  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group",
+                             variable.name = "Comparison", value.name = "Significance")
+
+  # Ensure ordering matches original experiment order and the excel order
+  sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
+  sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
+
+  # Step 2: Prepare symbol positions for right-side
+  symbol_side <- data.frame(
+    Group = rep(names(symbol_map), lengths(symbol_map)),
+    symbol = unlist(symbol_map),
+    stringsAsFactors = FALSE
+  )
+
+  # Merge with shape info
+  symbol_side <- merge(symbol_side, symbol_config, by = "symbol", all.x = TRUE)
+
+  # Factor levels
+  symbol_side$Group <- factor(symbol_side$Group, levels = levels(sig_melt$Group))
+
+  # Spread symbols horizontally in their own column to the right
+  last_tile_x <- length(levels(sig_melt$Comparison))
+  x_scale <- 20   # Controls how wide the symbols spread using y-offset as scaling
+  x_offset <- 0   # Horizontal offset for symbols to the right of tiles
+
+  symbol_side <- symbol_side %>%
+    group_by(Group) %>%
+    mutate(
+      xpos = last_tile_x + x_offset + (y - 1) * x_scale,
+      ypos = as.numeric(Group)
+    ) %>%
+    ungroup()
+
+  # Step 3: Prepare top annotation symbols (same spread logic, rotated above heatmap)
+  top_symbols <- symbol_side %>%
+    # Keep one row per symbol
+    group_by(Group) %>%
+    mutate(
+      xpos = as.numeric(factor(Group, levels = colnames(sig_matrix_df))), # Align above each heatmap column
+      ypos = last_tile_x + x_offset + (y - 1) * x_scale,                  # spread symbols vertically using y-offset
+    ) %>%
+    ungroup()
+
+  # Heatmap plot with symbols in the same panel
+  heatmap_plot <- ggplot() +
+    # Heatmap tiles
+    geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
+              color = "white") +
+    scale_fill_gradientn(
+      colors = c("white", "#FFC0C0", "#FF6666", "#990000"), # light to dark red
+      limits = c(0, 3),
+      na.value = "grey90",
+      breaks = 0:3,
+      labels = c("ns", "*", "**", "***")
+    ) +
+    # Right-side symbols
+    geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
+               size = 3, color = "black") +
+    # Top symbols above heatmap
+    geom_point(data = top_symbols, aes(x = xpos, y = ypos, shape = symbol),
+               size = 3, color = "black") +
+    # Shape legend mapping
+    scale_shape_manual(
+      values = setNames(symbol_config$shape, symbol_config$symbol),
+      breaks = legend_symbols,
+      na.translate = FALSE
+    ) +
+    # x-axis (heatmap columns)
+    scale_x_continuous(
+      breaks = 1:last_tile_x,
+      labels = levels(sig_melt$Comparison),
+      expand = c(0, 0)
+    ) +
+    # y-axis (heatmap rows)
+    scale_y_continuous(
+      breaks = 1:length(levels(sig_melt$Group)),
+      labels = levels(sig_melt$Group),
+      expand = c(0, 0)
+    ) +
+    # Ensure square tiles and expand y-limits to fit top symbols
+    coord_fixed(
+      ratio = 1,
+      xlim = c(0.5, max(symbol_side$xpos) + 0.5),
+      ylim = c(0.5, max(top_symbols$ypos) + 0.5)
+    ) +
+    theme_minimal() +
+    labs(
+      title = paste0(plot_title, " Significance Heatmap"),
+      x = "Experiment",
+      y = "Experiment"
+    ) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA),
+      legend.margin = margin(t = 10, r = 10, b = 10, l = 10),      # Adds padding around legend box
+      legend.spacing.y = unit(0.5, "cm"),                          # Increases vertical spacing between items
+      legend.spacing.x = unit(0.5, "cm"),                          # Increases horizontal spacing between items
+      plot.title = element_text(hjust = 0.5),                      # Center the plot title
+      plot.title.position = "plot"
+    )
+
+  # Step 5: Save plots
+  ggsave(
+    filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5
+  )
+  ggsave(
+    filename = paste0(base_file_name, "_dunn_heatmap.svg"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5
+  )
+
+  # Step 6: Return heatmap_plot object explicitly (invisible)
+  return(invisible(heatmap_plot))
 }
 
 #############
@@ -651,133 +846,13 @@ analyze_data <- function(data,
   )
 
   # Step 19: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
-  # a: Convert significance to numeric
-  sig_numeric <- sig_matrix_df
-  sig_numeric[sig_numeric == "-"] <- NA
-  sig_numeric[sig_numeric == "ns"] <- 0
-  sig_numeric[sig_numeric == "*"]  <- 1
-  sig_numeric[sig_numeric == "**"] <- 2
-  sig_numeric[sig_numeric == "***"]<- 3
-  sig_numeric <- as.data.frame(apply(sig_numeric, 2, as.numeric))
-
-  # Add Group names explicitly from rownames
-  sig_numeric$Group <- rownames(sig_matrix_df)
-
-  # Melt for ggplot
-  sig_melt <- reshape2::melt(sig_numeric, id.vars = "Group",
-                             variable.name = "Comparison", value.name = "Significance")
-
-  # Ensure ordering matches original experiment order and the excel order
-  sig_melt$Group <- factor(sig_melt$Group, levels = rev(rownames(sig_matrix_df)))
-  sig_melt$Comparison <- factor(sig_melt$Comparison, levels = colnames(sig_matrix_df))
-
-  # b: Prepare symbol positions for right-side
-  symbol_side <- data.frame(
-    Group = rep(names(symbol_map), lengths(symbol_map)),
-    symbol = unlist(symbol_map),
-    stringsAsFactors = FALSE
-  )
-
-  # Merge with shape info
-  symbol_side <- merge(symbol_side, symbol_config, by = "symbol", all.x = TRUE)
-
-  # Factor levels
-  symbol_side$Group <- factor(symbol_side$Group, levels = levels(sig_melt$Group))
-
-  # Spread symbols horizontally in their own column to the right
-  last_tile_x <- length(levels(sig_melt$Comparison))
-  x_scale <- 20   # Controls how wide the symbols spread using y-offset as scaling
-  x_offset <- 0   # Horizontal offset for symbols to the right of tiles
-
-  symbol_side <- symbol_side %>%
-    group_by(Group) %>%
-    mutate(
-      xpos = last_tile_x + x_offset + (y - 1) * x_scale,
-      ypos = as.numeric(Group)
-    ) %>%
-    ungroup()
-
-  # b2: Prepare top annotation symbols (same spread logic, rotated above heatmap)
-  top_symbols <- symbol_side %>%
-    # Keep one row per symbol
-    group_by(Group) %>%
-    mutate(
-      xpos = as.numeric(factor(Group, levels = colnames(sig_matrix_df))), # Align above each heatmap column
-      ypos = last_tile_x + x_offset + (y - 1) * x_scale,                  # spread symbols vertically using y-offset
-    ) %>%
-    ungroup()
-
-  # Heatmap plot with symbols in the same panel
-  heatmap_plot <- ggplot() +
-    # Heatmap tiles
-    geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
-              color = "white") +
-    scale_fill_gradientn(
-      colors = c("white", "#FFC0C0", "#FF6666", "#990000"), # light to dark red
-      limits = c(0, 3),
-      na.value = "grey90",
-      breaks = 0:3,
-      labels = c("ns", "*", "**", "***")
-    ) +
-    # Right-side symbols
-    geom_point(data = symbol_side, aes(x = xpos, y = ypos, shape = symbol),
-               size = 3, color = "black") +
-    # Top symbols above heatmap
-    geom_point(data = top_symbols, aes(x = xpos, y = ypos, shape = symbol),
-               size = 3, color = "black") +
-    # Shape legend mapping
-    scale_shape_manual(
-      values = setNames(symbol_config$shape, symbol_config$symbol),
-      breaks = legend_symbols,
-      na.translate = FALSE
-    ) +
-    # x-axis (heatmap columns)
-    scale_x_continuous(
-      breaks = 1:last_tile_x,
-      labels = levels(sig_melt$Comparison),
-      expand = c(0, 0)
-    ) +
-    # y-axis (heatmap rows)
-    scale_y_continuous(
-      breaks = 1:length(levels(sig_melt$Group)),
-      labels = levels(sig_melt$Group),
-      expand = c(0, 0)
-    ) +
-    # Ensure square tiles and expand y-limits to fit top symbols
-    coord_fixed(
-      ratio = 1,
-      xlim = c(0.5, max(symbol_side$xpos) + 0.5),
-      ylim = c(0.5, max(top_symbols$ypos) + 0.5)
-    ) +
-    theme_minimal() +
-    labs(
-      title = paste0(plot_title, " Significance Heatmap"),
-      x = "Experiment",
-      y = "Experiment"
-    ) +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.grid = element_blank(),
-      panel.background = element_rect(fill = "white", color = NA),
-      legend.margin = margin(t = 10, r = 10, b = 10, l = 10),      # Adds padding around legend box
-      legend.spacing.y = unit(0.5, "cm"),                          # Increases vertical spacing between items
-      legend.spacing.x = unit(0.5, "cm"),                          # Increases horizontal spacing between items
-      plot.title = element_text(hjust = 0.5),                      # Center the plot title
-      plot.title.position = "plot"
-    )
-
-  # d: Save plots
-  ggsave(
-    filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
-    plot = heatmap_plot,
-    width = 6,
-    height = 5
-  )
-  ggsave(
-    filename = paste0(base_file_name, "_dunn_heatmap.svg"),
-    plot = heatmap_plot,
-    width = 6,
-    height = 5
+  heatmap_plot <- create_dunn_heatmap_plot(
+    sig_matrix_df = sig_matrix_df,
+    symbol_map = symbol_map,
+    symbol_config = symbol_config,
+    legend_symbols = legend_symbols,
+    base_file_name = base_file_name,
+    plot_title = plot_title
   )
 
   # Step 20: Return plot object explicitly (invisible)
