@@ -2,6 +2,8 @@
 # Setup         #
 #################
 
+# options(warn = 2)  # Treat warnings as errors
+
 # Fail fast on errors, unless in interactive mode then go to debugging
 if (interactive() || Sys.getenv("DEBUG") == "true") {
   options(error = recover)
@@ -963,16 +965,16 @@ export_statistics_to_excel <- function(base_file_name,
 
 #' Analyze experimental data with non-parametric tests and annotated plots
 #'
-#' This function executes a full workflow for experimental metrics, including:
+#' Executes a full workflow for experimental metrics:
 #' 
-#' 1. Filtering data to a specified epoch range and removing specified outliers.
-#' 2. Computing medians per SuperRank and median-of-medians per experiment.
-#' 3. Using a Kruskal-Wallis test to compare experiments (groups), reporting two-sided p-values.
-#' 4. Following up with Dunn's post-hoc test with Bonferroni correction for multiple comparisons, reporting two-sided p-values.
-#' 5. Optionally using a Mann-Whitney U test (Wilcoxon rank-sum) for 2-group cases, reporting a two-sided p-value, saved in a separate Excel sheet.
-#' 6. Calculating effect sizes (r) for each pairwise comparison using the pairwise sample size (`n_pair`), along with significance labels and effect size strength.
-#' 7. Generating boxplots with optional median annotations and raw median points.
-#' 8. Saving Excel sheets and plots (PDF and SVG) to disk.
+#' 1. Filters data to a specified epoch range and removes specified outliers.
+#' 2. Prepares symbols for plotting via `symbol_map` and `symbol_config`.
+#' 3. Computes Kruskal-Wallis and optional Mann-Whitney tests, as well as Dunn post-hoc tests
+#'    with Bonferroni correction, including effect sizes (r) and significance labels.
+#' 4. Exports all statistical results to Excel sheets (`Kruskal-Wallis`, `Dunn Test`, optional `Mann-Whitney`).
+#' 5. Generates boxplots with optional median-of-medians annotations and raw medians
+#'    via `create_boxplot`, saving PDF and SVG files.
+#' 6. Generates a Dunn post-hoc significance heatmap via `create_dunn_heatmap_plot`, saved to disk.
 #'
 #' @param data A data frame containing raw experimental data. Must include columns for `versuch` (experiment name), `Epoche` (epoch number), `SuperRank` (replicate rank), and the metric specified in `metric`.
 #' @param experiments A character vector of experiment names (`versuch`) to include in the analysis. This defines the order of experiments in plots and tests.
@@ -988,34 +990,33 @@ export_statistics_to_excel <- function(base_file_name,
 #' @param metric_name A string used as the y-axis label in plots.
 #' @param plot_title Optional string for the plot title (default `"Plot Title"`).
 #' @param base_file_name Base file name (without extension) for saved plots and Excel sheets (default `"plot"`).
-#' @param mode Optional plotting mode. `"default"` creates plain boxplots, `"annotated"` adds median-of-medians points and labels, `"red_raw_medians"` overlays raw median points in red.
+#' @param mode Optional plotting mode: `"default"` creates plain boxplots, `"annotated"` adds median-of-medians points and labels + red raw medians, `"red_raw_medians"` overlays only raw median points in red.
 #' @param outlier_filter Optional list specifying outliers to remove, with elements `versuch` and `SuperRank` (default `list(versuch="001", SuperRank=6)`).
 #' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include (default `c(290, 299)`).
 #'
-#' @return Invisibly returns the ggplot object.
+#' @return Invisibly returns the boxplot ggplot object.
 #'         Saves the following files to disk (prefix given by `base_file_name`):
 #'         \itemize{
 #'           \item Excel sheets:
 #'             \describe{
-#'               \item{Kruskal-Wallis}{Contains test statistic, degrees of freedom, and p-value.}
-#'               \item{Dunn Test}{Contains pairwise comparisons split into `Group1` and `Group2`, with Z-statistic, raw and Bonferroni-adjusted p-values, pairwise sample size (`n_pair`), effect size r, significance, and effect size strength.}
-#'               \item{Mann-Whitney}{Optional sheet created only if exactly 2 groups are analyzed, with `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
+#'               \item{Kruskal-Wallis}{Test statistic, degrees of freedom, and p-value.}
+#'               \item{Dunn Test}{Pairwise comparisons: `Group1`, `Group2`, Z-statistic, raw and Bonferroni-adjusted p-values, pairwise sample size (`n_pair`), effect size r, significance, and effect size strength.}
+#'               \item{Mann-Whitney}{Optional sheet for cases with 2-group only: `Group1`, `Median1`, `Group2`, `Median2`, W-statistic, effect size r, p-value, significance, and method.}
 #'             }
 #'           \item Plots: PDF and SVG boxplots with optional annotations as defined by `mode`.
+#'           \item Dunn post-hoc significance heatmap saved to disk.
 #'         }
 #'
 #' @details
-#' The function is designed to handle multiple experiments (groups) robustly:
-#' - The Kruskal-Wallis test and Dunn's post-hoc test are always applied across the selected experiments.
-#' - For two-group comparisons:
-#'   - The Kruskal-Wallis test is mathematically related to the Mann-Whitney U test, but p-values may differ slightly due to implementation details (e.g., tie handling and approximations).
-#'   - An additional Mann-Whitney U test is computed explicitly for clarity and reported separately.
-#' - For three or more groups, inference is based on Kruskal-Wallis followed by Dunn's test.
-#' - Effect sizes for Dunn's test are computed as r = Z / sqrt(n_pair), where n_pair is the number of observations in the pairwise comparison.
-#' - Plot symbols and annotations are configured via `symbol_map` and `symbol_config`.
+#' The function handles multiple experimental groups robustly:
+#' - The Kruskal-Wallis and Dunn's tests are applied across all the selected experiments.
+#' - For two-group comparisons, an additional Mann-Whitney U test is applieded explicitly.
+#' - Effect sizes for Dunn's test are computed as r = Z / sqrt(n_pair), where n_pair is
+#'   the number of observations in the pairwise comparison.
+#' - Boxplot annotations (median-of-medians, raw medians) and heatmap symbols are configured via `symbol_map` and `symbol_config`.
 #'
 #' @examples
-#' # Run analysis on a small subset
+#' # Example use with dummy data
 #' analyze_data(
 #'   data = my_data,
 #'   experiments = c("Small", "Medium", "Medium+Aug"),
@@ -1023,10 +1024,18 @@ export_statistics_to_excel <- function(base_file_name,
 #'   symbol_config = symbol_config_df,
 #'   metric = "accuracy",
 #'   metric_name = "Accuracy",
-#'   plot_title = "YOLO Training Performance"
+#'   plot_title = "YOLO Training Performance",
+#'   base_file_name = "yolo_plot",
+#'   mode = "annotated"
 #' )
 #'
-#' @seealso \code{\link[stats]{kruskal.test}}, \code{\link[FSA]{dunnTest}}, \code{\link[stats]{wilcox.test}}
+#' @seealso
+#' \code{\link[stats]{kruskal.test}}, 
+#' \code{\link[FSA]{dunnTest}}, 
+#' \code{\link[stats]{wilcox.test}}, 
+#' \code{\link[ggplot2]{ggplot}}, 
+#' \code{\link[openxlsx]{write.xlsx}}
+#'
 #' @import ggplot2
 #' @importFrom dplyr group_by summarise mutate
 #' @importFrom tidyr stack separate
