@@ -446,7 +446,8 @@ create_dunn_heatmap_plot <- function(
       y = "Experiment"
     ) +
     theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.x = element_text(size = 6),
+      axis.text.y = element_text(size = 6),
       panel.grid = element_blank(),
       panel.background = element_rect(fill = "white", color = NA),
       legend.margin = margin(t = 10, r = 10, b = 10, l = 10),      # Adds padding around legend box
