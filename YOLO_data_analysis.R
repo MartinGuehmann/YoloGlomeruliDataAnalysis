@@ -518,7 +518,8 @@ create_boxplot <- function(subdata,
   create_parent_dir(base_file_name)
 
   # Step 1: Create the main breaks, make sure it is 0.0, 0.1 etc instead of next machine number
-  breaks_main <- as.numeric(sprintf("%.1f", seq(0, 1, 0.1)))
+  breaks_main <- seq(0, 1, 0.1)
+  labels_main <- sprintf("%.1f", breaks_main)
 
   # Step 2: Compute median per SuperRank for each versuch
   form <- as.formula(paste(metric, "~ versuch + SuperRank"))
@@ -529,7 +530,7 @@ create_boxplot <- function(subdata,
     paste(metric, "~ versuch")
   )
   subdata_median_median <- aggregate(form, data = subdata_median, median)
-  
+
   # Step 4: Ensure median datasets have correct factor levels
   subdata_median$versuch <- factor(subdata_median$versuch, levels = experiments)
   subdata_median_median$versuch <- factor(subdata_median_median$versuch, levels = experiments)
@@ -556,7 +557,7 @@ create_boxplot <- function(subdata,
       limits = c(0, 1.25),
       expand = c(0, 0),
       breaks = breaks_main,
-      labels = breaks_main,
+      labels = labels_main,
       minor_breaks = NULL
     ) +
     ggtitle(plot_title) +
