@@ -202,65 +202,51 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
   if (is.null(stats)) return(p)
 
+  # Only add asterices to boxplots with 2 or 3 groups to avoid clutter
   group_count <- length(unique(subdata$versuch))
-  # Only add asterices to boxplots with 2 and 3 groups to avoid clutter
   if (group_count > 3) return(p)
 
-  library(ggpubr)
+  y_vals <- subdata[[metric]]
+  y_max <- max(y_vals, na.rm = TRUE)
+  y_min <- min(y_vals, na.rm = TRUE)
 
-  y_max <- max(subdata[[metric]], na.rm = TRUE)
-  y_offset <- 0.05 * diff(range(subdata[[metric]], na.rm = TRUE))
+  # Fixed limits for your case
+  y_limit_min <- 0
+  y_limit_max <- 1
+
+  # Available space
+  space_above <- y_limit_max - y_max
+  space_below <- y_min - y_limit_min
+
+  place_above <- space_above >= space_below
+  available_space <- if (place_above) space_above else space_below
+
+  # Small margin from data and boundary
+  margin <- 0.01
 
   # ---- CASE: 2 groups ----
   if (group_count == 2 && !is.null(stats$mann_whitney_df)) {
 
     mw <- stats$mann_whitney_df
     p_val <- mw$p.value
-    
+
     signif_label <- ifelse(p_val < 0.001, "***",
                            ifelse(p_val < 0.01, "**",
                                   ifelse(p_val < alpha, "*", "ns")))
 
-    df_pvalues <- data.frame(
-      group1 = mw$Group1,
-      group2 = mw$Group2,
-      p = p_val,
-      p.signif = signif_label,
-      y.position = y_max + y_offset
-    )
-
-    p <- p +
-      stat_pvalue_manual(
-        df_pvalues,
-        label = "p.signif",
-        xmin = "group1",
-        xmax = "group2",
-        y.position = "y.position"
-      )
-  }
-
-  # ---- CASE: 3 groups ----
-  if (group_count == 3) {
-
-    dunn <- stats$dunn_result$res
-
-    # keep only significant comparisons
-    dunn <- dunn[dunn$P.adj < alpha, ]
-
-    if (nrow(dunn) > 0) {
-
-      dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
-                              ifelse(dunn$P.adj < 0.01, "**",
-                                     ifelse(dunn$P.adj < alpha, "*", "ns")))
-
-      dunn$y.position <- y_max + y_offset * seq_len(nrow(dunn))
+    if (available_space > 0) {
+      if (place_above) {
+        y_pos <- y_max + margin + available_space / 2
+      } else {
+        y_pos <- y_min - (margin + available_space / 2)
+      }
 
       df_pvalues <- data.frame(
-        group1 = dunn$Group1,
-        group2 = dunn$Group2,
-        p = dunn$P.adj,
-        p.signif = dunn$p.signif,
-        y.position = dunn$y.position
+        group1 = mw$Group1,
+        group2 = mw$Group2,
+        p = p_val,
+        p.signif = signif_label,
+        y.position = y_pos
       )
 
       p <- p +
@@ -271,6 +257,51 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
           xmax = "group2",
           y.position = "y.position"
         )
+    }
+  }
+
+  # ---- CASE: 3 groups ----
+  if (group_count == 3) {
+
+    dunn <- stats$dunn_result$res
+    dunn <- dunn[dunn$P.adj < alpha, ]
+
+    n <- nrow(dunn)
+
+    if (n > 0 && available_space > 0) {
+
+      dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
+                              ifelse(dunn$P.adj < 0.01, "**",
+                                     ifelse(dunn$P.adj < alpha, "*", "ns")))
+
+      usable_space <- max(available_space - 2 * margin, 0)
+
+      if (usable_space > 0) {
+        step <- usable_space / (n + 1)
+
+        if (place_above) {
+          dunn$y.position <- y_max + margin + step * seq_len(n)
+        } else {
+          dunn$y.position <- y_min - (margin + step * seq_len(n))
+        }
+
+        df_pvalues <- data.frame(
+          group1 = dunn$Group1,
+          group2 = dunn$Group2,
+          p = dunn$P.adj,
+          p.signif = dunn$p.signif,
+          y.position = dunn$y.position
+        )
+
+        p <- p +
+          stat_pvalue_manual(
+            df_pvalues,
+            label = "p.signif",
+            xmin = "group1",
+            xmax = "group2",
+            y.position = "y.position"
+          )
+      }
     }
   }
 
