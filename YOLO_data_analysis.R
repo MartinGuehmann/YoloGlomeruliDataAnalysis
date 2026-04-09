@@ -1072,6 +1072,14 @@ export_statistics_to_excel <- function(base_file_name,
 #'   mode = "annotated"
 #' )
 #'
+#' # Access returned plots
+#' boxplot_plot <- results$boxplot
+#' heatmap_plot <- results$heatmap
+#'
+#' # Display plots
+#' print(boxplot_plot)
+#' print(heatmap_plot)
+#'
 #' @seealso
 #' \code{\link[stats]{kruskal.test}}, 
 #' \code{\link[FSA]{dunnTest}}, 
