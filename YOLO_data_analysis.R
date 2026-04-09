@@ -199,27 +199,28 @@ shrink_first_point_layer <- function(p, new_size = 1.3) {
 
 
 add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
-  
+
   if (is.null(stats)) return(p)
-  
+
   group_count <- length(unique(subdata$versuch))
-  if (group_count > 3) return(p)  # avoid clutter
-  
+  # Only add asterices to boxplots with 2 and 3 groups to avoid clutter
+  if (group_count > 3) return(p)
+
   library(ggpubr)
-  
+
   y_max <- max(subdata[[metric]], na.rm = TRUE)
   y_offset <- 0.05 * diff(range(subdata[[metric]], na.rm = TRUE))
-  
+
   # ---- CASE: 2 groups ----
   if (group_count == 2 && !is.null(stats$mann_whitney_df)) {
-    
+
     mw <- stats$mann_whitney_df
     p_val <- mw$p.value
     
     signif_label <- ifelse(p_val < 0.001, "***",
                            ifelse(p_val < 0.01, "**",
                                   ifelse(p_val < alpha, "*", "ns")))
-    
+
     df_pvalues <- data.frame(
       group1 = mw$Group1,
       group2 = mw$Group2,
@@ -227,7 +228,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
       p.signif = signif_label,
       y.position = y_max + y_offset
     )
-    
+
     p <- p +
       stat_pvalue_manual(
         df_pvalues,
@@ -237,23 +238,23 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
         y.position = "y.position"
       )
   }
-  
+
   # ---- CASE: 3 groups ----
   if (group_count == 3) {
-    
+
     dunn <- stats$dunn_result$res
-    
+
     # keep only significant comparisons
     dunn <- dunn[dunn$P.adj < alpha, ]
-    
+
     if (nrow(dunn) > 0) {
-      
+
       dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
                               ifelse(dunn$P.adj < 0.01, "**",
                                      ifelse(dunn$P.adj < alpha, "*", "ns")))
-      
+
       dunn$y.position <- y_max + y_offset * seq_len(nrow(dunn))
-      
+
       df_pvalues <- data.frame(
         group1 = dunn$Group1,
         group2 = dunn$Group2,
@@ -261,7 +262,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
         p.signif = dunn$p.signif,
         y.position = dunn$y.position
       )
-      
+
       p <- p +
         stat_pvalue_manual(
           df_pvalues,
@@ -272,7 +273,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
         )
     }
   }
-  
+
   return(p)
 }
 
