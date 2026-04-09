@@ -401,7 +401,7 @@ create_dunn_heatmap_plot <- function(
   heatmap_plot <- ggplot() +
     # Heatmap tiles
     geom_tile(data = sig_melt, aes(x = as.numeric(Comparison), y = as.numeric(Group), fill = Significance),
-              color = "white") +
+              color = "black") +
     scale_fill_gradientn(
       colors = c("white", "#FFC0C0", "#FF6666", "#990000"), # light to dark red
       limits = c(0, 3),
