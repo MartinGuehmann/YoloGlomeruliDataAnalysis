@@ -734,7 +734,10 @@ create_boxplot <- function(subdata,
     }
   }
 
-  # Step 7: Save plot as PDF and SVG
+  # Step 7: Add significance asterices on boxplots with 2 or 3 groups
+  p <- add_significance_stars(p, subdata, metric, stats)
+
+  # Step 8: Save plot as PDF and SVG
   ggsave(
     filename = paste0(base_file_name, ".pdf"),
     plot = p,
@@ -1229,10 +1232,7 @@ analyze_data <- function(data,
                          stats,
                          mode)
 
-  # Step 6: Add significance asterices on boxplots with 2 or 3 groups
-  plot <- add_significance_stars(plot, subdata, metric, stats)
-
-  # Step 7: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
+  # Step 6: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   heatmap_plot <- create_dunn_heatmap_plot(
     sig_matrix_df  = sig_matrix_df,
     symbol_map     = symbol_map,
@@ -1242,7 +1242,7 @@ analyze_data <- function(data,
     plot_title     = plot_title
   )
 
-  # Step 8: Return both plot objects (invisible)
+  # Step 7: Return both plot objects (invisible)
   return(invisible(list(
     boxplot = plot,
     heatmap = heatmap_plot
