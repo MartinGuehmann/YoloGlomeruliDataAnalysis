@@ -159,6 +159,43 @@ filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
   return(subdata)
 }
 
+#' Shrink the first GeomPoint layer in a ggplot object
+#'
+#' This function reduces the size of the first `GeomPoint` layer in a ggplot object.
+#' Useful when a plot has multiple layers but you want to specifically adjust the
+#' point symbols that come from a particular data layer (e.g., `symbol_df` in
+#' `analyze_data()`), without affecting other points or boxplots.
+#'
+#' @param p A ggplot object. The plot whose first point layer you want to resize.
+#' @param new_size Numeric. The desired size for the points in the first GeomPoint layer.
+#'                 Default is 1.3.
+#'
+#' @return The same ggplot object `p` with the first GeomPoint layer's size modified.
+#'
+#' @details
+#' - Only modifies the **first** layer that is a `GeomPoint`. Other point layers,
+#'   such as outliers in `geom_boxplot()` or optional median points, are not affected.
+#' - If no GeomPoint layer is found, execution **stops** with an informative error,
+#'   to prevent silently producing an incorrect plot if `analyze_data()` changes.
+#'
+#' @examples
+#' # Suppose 'p' is returned from analyze_data()
+#' p_small <- shrink_first_point_layer(p, new_size = 1.5)
+shrink_first_point_layer <- function(p, new_size = 1.3) {
+  # Find the index of the first layer that is a GeomPoint
+  point_layer_index <- which(sapply(p$layers, function(l) "GeomPoint" %in% class(l$geom)))[1]
+  
+  # Stop execution if no GeomPoint layer exists
+  if (is.na(point_layer_index)) {
+    stop("No GeomPoint layer found to shrink. Check if analyze_data() changed the plot structure!")
+  }
+  
+  # Adjust the size of the points in the first GeomPoint layer
+  p$layers[[point_layer_index]]$aes_params$size <- new_size
+  
+  return(p)
+}
+
 ################
 # Subfunctions #
 ################
@@ -1874,41 +1911,125 @@ plot_training_times(traing_times, image_numbers, output_dir)
 
 #########################################################################################################################
 
+library(cowplot)
+
+remove_y <- theme(
+  axis.title.y = element_blank(),
+  axis.text.y  = element_blank(),
+  axis.ticks.y = element_blank()
+)
+
+no_legend_title <- theme(
+  legend.position = "none",
+  plot.title = element_blank(),
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank()
+)
+
+legend_only <- theme(
+  legend.position = "right",
+  legend.justification = "top",
+  legend.box.just = "top",
+  plot.title = element_blank()
+)
+
+no_title <- theme(
+  plot.title = element_blank()
+)
+
 for (metric in names(metrics)) {
   for(plot_type in names(plot_types)) {
-      for(job in jobs) {
-        metric_name     <- metrics[[metric]]
-        plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
-        base_file_name  <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]], file_safe_name(plot_title))
-
-        if(metric == "mAP_50" && job$name == "all") {
-          analyze_data(
-            data1df,
-            job$experiments,
-            symbol_map_experiments,
-            symbol_config,
-            metric,
-            metric_name,
-            plot_title,
-            base_file_name,
-            plot_type,
-            NULL
-          )
-        }
-        else {
-          analyze_data(
-            data1df,
-            job$experiments,
-            symbol_map_experiments,
-            symbol_config,
-            metric,
-            metric_name,
-            plot_title,
-            base_file_name,
-            plot_type
-          )
-        }
+    plots_to_assemble <- list()
+    
+    for(job in jobs) {
+      metric_name     <- metrics[[metric]]
+      plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
+      base_dir        <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]])
+      base_file_name  <- paste0(base_dir, file_safe_name(plot_title))
+      
+      if(metric == "mAP_50" && job$name == "all") {
+        p <- analyze_data(
+          data1df,
+          job$experiments,
+          symbol_map_experiments,
+          symbol_config,
+          metric,
+          metric_name,
+          plot_title,
+          base_file_name,
+          plot_type,
+          NULL
+        )
+      }
+      else {
+        p <- analyze_data(
+          data1df,
+          job$experiments,
+          symbol_map_experiments,
+          symbol_config,
+          metric,
+          metric_name,
+          plot_title,
+          base_file_name,
+          plot_type
+        )
+      }
+      plots_to_assemble[[job$name]] <- p
     }
+    
+    
+    
+  #  for(plot in names(figure_plots)) {
+  #  }
+    legend_grob <- get_legend(
+      plots_to_assemble[["all"]] + legend_only
+    )
+
+    p1_clean    <- plots_to_assemble[["size_to_lower"]] + no_legend_title
+    p2_clean    <- plots_to_assemble[["non_annotated_removed"]] + remove_y + no_legend_title
+    p3_clean    <- plots_to_assemble[["add_augmented1"]] + remove_y + no_legend_title
+    p4_clean    <- plots_to_assemble[["combinations"]] + no_legend_title
+
+    p1_clean    <- shrink_first_point_layer(p1_clean)
+    p2_clean    <- shrink_first_point_layer(p2_clean)
+    p3_clean    <- shrink_first_point_layer(p3_clean)
+    p4_clean    <- shrink_first_point_layer(p4_clean)
+
+    top_row <- plot_grid(
+      p1_clean, p2_clean, p3_clean, legend_grob,
+      labels = c("A", "B", "C", ""),
+      ncol = 4,
+      align = "v",           # Align vertically
+      axis = "l"             # Align left edges of the grobs
+    )
+
+    final_plot <- plot_grid(
+      top_row,
+      p4_clean,
+      labels = c("", "D"),
+      ncol = 1
+    )
+
+    final_plot <- ggdraw() +
+      draw_plot(final_plot, x = 0.05, y = 0.05, width = 0.95, height = 0.95) +
+      draw_label("Experiment", x = 0.5, y = 0.03, angle = 0, vjust = 0.5) +
+      draw_label(metric_name, x = 0.03, y = 0.5, angle = 90, vjust = 0.5)
+
+    pdf_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".pdf")
+    svg_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".svg")
+
+    ggsave(
+      filename = pdf_file,
+      plot = final_plot,
+      height = 5,
+      width = 5
+    )
+    ggsave(
+      filename = svg_file,
+      plot = final_plot,
+      height = 5,
+      width = 5
+    )
   }
 }
 
