@@ -185,12 +185,12 @@ filter_data <- function(data, experiments, epoch_range, outlier_filter = NULL) {
 shrink_first_point_layer <- function(p, new_size = 1.3) {
   # Find the index of the first layer that is a GeomPoint
   point_layer_index <- which(sapply(p$layers, function(l) "GeomPoint" %in% class(l$geom)))[1]
-  
+
   # Stop execution if no GeomPoint layer exists
   if (is.na(point_layer_index)) {
     stop("No GeomPoint layer found to shrink. Check if analyze_data() changed the plot structure!")
   }
-  
+
   # Adjust the size of the points in the first GeomPoint layer
   p$layers[[point_layer_index]]$aes_params$size <- new_size
   
@@ -214,13 +214,6 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_limit_min <- 0
   y_limit_max <- 1
 
-  # Available space
-  space_above <- y_limit_max - y_max
-  space_below <- y_min - y_limit_min
-
-  place_above <- space_above >= space_below
-  available_space <- if (place_above) space_above else space_below
-
   # Small margin from data and boundary
   margin <- 0.01
 
@@ -234,30 +227,37 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
                            ifelse(p_val < 0.01, "**",
                                   ifelse(p_val < alpha, "*", "ns")))
 
-    if (available_space > 0) {
-      if (place_above) {
-        y_pos <- y_max + margin + available_space / 2
-      } else {
-        y_pos <- y_min - (margin + available_space / 2)
-      }
+    # Determine placement: above or below based on available space
+    space_above <- y_limit_max - y_max - margin
+    space_below <- y_min - y_limit_min - margin
 
-      df_pvalues <- data.frame(
-        group1 = mw$Group1,
-        group2 = mw$Group2,
-        p = p_val,
-        p.signif = signif_label,
-        y.position = y_pos
-      )
-
-      p <- p +
-        stat_pvalue_manual(
-          df_pvalues,
-          label = "p.signif",
-          xmin = "group1",
-          xmax = "group2",
-          y.position = "y.position"
-        )
+    if (space_above >= space_below) {
+      # Place above
+      y_pos <- y_max + space_above / 2
+      tip <- 0.02
+    } else {
+      # Place below
+      y_pos <- y_min - space_below / 2
+      tip <- -0.02
     }
+
+    df_pvalues <- data.frame(
+      group1 = mw$Group1,
+      group2 = mw$Group2,
+      p = p_val,
+      p.signif = signif_label,
+      y.position = y_pos
+    )
+
+    p <- p +
+      stat_pvalue_manual(
+        df_pvalues,
+        label = "p.signif",
+        xmin = "group1",
+        xmax = "group2",
+        y.position = "y.position",
+        tip.length = tip
+      )
   }
 
   # ---- CASE: 3 groups ----
@@ -265,44 +265,45 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
     dunn <- stats$dunn_result$res
     dunn <- dunn[dunn$P.adj < alpha, ]
-
     n <- nrow(dunn)
+    if (n == 0) return(p)
 
-    if (n > 0 && available_space > 0) {
+    dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
+                            ifelse(dunn$P.adj < 0.01, "**",
+                                   ifelse(dunn$P.adj < alpha, "*", "ns")))
 
-      dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
-                              ifelse(dunn$P.adj < 0.01, "**",
-                                     ifelse(dunn$P.adj < alpha, "*", "ns")))
+    space_above <- y_limit_max - y_max - margin
+    space_below <- y_min - y_limit_min - margin
 
-      usable_space <- max(available_space - 2 * margin, 0)
-
-      if (usable_space > 0) {
-        step <- usable_space / (n + 1)
-
-        if (place_above) {
-          dunn$y.position <- y_max + margin + step * seq_len(n)
-        } else {
-          dunn$y.position <- y_min - (margin + step * seq_len(n))
-        }
-
-        df_pvalues <- data.frame(
-          group1 = dunn$Group1,
-          group2 = dunn$Group2,
-          p = dunn$P.adj,
-          p.signif = dunn$p.signif,
-          y.position = dunn$y.position
-        )
-
-        p <- p +
-          stat_pvalue_manual(
-            df_pvalues,
-            label = "p.signif",
-            xmin = "group1",
-            xmax = "group2",
-            y.position = "y.position"
-          )
-      }
+    if (space_above >= space_below) {
+      # Place above
+      step <- space_above / (n + 1)
+      dunn$y.position <- y_max + step * seq_len(n)
+      tip <- 0.02
+    } else {
+      # Place below
+      step <- space_below / (n + 1)
+      dunn$y.position <- y_min - step * seq_len(n)
+      tip <- -0.02
     }
+
+    df_pvalues <- data.frame(
+      group1 = dunn$Group1,
+      group2 = dunn$Group2,
+      p = dunn$P.adj,
+      p.signif = dunn$p.signif,
+      y.position = dunn$y.position
+    )
+
+    p <- p +
+      stat_pvalue_manual(
+        df_pvalues,
+        label = "p.signif",
+        xmin = "group1",
+        xmax = "group2",
+        y.position = "y.position",
+        tip.length = tip
+      )
   }
 
   return(p)
