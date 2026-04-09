@@ -602,6 +602,7 @@ create_boxplot <- function(subdata,
       plot.title = element_text(color = "black", size = 9, hjust = 0.5),
       plot.title.position = "plot",
       axis.text.x = element_text(size = 6),
+      axis.text.y = element_text(size = 6),
       panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
       panel.grid.minor.y = element_blank()
     )
