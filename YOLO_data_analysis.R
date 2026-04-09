@@ -26,6 +26,7 @@ library(stringr)
 library(openxlsx)
 library(reshape2)
 library(patchwork)
+library(ggpubr)
 
 # Set working directory to script directory
 if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
@@ -192,6 +193,85 @@ shrink_first_point_layer <- function(p, new_size = 1.3) {
   
   # Adjust the size of the points in the first GeomPoint layer
   p$layers[[point_layer_index]]$aes_params$size <- new_size
+  
+  return(p)
+}
+
+
+add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
+  
+  if (is.null(stats)) return(p)
+  
+  group_count <- length(unique(subdata$versuch))
+  if (group_count > 3) return(p)  # avoid clutter
+  
+  library(ggpubr)
+  
+  y_max <- max(subdata[[metric]], na.rm = TRUE)
+  y_offset <- 0.05 * diff(range(subdata[[metric]], na.rm = TRUE))
+  
+  # ---- CASE: 2 groups ----
+  if (group_count == 2 && !is.null(stats$mann_whitney_df)) {
+    
+    mw <- stats$mann_whitney_df
+    p_val <- mw$p.value
+    
+    signif_label <- ifelse(p_val < 0.001, "***",
+                           ifelse(p_val < 0.01, "**",
+                                  ifelse(p_val < alpha, "*", "ns")))
+    
+    df_pvalues <- data.frame(
+      group1 = mw$Group1,
+      group2 = mw$Group2,
+      p = p_val,
+      p.signif = signif_label,
+      y.position = y_max + y_offset
+    )
+    
+    p <- p +
+      stat_pvalue_manual(
+        df_pvalues,
+        label = "p.signif",
+        xmin = "group1",
+        xmax = "group2",
+        y.position = "y.position"
+      )
+  }
+  
+  # ---- CASE: 3 groups ----
+  if (group_count == 3) {
+    
+    dunn <- stats$dunn_result$res
+    
+    # keep only significant comparisons
+    dunn <- dunn[dunn$P.adj < alpha, ]
+    
+    if (nrow(dunn) > 0) {
+      
+      dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
+                              ifelse(dunn$P.adj < 0.01, "**",
+                                     ifelse(dunn$P.adj < alpha, "*", "ns")))
+      
+      dunn$y.position <- y_max + y_offset * seq_len(nrow(dunn))
+      
+      df_pvalues <- data.frame(
+        group1 = dunn$Group1,
+        group2 = dunn$Group2,
+        p = dunn$P.adj,
+        p.signif = dunn$p.signif,
+        y.position = dunn$y.position
+      )
+      
+      p <- p +
+        stat_pvalue_manual(
+          df_pvalues,
+          label = "p.signif",
+          xmin = "group1",
+          xmax = "group2",
+          y.position = "y.position"
+        )
+    }
+  }
   
   return(p)
 }
@@ -550,6 +630,7 @@ create_boxplot <- function(subdata,
                            metric_name,
                            base_file_name,
                            plot_title = "Plot Title",
+                           stats = NULL,
                            mode = "default") {
 
   # Step 0: Create the parent dir of the output file if it does not exsist
@@ -1145,9 +1226,13 @@ analyze_data <- function(data,
                          metric_name,
                          base_file_name,
                          plot_title,
+                         stats,
                          mode)
 
-  # Step 6: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
+  # Step 6: Add significance asterices on boxplots with 2 or 3 groups
+  plot <- add_significance_stars(plot, subdata, metric, stats)
+
+  # Step 7: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   heatmap_plot <- create_dunn_heatmap_plot(
     sig_matrix_df  = sig_matrix_df,
     symbol_map     = symbol_map,
@@ -1157,7 +1242,7 @@ analyze_data <- function(data,
     plot_title     = plot_title
   )
 
-  # Step 7: Return both plot objects (invisible)
+  # Step 8: Return both plot objects (invisible)
   return(invisible(list(
     boxplot = plot,
     heatmap = heatmap_plot
