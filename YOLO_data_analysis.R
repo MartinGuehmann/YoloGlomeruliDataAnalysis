@@ -1935,12 +1935,23 @@ remove_y <- theme(
   axis.ticks.y = element_blank()
 )
 
-no_legend_title <- theme(
-  legend.position = "none",
+no_title <- theme(
   plot.title = element_blank(),
+)
+
+no_xaxis <- theme(
   axis.title.x = element_blank(),
+)
+
+no_yaxis <- theme(
   axis.title.y = element_blank()
 )
+
+no_legend <- theme(
+  legend.position = "none",
+)
+
+no_legend_title <- no_title + no_legend + no_xaxis + no_yaxis
 
 legend_only <- theme(
   legend.position = "right",
@@ -1992,11 +2003,7 @@ for (metric in names(metrics)) {
       }
       plots_to_assemble[[job$name]] <- plots
     }
-    
-    
-    
-  #  for(plot in names(figure_plots)) {
-  #  }
+
     legend_grob <- get_legend(
       plots_to_assemble[["all"]]$boxplot + legend_only
     )
@@ -2004,7 +2011,7 @@ for (metric in names(metrics)) {
     p1_clean    <- plots_to_assemble[["size_to_lower"]]$boxplot + no_legend_title
     p2_clean    <- plots_to_assemble[["non_annotated_removed"]]$boxplot + remove_y + no_legend_title
     p3_clean    <- plots_to_assemble[["add_augmented1"]]$boxplot + remove_y + no_legend_title
-    p4_clean    <- plots_to_assemble[["combinations"]]$boxplot + no_legend_title
+    p4_clean    <- plots_to_assemble[["combinations"]]$boxplot + no_title + no_legend + no_yaxis
 
     p1_clean    <- shrink_first_point_layer(p1_clean)
     p2_clean    <- shrink_first_point_layer(p2_clean)
@@ -2027,9 +2034,18 @@ for (metric in names(metrics)) {
     )
 
     final_plot <- ggdraw() +
-      draw_plot(final_plot, x = 0.05, y = 0.05, width = 0.95, height = 0.95) +
-      draw_label("Experiment", x = 0.5, y = 0.03, angle = 0, vjust = 0.5) +
+      draw_plot(final_plot, x = 0.05, y = 0.0, width = 0.95, height = 1.0) +
       draw_label(metric_name, x = 0.03, y = 0.5, angle = 90, vjust = 0.5)
+
+    heatmap    <- plots_to_assemble[["combinations"]]$heatmap
+    heatmap    <- heatmap + no_title + no_legend
+
+    final_plot <- plot_grid(
+      final_plot,
+      heatmap,
+      labels = c("", "E"),
+      ncol = 2
+    )
 
     pdf_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".pdf")
     svg_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".svg")
@@ -2038,13 +2054,13 @@ for (metric in names(metrics)) {
       filename = pdf_file,
       plot = final_plot,
       height = 5,
-      width = 5
+      width = 10
     )
     ggsave(
       filename = svg_file,
       plot = final_plot,
       height = 5,
-      width = 5
+      width = 10
     )
   }
 }
