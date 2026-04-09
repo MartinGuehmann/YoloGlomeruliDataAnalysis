@@ -1007,7 +1007,7 @@ export_statistics_to_excel <- function(base_file_name,
 #' 
 #' 1. Filters data to a specified epoch range and removes specified outliers.
 #' 2. Prepares symbols for plotting via `symbol_map` and `symbol_config`.
-#' 3. Computes Kruskal-Wallis and optional Mann-Whitney tests, as well as Dunn post-hoc tests
+#' 3. Computes the Kruskal-Wallis test and, optionally, the Mann-Whitney test, as well as Dunn's post-hoc tests
 #'    with Bonferroni correction, including effect sizes (r) and significance labels.
 #' 4. Exports all statistical results to Excel sheets (`Kruskal-Wallis`, `Dunn Test`, optional `Mann-Whitney`).
 #' 5. Generates boxplots with optional median-of-medians annotations and raw medians
@@ -1032,7 +1032,12 @@ export_statistics_to_excel <- function(base_file_name,
 #' @param outlier_filter Optional list specifying outliers to remove, with elements `versuch` and `SuperRank` (default `list(versuch="001", SuperRank=6)`).
 #' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include (default `c(290, 299)`).
 #'
-#' @return Invisibly returns the boxplot ggplot object.
+#' @return Invisibly returns a list containing two ggplot objects:
+#'         \describe{
+#'           \item{boxplot}{The boxplot ggplot object, optionally annotated according to `mode`.}
+#'           \item{heatmap}{The Dunn post-hoc significance heatmap ggplot object.}
+#'         }
+#'         The plots are returned invisibly to avoid automatic printing in scripts.
 #'         Saves the following files to disk (prefix given by `base_file_name`):
 #'         \itemize{
 #'           \item Excel sheets:
@@ -1047,15 +1052,15 @@ export_statistics_to_excel <- function(base_file_name,
 #'
 #' @details
 #' The function handles multiple experimental groups robustly:
-#' - The Kruskal-Wallis and Dunn's tests are applied across all the selected experiments.
-#' - For two-group comparisons, an additional Mann-Whitney U test is applieded explicitly.
+#' - The Kruskal-Wallis test and Dunn's tests are applied across all the selected experiments.
+#' - For two-group comparisons, the Mann-Whitney U test is applied explicitly in addition.
 #' - Effect sizes for Dunn's test are computed as r = Z / sqrt(n_pair), where n_pair is
 #'   the number of observations in the pairwise comparison.
 #' - Boxplot annotations (median-of-medians, raw medians) and heatmap symbols are configured via `symbol_map` and `symbol_config`.
 #'
 #' @examples
 #' # Example use with dummy data
-#' analyze_data(
+#' results <- analyze_data(
 #'   data = my_data,
 #'   experiments = c("Small", "Medium", "Medium+Aug"),
 #'   symbol_map = list("Small"="A", "Medium"="B", "Medium+Aug"="C"),
@@ -1121,16 +1126,16 @@ analyze_data <- function(data,
                              mann_whitney_df = stats$mann_whitney_df)
 
   # Step 5: Create Plot
-  p <- create_boxplot(subdata,
-                      experiments,
-                      symbol_df,
-                      symbol_config,
-                      legend_symbols,
-                      metric,
-                      metric_name,
-                      base_file_name,
-                      plot_title,
-                      mode)
+  plot <- create_boxplot(subdata,
+                         experiments,
+                         symbol_df,
+                         symbol_config,
+                         legend_symbols,
+                         metric,
+                         metric_name,
+                         base_file_name,
+                         plot_title,
+                         mode)
 
   # Step 6: Dunn Post-Hoc Significance Heatmap (symbols on side and top, squares, spread with spacing)
   heatmap_plot <- create_dunn_heatmap_plot(
@@ -1142,8 +1147,11 @@ analyze_data <- function(data,
     plot_title     = plot_title
   )
 
-  # Step 7: Return plot object explicitly (invisible)
-  return(invisible(p))
+  # Step 7: Return both plot objects (invisible)
+  return(invisible(list(
+    boxplot = plot,
+    heatmap = heatmap_plot
+  )))
 }
 
 run_linear_model <- function(data,
@@ -1948,7 +1956,7 @@ for (metric in names(metrics)) {
       base_file_name  <- paste0(base_dir, file_safe_name(plot_title))
       
       if(metric == "mAP_50" && job$name == "all") {
-        p <- analyze_data(
+        plots <- analyze_data(
           data1df,
           job$experiments,
           symbol_map_experiments,
@@ -1962,7 +1970,7 @@ for (metric in names(metrics)) {
         )
       }
       else {
-        p <- analyze_data(
+        plots <- analyze_data(
           data1df,
           job$experiments,
           symbol_map_experiments,
@@ -1974,7 +1982,7 @@ for (metric in names(metrics)) {
           plot_type
         )
       }
-      plots_to_assemble[[job$name]] <- p
+      plots_to_assemble[[job$name]] <- plots
     }
     
     
@@ -1982,13 +1990,13 @@ for (metric in names(metrics)) {
   #  for(plot in names(figure_plots)) {
   #  }
     legend_grob <- get_legend(
-      plots_to_assemble[["all"]] + legend_only
+      plots_to_assemble[["all"]]$boxplot + legend_only
     )
 
-    p1_clean    <- plots_to_assemble[["size_to_lower"]] + no_legend_title
-    p2_clean    <- plots_to_assemble[["non_annotated_removed"]] + remove_y + no_legend_title
-    p3_clean    <- plots_to_assemble[["add_augmented1"]] + remove_y + no_legend_title
-    p4_clean    <- plots_to_assemble[["combinations"]] + no_legend_title
+    p1_clean    <- plots_to_assemble[["size_to_lower"]]$boxplot + no_legend_title
+    p2_clean    <- plots_to_assemble[["non_annotated_removed"]]$boxplot + remove_y + no_legend_title
+    p3_clean    <- plots_to_assemble[["add_augmented1"]]$boxplot + remove_y + no_legend_title
+    p4_clean    <- plots_to_assemble[["combinations"]]$boxplot + no_legend_title
 
     p1_clean    <- shrink_first_point_layer(p1_clean)
     p2_clean    <- shrink_first_point_layer(p2_clean)
