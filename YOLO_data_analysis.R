@@ -210,103 +210,77 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_max <- max(y_vals, na.rm = TRUE)
   y_min <- min(y_vals, na.rm = TRUE)
 
-  # Fixed limits for your case
   y_limit_min <- 0
   y_limit_max <- 1
+  margin <- 0.01     # Small margin from data and boundary
 
-  # Small margin from data and boundary
-  margin <- 0.01
+  # Extract df_pvalues from the different case
+  df_pvalues <- NULL
 
-  # ---- CASE: 2 groups ----
+  # Case: Two groups
   if (group_count == 2 && !is.null(stats$mann_whitney_df)) {
 
     mw <- stats$mann_whitney_df
-    p_val <- mw$p.value
-
-    signif_label <- ifelse(p_val < 0.001, "***",
-                           ifelse(p_val < 0.01, "**",
-                                  ifelse(p_val < alpha, "*", "ns")))
-
-    # Determine placement: above or below based on available space
-    space_above <- y_limit_max - y_max - margin
-    space_below <- y_min - y_limit_min - margin
-
-    if (space_above >= space_below) {
-      # Place above
-      y_pos <- y_max + space_above / 2
-      tip <- 0.02
-    } else {
-      # Place below
-      y_pos <- y_min - space_below / 2
-      tip <- -0.02
-    }
 
     df_pvalues <- data.frame(
       group1 = mw$Group1,
       group2 = mw$Group2,
-      p = p_val,
-      p.signif = signif_label,
-      y.position = y_pos
+      p = mw$p.value
     )
-
-    p <- p +
-      stat_pvalue_manual(
-        df_pvalues,
-        label = "p.signif",
-        xmin = "group1",
-        xmax = "group2",
-        y.position = "y.position",
-        tip.length = tip
-      )
   }
 
-  # ---- CASE: 3 groups ----
+  # Case: Three groups
   if (group_count == 3) {
 
     dunn <- stats$dunn_result$res
     dunn <- dunn[dunn$P.adj < alpha, ]
-    n <- nrow(dunn)
-    if (n == 0) return(p)
-
-    dunn$p.signif <- ifelse(dunn$P.adj < 0.001, "***",
-                            ifelse(dunn$P.adj < 0.01, "**",
-                                   ifelse(dunn$P.adj < alpha, "*", "ns")))
-
-    space_above <- y_limit_max - y_max - margin
-    space_below <- y_min - y_limit_min - margin
-
-    if (space_above >= space_below) {
-      # Place above
-      step <- space_above / (n + 1)
-      dunn$y.position <- y_max + step * seq_len(n)
-      tip <- 0.02
-    } else {
-      # Place below
-      step <- space_below / (n + 1)
-      dunn$y.position <- y_min - step * seq_len(n)
-      tip <- -0.02
-    }
+    if (nrow(dunn) == 0) return(p)
 
     df_pvalues <- data.frame(
       group1 = dunn$Group1,
       group2 = dunn$Group2,
-      p = dunn$P.adj,
-      p.signif = dunn$p.signif,
-      y.position = dunn$y.position
+      p = dunn$P.adj
     )
-
-    p <- p +
-      stat_pvalue_manual(
-        df_pvalues,
-        label = "p.signif",
-        xmin = "group1",
-        xmax = "group2",
-        y.position = "y.position",
-        tip.length = tip
-      )
   }
 
-  return(p)
+  if (is.null(df_pvalues) || nrow(df_pvalues) == 0) return(p)
+
+  # Turn significance levels into asterix labels
+  df_pvalues$p.signif <- ifelse(df_pvalues$p < 0.001, "***",
+                                ifelse(df_pvalues$p < 0.01, "**",
+                                       ifelse(df_pvalues$p < alpha, "*", "ns")))
+
+  n <- nrow(df_pvalues)
+
+  space_above <- y_limit_max - y_max - margin
+  space_below <- y_min - y_limit_min - margin
+
+  if (space_above >= space_below) {
+    tip <- 0.02
+    if (n == 1) {
+      df_pvalues$y.position <- y_max + space_above / 2
+    } else {
+      step <- space_above / (n + 1)
+      df_pvalues$y.position <- y_max + step * seq_len(n)
+    }
+  } else {
+    tip <- -0.02
+    if (n == 1) {
+      df_pvalues$y.position <- y_min - space_below / 2
+    } else {
+      step <- space_below / (n + 1)
+      df_pvalues$y.position <- y_min - step * seq_len(n)
+    }
+  }
+
+  p + stat_pvalue_manual(
+    df_pvalues,
+    label = "p.signif",
+    xmin = "group1",
+    xmax = "group2",
+    y.position = "y.position",
+    tip.length = tip
+  )
 }
 
 ################
