@@ -256,6 +256,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   space_below <- y_min - y_limit_min - margin
 
   if (space_above >= space_below) {
+    vjust <- 0.65
     tip <- 0.02
     if (n == 1) {
       df_pvalues$y.position <- y_max + space_above / 2
@@ -264,6 +265,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
       df_pvalues$y.position <- y_max + step * seq_len(n)
     }
   } else {
+    vjust <- 1.65
     tip <- -0.02
     if (n == 1) {
       df_pvalues$y.position <- y_min - space_below / 2
@@ -273,14 +275,18 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
     }
   }
 
-  p + stat_pvalue_manual(
+  # Place brackets and lables
+  p <- p + stat_pvalue_manual(
     df_pvalues,
     label = "p.signif",
     xmin = "group1",
     xmax = "group2",
     y.position = "y.position",
-    tip.length = tip
+    tip.length = tip,
+    vjust = vjust
   )
+
+  return(p)
 }
 
 ################
