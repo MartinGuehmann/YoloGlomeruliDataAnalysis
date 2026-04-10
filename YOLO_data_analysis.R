@@ -210,9 +210,12 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_max <- max(y_vals, na.rm = TRUE)
   y_min <- min(y_vals, na.rm = TRUE)
 
-  y_limit_min <- 0
-  y_limit_max <- 1
-  margin <- 0.01     # Small margin from data and boundary
+  y_range <- y_max - y_min
+  if (y_range == 0) return(p)
+
+  margin <- 0.05 * y_range
+  step_base <- 0.08 * y_range
+  label_offset <- 0.02 * y_range
 
   # Extract df_pvalues from the different case
   df_pvalues <- NULL
@@ -234,6 +237,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
     dunn <- stats$dunn_result$res
     dunn <- dunn[dunn$P.adj < alpha, ]
+
     if (nrow(dunn) == 0) return(p)
 
     df_pvalues <- data.frame(
@@ -252,38 +256,50 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
   n <- nrow(df_pvalues)
 
+  y_limit_min <- 0
+  y_limit_max <- 1
+
   space_above <- y_limit_max - y_max - margin
   space_below <- y_min - y_limit_min - margin
 
-  if (space_above >= space_below) {
-    vjust <- 0.67 # This may have to be adjusted when the font size changes
+  place_above <- space_above >= space_below
+
+  # Adjust bracket and label position depending
+  # whether to place them above or below the data
+  if (place_above) {
+
+    df_pvalues$y.position <- y_max + margin + step_base * seq_len(n)
+    df_pvalues$y.label <- df_pvalues$y.position + label_offset
     tip <- 0.02
-    if (n == 1) {
-      df_pvalues$y.position <- y_max + space_above / 2
-    } else {
-      step <- space_above / (n + 1)
-      df_pvalues$y.position <- y_max + step * seq_len(n)
-    }
+
   } else {
-    vjust <- 1.67 # This may have to be adjusted when the font size changes
+
+    df_pvalues$y.position <- y_min - margin - step_base * seq_len(n)
+    df_pvalues$y.label <- df_pvalues$y.position - label_offset
     tip <- -0.02
-    if (n == 1) {
-      df_pvalues$y.position <- y_min - space_below / 2
-    } else {
-      step <- space_below / (n + 1)
-      df_pvalues$y.position <- y_min - step * seq_len(n)
-    }
   }
 
-  # Place brackets and lables
-  p <- p + stat_pvalue_manual(
+  df_pvalues$label_dummy <- ""
+
+  # Place brackets and dummy lables (empty string) with ggpubr
+  p <- p + ggpubr::stat_pvalue_manual(
     df_pvalues,
-    label = "p.signif",
+    label = "label_dummy",   # <- Suppress ggpubr labels
     xmin = "group1",
     xmax = "group2",
     y.position = "y.position",
     tip.length = tip,
-    vjust = vjust
+  )
+
+  df_pvalues$x_mid <- (match(df_pvalues$group1, group_count) +
+                         match(df_pvalues$group2, group_count)) / 2
+
+  # Place the real labels
+  p <- p + geom_text(
+    data = df_pvalues,
+    aes(x = x_mid, y = y.label, label = p.signif),
+    inherit.aes = FALSE,
+    size = 3
   )
 
   return(p)
