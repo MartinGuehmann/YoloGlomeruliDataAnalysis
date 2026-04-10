@@ -197,7 +197,40 @@ shrink_first_point_layer <- function(p, new_size = 1.3) {
   return(p)
 }
 
-
+#' Add Significance Stars to a Boxplot
+#'
+#' This function adds statistical significance annotations (brackets and stars)
+#' to a ggplot boxplot based on pairwise test results (Mann–Whitney U test for
+#' two groups or Dunn’s test for three groups).
+#'
+#' The function supports up to three groups and automatically decides whether
+#' annotations are placed above or below the data depending on available space.
+#' Brackets are drawn using `ggpubr::stat_pvalue_manual()`, while labels are
+#' positioned manually for full control the over layout.
+#'
+#' @param p A ggplot object (typically a boxplot).
+#' @param subdata A data frame containing the plotted data.
+#' @param metric A character string specifying the numeric variable used in the plot.
+#' @param stats A list containing statistical test results. Must include either:
+#'   - `mann_whitney_df` for two-group comparisons, or
+#'   - `dunn_result$res` for three-group comparisons.
+#' @param alpha A numeric significance threshold (default is 0.05).
+#'
+#' @return A ggplot object with significance annotations added.
+#'
+#' @details
+#' The function computes significance levels and converts them into star labels
+#' ("***", "**", "*", "ns"). Annotation positions are determined using a fixed
+#' vertical spacing system (`step_base`) to ensure consistent spacing across plots.
+#'
+#' The x-axis midpoint between the compared groups is computed based on the factor
+#' ordering of `subdata$versuch`.
+#'
+#' @examples
+#' \dontrun{
+#' p <- ggplot(df, aes(x = group, y = value)) + geom_boxplot()
+#' p <- add_significance_stars(p, df, "value", stats)
+#' }
 add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
   if (is.null(stats)) return(p)
@@ -210,12 +243,15 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_max <- max(y_vals, na.rm = TRUE)
   y_min <- min(y_vals, na.rm = TRUE)
 
-  # Fixed vertical spacing between significance annotations
+  # Fixed vertical spacing between significance annotations (in data units)
+  # Controls distance between stacked brackets
   step_base <- 0.06
-  # Vertical offset between bracket and label if the bracket is below the data
+
+  # Vertical offset between bracket and label if annotations are placed below data
+  # (used to move the label below the bracket line)
   label_offset <- 0.04
 
-  # Extract df_pvalues from the different case
+  # Extract df_pvalues for the different cases
   df_pvalues <- NULL
 
   # Case: Two groups
@@ -235,7 +271,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
     dunn <- stats$dunn_result$res
     dunn <- dunn[dunn$P.adj < alpha, ]
-
+    
     if (nrow(dunn) == 0) return(p)
 
     df_pvalues <- data.frame(
@@ -244,16 +280,18 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
       p = dunn$P.adj
     )
   }
-
+  
   if (is.null(df_pvalues) || nrow(df_pvalues) == 0) return(p)
 
-  # Turn significance levels into asterix labels
+  # Convert p-values into significance symbols
   df_pvalues$p.signif <- ifelse(df_pvalues$p < 0.001, "***",
                                 ifelse(df_pvalues$p < 0.01, "**",
                                        ifelse(df_pvalues$p < alpha, "*", "ns")))
 
   n <- nrow(df_pvalues)
 
+  # Plot boundary assumptions (fixed scale system)
+  # These define the decision rule for placing annotations above or below the data
   y_limit_min <- 0
   y_limit_max <- 1
 
@@ -262,37 +300,52 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
 
   place_above <- space_above >= space_below
 
+  # Geometry rule:
+  # - y.position defines the bracket y-position
+  # - y.label defines the text y-position
+  # - The stacking uses constant step_base (not data-dependent scaling)
+
   if (place_above) {
 
     df_pvalues$y.position <- y_max + step_base * seq_len(n)
-    df_pvalues$y.label <- df_pvalues$y.position # No offset needed, the label is already at the right position
+
+    # If above the data, the label is placed directly at the bracket height
+    # (no additional offset needed for readability)
+    df_pvalues$y.label <- df_pvalues$y.position
+
     tip <- 0.02
 
   } else {
 
     df_pvalues$y.position <- y_min - step_base * seq_len(n)
+
+    # If below the data, the labels are shifted downward to be below the bracket
     df_pvalues$y.label <- df_pvalues$y.position - label_offset
+
     tip <- -0.02
   }
 
+  # Dummy column to suppress ggpubr internal label rendering
   df_pvalues$label_dummy <- ""
 
-  # Place brackets and dummy lables (empty string) with ggpubr
+  # Draw brackets only (labels suppressed)
   p <- p + ggpubr::stat_pvalue_manual(
     df_pvalues,
-    label = "label_dummy",   # <- Suppress ggpubr labels
+    label = "label_dummy",
     xmin = "group1",
     xmax = "group2",
     y.position = "y.position",
     tip.length = tip
   )
 
-  # Calculate the middle position between the groups
+  # Calculate the midpoint between the groups in x-axis space
+  # Assumes ggplot uses factor ordering of subdata$versuch
   group_levels <- levels(factor(subdata$versuch))
+  
   df_pvalues$x_mid <- (match(df_pvalues$group1, group_levels) +
                          match(df_pvalues$group2, group_levels)) / 2
 
-  # Place the real labels
+  # Draw significance labels manually (fully controlled positioning)
   p <- p + geom_text(
     data = df_pvalues,
     aes(x = x_mid, y = y.label, label = p.signif),
