@@ -256,7 +256,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   space_below <- y_min - y_limit_min - margin
 
   if (space_above >= space_below) {
-    vjust <- 0.65
+    vjust <- 0.67 # This may have to be adjusted when the font size changes
     tip <- 0.02
     if (n == 1) {
       df_pvalues$y.position <- y_max + space_above / 2
@@ -265,7 +265,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
       df_pvalues$y.position <- y_max + step * seq_len(n)
     }
   } else {
-    vjust <- 1.65
+    vjust <- 1.67 # This may have to be adjusted when the font size changes
     tip <- -0.02
     if (n == 1) {
       df_pvalues$y.position <- y_min - space_below / 2
