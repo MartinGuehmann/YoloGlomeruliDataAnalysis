@@ -210,12 +210,10 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_max <- max(y_vals, na.rm = TRUE)
   y_min <- min(y_vals, na.rm = TRUE)
 
-  y_range <- y_max - y_min
-  if (y_range == 0) return(p)
-
-  margin <- 0.05 * y_range
-  step_base <- 0.08 * y_range
-  label_offset <- 0.02 * y_range
+  # Fixed vertical spacing between significance annotations
+  step_base <- 0.06
+  # Vertical offset between bracket and label if the bracket is below the data
+  label_offset <- 0.04
 
   # Extract df_pvalues from the different case
   df_pvalues <- NULL
@@ -259,22 +257,20 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   y_limit_min <- 0
   y_limit_max <- 1
 
-  space_above <- y_limit_max - y_max - margin
-  space_below <- y_min - y_limit_min - margin
+  space_above <- y_limit_max - y_max
+  space_below <- y_min - y_limit_min
 
   place_above <- space_above >= space_below
 
-  # Adjust bracket and label position depending
-  # whether to place them above or below the data
   if (place_above) {
 
-    df_pvalues$y.position <- y_max + margin + step_base * seq_len(n)
-    df_pvalues$y.label <- df_pvalues$y.position + label_offset
+    df_pvalues$y.position <- y_max + step_base * seq_len(n)
+    df_pvalues$y.label <- df_pvalues$y.position # No offset needed, the label is already at the right position
     tip <- 0.02
 
   } else {
 
-    df_pvalues$y.position <- y_min - margin - step_base * seq_len(n)
+    df_pvalues$y.position <- y_min - step_base * seq_len(n)
     df_pvalues$y.label <- df_pvalues$y.position - label_offset
     tip <- -0.02
   }
@@ -288,11 +284,13 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
     xmin = "group1",
     xmax = "group2",
     y.position = "y.position",
-    tip.length = tip,
+    tip.length = tip
   )
 
-  df_pvalues$x_mid <- (match(df_pvalues$group1, group_count) +
-                         match(df_pvalues$group2, group_count)) / 2
+  # Calculate the middle position between the groups
+  group_levels <- levels(factor(subdata$versuch))
+  df_pvalues$x_mid <- (match(df_pvalues$group1, group_levels) +
+                         match(df_pvalues$group2, group_levels)) / 2
 
   # Place the real labels
   p <- p + geom_text(
