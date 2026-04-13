@@ -1834,6 +1834,63 @@ plot_experiment <- function(data,
   dev.off()
 }
 
+#' Plot histograms and test normality (Shapiro-Wilk) per experiment
+#'
+#' This function filters a dataset by epoch range and experiment identifiers,
+#' performs Shapiro-Wilk normality tests per experiment, and visualizes the
+#' distribution of a specified metric using faceted histograms. Results are
+#' saved to an Excel file and a PDF plot.
+#'
+#' @param data A data.frame containing the dataset. Must include columns
+#'   `Epoche`, `versuch`, and the specified metric.
+#' @param metric A character string specifying the column name of the variable
+#'   to analyze.
+#' @param metric_name A human-readable name of the metric, used for plot labels.
+#' @param base_filename A character string used as the base path and prefix
+#'   for output files.
+#' @param versuche A character vector specifying which `versuch` values
+#'   (experiments) to include.
+#' @param epoch_range A numeric vector of length 2 specifying the inclusive
+#'   range of epochs to retain. Default is `c(290, 299)`.
+#' @param axis_text_size Numeric value controlling the size of x-axis text
+#'   in the histogram plot. Default is 5.
+#'
+#' @details
+#' The function performs the following steps:
+#' \enumerate{
+#'   \item Creates the output directory if it does not exist.
+#'   \item Filters the dataset by epoch range and selected experiments.
+#'   \item Performs a Shapiro-Wilk normality test for each experiment
+#'         (`versuch`), if at least 3 observations are available.
+#'   \item Classifies each experiment as normally distributed ("Yes"/"No")
+#'         using a significance level of 0.05.
+#'   \item Saves the test results to an Excel file.
+#'   \item Generates a faceted histogram plot of the metric and saves it as PDF.
+#' }
+#'
+#' Experiments with fewer than 3 observations are assigned `NA` for both
+#' the test statistic and p-value.
+#'
+#' @return A data.frame containing the Shapiro-Wilk test results with columns:
+#' \describe{
+#'   \item{versuch}{Experiment identifier}
+#'   \item{W}{Shapiro-Wilk test statistic}
+#'   \item{p_value}{p-value of the test}
+#'   \item{normal}{"Yes" if p > 0.05, otherwise "No"}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' plot_histogram_normality(
+#'   data = df,
+#'   metric = "accuracy",
+#'   metric_name = "Accuracy",
+#'   base_filename = "results/normality",
+#'   versuche = c("001", "002", "003")
+#' )
+#' }
+#'
+#' @export
 plot_histogram_normality <- function(
     data,
     metric,
