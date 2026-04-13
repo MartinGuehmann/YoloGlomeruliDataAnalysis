@@ -1777,7 +1777,6 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
     labs(
       x = "Number of training images",
       y = "Training time (h)",
-      title = "Dependency: Training time vs training data set size"
     ) +
     scale_x_continuous(
       breaks = seq(0, max(df$Images) + 10000, by = 10000),   # X ticks every 10000
@@ -1792,10 +1791,19 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
       axis.text = element_text(size = 9),
       axis.title = element_text(size = 9),
       plot.title = element_text(size = 9)
-    )
+    ) +
+   ggtitle("Dependency: Training time vs training data set size")
 
   # Save plot as PDF and SVG
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in") # Set the "default" units explicitly. Quite weired that inchi-binchies are the default.
+  ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
+
+  # Build output file names
+  output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.pdf")
+  output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.svg")
+
+  p <- p + theme(plot.title = element_blank())
+  ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in")
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
 }
 
