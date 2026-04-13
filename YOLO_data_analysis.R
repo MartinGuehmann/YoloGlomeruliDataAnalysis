@@ -1809,6 +1809,52 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   return(invisible(fit))
 }
 
+#' Plot experiment metric over epochs with optional outlier removal
+#'
+#' This function filters a dataset for a specific experiment, optionally removes
+#' a predefined outlier, and visualizes the evolution of a selected metric over
+#' epochs. The resulting plot is faceted by `SuperRank` and saved to a file.
+#'
+#' @param data A data.frame containing the dataset. Must include at least
+#'   `versuch`, `Epoche`, `SuperRank`, and the specified metric column.
+#' @param experiment_id A single experiment identifier used to subset `versuch`.
+#' @param metric A character string specifying the column name of the variable
+#'   to plot on the y-axis.
+#' @param metric_name A human-readable name of the metric, used for axis labeling.
+#' @param title A character string defining the plot title.
+#' @param filename A character string specifying the output file path for the plot.
+#' @param outlier_filter A named list with elements `versuch` and `SuperRank`
+#'   specifying a single observation to remove. If `NULL`, no outlier removal is applied.
+#'   Default is `list(versuch = "001", SuperRank = 6)`.
+#'
+#' @details
+#' The function executes the following steps:
+#' \enumerate{
+#'   \item Filters the dataset for the selected experiment (`experiment_id`).
+#'   \item Optionally removes a predefined outlier based on `versuch` and `SuperRank`.
+#'   \item Checks that data remains after filtering.
+#'   \item Creates a scatter plot of the selected metric over `Epoche`,
+#'         faceted by `SuperRank`.
+#'   \item Ensures that the output directory exists.
+#'   \item Saves the plot to a file using `ggsave()`.
+#' }
+#'
+#' @return Invisibly returns NULL. The function is used for its side effect
+#'   of generating and saving a plot.
+#'
+#' @examples
+#' \dontrun{
+#' plot_experiment(
+#'   data = df,
+#'   experiment_id = "001",
+#'   metric = "accuracy",
+#'   metric_name = "Accuracy",
+#'   title = "Experiment 001 - Accuracy over Time",
+#'   filename = "results/exp001_accuracy.pdf"
+#' )
+#' }
+#'
+#' @export
 plot_experiment <- function(data,
                             experiment_id, 
                             metric,
