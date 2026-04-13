@@ -1,3 +1,43 @@
+############################################################
+# Title: Glomeruli detection in my tissue sections
+#
+# Description:
+# <Short high-level description of what this script does,
+# e.g. "This script performs preprocessing, statistical
+# modeling, and visualization of experimental results.">
+#
+# Author: <August Pfeiffer, Martin Gühmann>
+# Date: <2026-MM-DD>
+#
+# Purpose:
+# <Explain the goal of the script in 2–4 sentences.
+# Example: This script analyzes experimental runs across
+# multiple conditions, fits linear and interaction models,
+# and generates summary plots and statistical outputs.>
+#
+# Input:
+# - allresults_header_tab_final_v002.txt
+# - Design2.xlsx
+# - data: <source of data, file format, expected structure>
+# - required columns: <list key columns briefly>
+#
+# Output:
+# - <list generated files: plots, tables, models, etc.>
+#
+# Workflow:
+# 1. Load and prepare data
+# 2. Filter / clean dataset
+# 3. Run statistical analysis / models
+# 4. Generate plots
+# 5. Save outputs
+#
+# Notes:
+# - <any assumptions, e.g. epoch ranges, outlier handling>
+# - <important parameter choices like alpha = 0.05>
+# - <known limitations if any>
+#
+############################################################
+
 #################
 # Setup         #
 #################
