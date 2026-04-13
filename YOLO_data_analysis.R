@@ -1901,6 +1901,12 @@ plot_histogram_normality <- function(
     axis_text_size = 5
 ) {
 
+  required_cols <- c("Epoche", "versuch", metric)
+  missing_cols <- setdiff(required_cols, colnames(data))
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+  }
+
   create_parent_dir(base_filename)
   # Filter data
   subdata_all <- subset(
@@ -1909,6 +1915,10 @@ plot_histogram_normality <- function(
       Epoche <= epoch_range[2] &
       versuch %in% versuche
   )
+
+  if (nrow(subdata_all) == 0) {
+    stop("No data left after filtering")
+  }
 
   # ---------------------------
   # Shapiro-Wilk test per versuch
