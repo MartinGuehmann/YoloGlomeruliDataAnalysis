@@ -1915,8 +1915,8 @@ plot_experiment <- function(data,
 #' Plot histograms and test normality (Shapiro-Wilk) per experiment
 #'
 #' This function filters a dataset by epoch range and experiment identifiers,
-#' performs Shapiro-Wilk normality tests per experiment, and visualizes the
-#' distribution of a specified metric using faceted histograms. Results are
+#' applies a Shapiro-Wilk normality tests per experiment, and visualizes the
+#' distribution of a specified metric with faceted histograms. The results are
 #' saved to an Excel file and a PDF plot.
 #'
 #' @param data A data.frame containing the dataset. Must include columns
@@ -1934,11 +1934,11 @@ plot_experiment <- function(data,
 #'   in the histogram plot. Default is 5.
 #'
 #' @details
-#' The function performs the following steps:
+#' The function executes the following steps:
 #' \enumerate{
 #'   \item Creates the output directory if it does not exist.
 #'   \item Filters the dataset by epoch range and selected experiments.
-#'   \item Performs a Shapiro-Wilk normality test for each experiment
+#'   \item Applies a Shapiro-Wilk normality test for each experiment
 #'         (`versuch`), if at least 3 observations are available.
 #'   \item Classifies each experiment as normally distributed ("Yes"/"No")
 #'         using a significance level of 0.05.
