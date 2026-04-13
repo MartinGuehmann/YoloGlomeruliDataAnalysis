@@ -1414,6 +1414,18 @@ run_linear_model <- function(data,
   create_parent_dir(base_file_name)
 
   # ----------------------------
+  # Step 0a: Cheack that all
+  #          needed columns exist
+  # ----------------------------
+  required_cols <- c("Epoche", "versuch", "SuperRank",
+                     "TrainTiny", "TinyAug", "Syn", "SynAug", metric)
+
+  missing_cols <- setdiff(required_cols, colnames(data))
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+  }
+
+  # ----------------------------
   # Step 1: Filter epochs
   # ----------------------------
   subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
