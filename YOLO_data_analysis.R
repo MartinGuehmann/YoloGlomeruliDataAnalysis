@@ -1667,26 +1667,22 @@ run_linear_model <- function(data,
 #' Plot Training Time vs. Number of Images
 #'
 #' @description
-#' Creates a scatter plot of training time (in hours) versus the
-#' number of training images, including a linear regression line
-#' and its formula. The plot is saved as both PDF and SVG files.
+#' This function visualizes the relationship between the number of training
+#' images and the corresponding training time. It fits a linear regression model,
+#' overlays the regression line, and annotates the plot with the regression
+#' formula and an estimated training efficiency.
 #'
-#' @param training_times Numeric vector.
-#'   Training durations in hours (y-axis values).
+#' @param traing_times A numeric vector containing training times (in hours).
+#' @param image_numbers A numeric vector containing the corresponding number
+#'   of training images.
+#' @param output_dir A character string specifying the directory where the
+#'   output files will be saved.
 #'
-#' @param image_numbers Numeric vector.
-#'   Number of training images (x-axis values).
-#'
-#' @param output_dir Character string.
-#'   Directory where the output files will be saved.
-#'   The directory will be created if it does not exist.
-#'
-#' @return
-#' No return value. The function is called for its side effect of
-#' saving plot files to disk.
+#' @return Invisibly returns the fitted linear model (`lm` object).
 #'
 #' @details
 #' \itemize{
+#'   \item Creates the output directory if it does not exist.
 #'   \item Points are plotted as unfilled red circles.
 #'   \item A linear regression model (\code{lm}) is fitted and drawn as a line.
 #'   \item The regression formula is displayed inside the plot area,
@@ -1711,6 +1707,10 @@ run_linear_model <- function(data,
 #' @export
 plot_training_times <- function(training_times, image_numbers, output_dir)
 {
+  if (length(traing_times) != length(image_numbers)) {
+    stop("traing_times and image_numbers must have the same length")
+  }
+
   # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime.svg")
@@ -1805,6 +1805,8 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   p <- p + theme(plot.title = element_blank())
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in")
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
+
+  return(invisible(fit))
 }
 
 plot_experiment <- function(data,
