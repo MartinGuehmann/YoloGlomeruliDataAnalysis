@@ -1329,6 +1329,76 @@ analyze_data <- function(data,
   )))
 }
 
+#' Run linear and interaction models on experimental data
+#'
+#' This function filters, aggregates, and analyzes experimental data using
+#' linear models with and without interaction terms. It produces coefficient
+#' summaries, diagnostic checks, and saves results as Excel files and plots.
+#'
+#' @param data A data.frame containing the full dataset. Must include columns
+#'   for epochs (`Epoche`), experiment identifiers (`versuch`), ranking
+#'   (`SuperRank`), and the specified metric.
+#' @param experiments A character vector specifying the levels of `versuch`
+#'   to include and their order.
+#' @param metric A character string specifying the column name of the response
+#'   variable to analyze.
+#' @param metric_name A human-readable name of the metric, used for plot titles.
+#' @param base_file_name A character string used as the base path and prefix
+#'   for all generated output files.
+#' @param outlier_filter A named list specifying an outlier to remove, with
+#'   elements `versuch` and `SuperRank`. Set to `NULL` to disable filtering.
+#'   Default is `list(versuch = "001", SuperRank = 6)`.
+#' @param epoch_range A numeric vector of length 2 specifying the inclusive
+#'   range of epochs to retain. Default is `c(290, 299)`.
+#'
+#' @details
+#' The function executes the following steps:
+#' \enumerate{
+#'   \item Creates the output directory if it does not exist.
+#'   \item Filters the dataset to the specified epoch range.
+#'   \item Removes a specified outlier (if provided).
+#'   \item Restricts and orders the `versuch` factor levels.
+#'   \item Aggregates the data using the median across experimental factors.
+#'   \item Fits two models:
+#'     \itemize{
+#'       \item A linear model with main effects only.
+#'       \item A full interaction model with all factor interactions.
+#'     }
+#'   \item Extracts and classifies coefficients (main effects, interactions).
+#'   \item Saves results to an Excel file, including AIC values.
+#'   \item Generates and saves coefficient plots (standard and faceted).
+#' }
+#'
+#' Several sanity checks are executed to ensure data integrity, including:
+#' \itemize{
+#'   \item Non-empty filtered data
+#'   \item Presence of the metric column
+#'   \item Absence of NA values in key variables
+#'   \item Valid model matrices
+#'   \item Finite AIC values
+#' }
+#'
+#' @return An invisible list containing:
+#' \describe{
+#'   \item{lm}{The fitted linear model (main effects only).}
+#'   \item{lmi}{The fitted linear model with interaction terms.}
+#'   \item{coef}{A data.frame of model coefficients and statistics.}
+#'   \item{n_rows_subdata}{Number of rows after filtering.}
+#'   \item{n_rows_result}{Number of rows after aggregation.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' run_linear_model(
+#'   data = df,
+#'   experiments = c("001", "002", "003"),
+#'   metric = "accuracy",
+#'   metric_name = "Accuracy",
+#'   base_file_name = "results/model_"
+#' )
+#' }
+#'
+#' @export
 run_linear_model <- function(data,
                              experiments,
                              metric,
