@@ -1986,12 +1986,13 @@ plot_histogram_normality <- function(
     ggtitle(
       paste0(
         "Histogram of ", metric_name,
-        "-values for all experiments of the last 10 Epochs"
+        "-values for all experiments (epoch range: ",
+        epoch_range[1], "-", epoch_range[2], ")"
       )
     ) +
     labs(
-      x     = metric_name,
-      y     = "Count"
+      x = metric_name,
+      y = "Count"
     ) +
     theme(
       plot.title = element_text(color = "black", size = 9),
