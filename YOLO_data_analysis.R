@@ -341,7 +341,7 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   # Calculate the midpoint between the groups in x-axis space
   # Assumes ggplot uses factor ordering of subdata$versuch
   group_levels <- levels(factor(subdata$versuch))
-  
+
   df_pvalues$x_mid <- (match(df_pvalues$group1, group_levels) +
                          match(df_pvalues$group2, group_levels)) / 2
 
@@ -1579,7 +1579,6 @@ run_linear_model <- function(data,
       axis.text.x = element_text(angle = 45, hjust = 1),
       plot.title = element_text(size = 9)
     ) +
-    ggtitle(title) +
     labs(
       x     = "Training dataset combinations",
       y     = "Coefficients"
