@@ -1911,14 +1911,21 @@ plot_histogram_normality <- function(
     axis_text_size = 5
 ) {
 
+  # ----------------------------
+  # Step 0: Input validation
+  # ----------------------------
   required_cols <- c("Epoche", "versuch", metric)
   missing_cols <- setdiff(required_cols, colnames(data))
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
 
+  # Ensure output directory exists
   create_parent_dir(base_filename)
-  # Filter data
+
+  # ----------------------------
+  # Step 1: Filter data (epochs + selected experiments)
+  # ----------------------------
   subdata_all <- subset(
     data,
     Epoche >= epoch_range[1] &
@@ -1926,18 +1933,19 @@ plot_histogram_normality <- function(
       versuch %in% versuche
   )
 
+  # Safety check: ensure data remains after filtering
   if (nrow(subdata_all) == 0) {
     stop("No data left after filtering")
   }
 
-  # ---------------------------
-  # Shapiro-Wilk test per versuch
-  # ---------------------------
+  # ----------------------------
+  # Step 2: Shapiro-Wilk normality test per experiment
+  # ----------------------------
   shapiro_df <- do.call(
     rbind,
     lapply(split(subdata_all[[metric]], subdata_all$versuch), function(x) {
 
-      # Shapiro requires at least 3 values
+      # Shapiro-Wilk requires at least 3 observations
       if (length(x) < 3) {
         return(data.frame(W = NA, p_value = NA))
       }
@@ -1951,24 +1959,27 @@ plot_histogram_normality <- function(
     })
   )
 
+  # Attach experiment labels back to results
   shapiro_df$versuch <- rownames(shapiro_df)
   rownames(shapiro_df) <- NULL
 
-  # Add significance column
+  # ----------------------------
+  # Step 3: Classify normality (alpha = 0.05)
+  # ----------------------------
   alpha <- 0.05
   shapiro_df$normal <- ifelse(shapiro_df$p_value > alpha, "Yes", "No")
 
-  # ---------------------------
-  # Write Excel file
-  # ---------------------------
+  # ----------------------------
+  # Step 4: Export results to Excel
+  # ----------------------------
   write_xlsx(
     list("Shapiro-Wilk" = shapiro_df),
     path = paste0(base_filename, "_Shapiro_Wilk_", metric, ".xlsx")
   )
 
-  # ---------------------------
-  # Plot
-  # ---------------------------
+  # ----------------------------
+  # Step 5: Histogram visualization
+  # ----------------------------
   p <- ggplot(subdata_all, aes(x = .data[[metric]])) +
     geom_histogram(binwidth = 0.01) +
     facet_wrap(~versuch) +
@@ -1987,7 +1998,7 @@ plot_histogram_normality <- function(
       axis.text.x = element_text(size = axis_text_size)
     )
 
-  # Plot
+  # Save plot to file
   ggsave(
     filename = paste0(base_filename, "_histogram_", metric, ".pdf"),
     plot = p,
@@ -1995,7 +2006,9 @@ plot_histogram_normality <- function(
     width = 5
   )
 
-  # Return results for further use
+  # ----------------------------
+  # Step 6: Return results
+  # ----------------------------
   return(shapiro_df)
 }
 
