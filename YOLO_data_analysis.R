@@ -1671,7 +1671,7 @@ run_linear_model <- function(data,
 #' number of training images, including a linear regression line
 #' and its formula. The plot is saved as both PDF and SVG files.
 #'
-#' @param traing_times Numeric vector.
+#' @param training_times Numeric vector.
 #'   Training durations in hours (y-axis values).
 #'
 #' @param image_numbers Numeric vector.
@@ -1703,13 +1703,13 @@ run_linear_model <- function(data,
 #'
 #' @examples
 #' # Example usage:
-#' traing_times <- c(10, 20, 35, 50)
+#' training_times <- c(10, 20, 35, 50)
 #' image_numbers <- c(5000, 10000, 15000, 20000)
-#' plot_training_times(traing_times, image_numbers, tempdir())
+#' plot_training_times(training_times, image_numbers, tempdir())
 #'
 #' @import ggplot2
 #' @export
-plot_training_times <- function(traing_times, image_numbers, output_dir)
+plot_training_times <- function(training_times, image_numbers, output_dir)
 {
   # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
@@ -1721,7 +1721,7 @@ plot_training_times <- function(traing_times, image_numbers, output_dir)
   # Create a data frame for ggplot
   df <- data.frame(
     Images = image_numbers,
-    Time_h = traing_times
+    Time_h = training_times
   )
 
   # Fit linear model for regression line
@@ -1986,9 +1986,12 @@ plot_histogram_normality <- function(
     )
 
   # Plot
-  pdf(paste0(base_filename, "_histogram_", metric, ".pdf"), height = 5, width = 5)
-  print(p)
-  dev.off()
+  ggsave(
+    filename = paste0(base_filename, "_histogram_", metric, ".pdf"),
+    plot = p,
+    height = 5,
+    width = 5
+  )
 
   # Return results for further use
   return(shapiro_df)
@@ -2214,8 +2217,8 @@ jobs <- list(
 
 # Make vectors for training time and number of images, hard encoded, come from outside.
 # Would be better to have it in its own file.
-traing_times  <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
-image_numbers <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
+training_times <- c(9.544, 113.401, 21.871, 4.854, 3.099, 2.856, 4.936, 11.607, 11.489, 12.316, 100.733, 5.162, 2.808, 9.625, 5.067, 9.924, 9.77, 11.583, 9.911)
+image_numbers  <- c(3410, 53908, 8855, 800, 15, 75, 815, 4000, 4015, 4075, 44275, 875, 60, 3200, 860, 3260, 3215, 4060, 3275)
 
 #########################################################################################################################
 
@@ -2246,7 +2249,7 @@ for (metric in names(metrics)) {
 #########################################################################################################################
 
 # Plot the relation of training time and number of training images
-plot_training_times(traing_times, image_numbers, output_dir)
+plot_training_times(training_times, image_numbers, output_dir)
 
 #########################################################################################################################
 
