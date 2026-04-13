@@ -1821,8 +1821,15 @@ plot_experiment <- function(data,
   subdata <- subset(data, versuch == experiment_id)
   
   if (!is.null(outlier_filter)) {
-    subdata <- subdata[!(subdata$versuch == outlier_filter$versuch & 
-                           subdata$SuperRank == outlier_filter$SuperRank), ]
+    subdata <- subdata[!(
+      subdata$versuch == outlier_filter$versuch & 
+        subdata$SuperRank == outlier_filter$SuperRank
+    ), ]
+  }
+
+  # Safety check: ensure data is not empty after filtering
+  if (nrow(subdata) == 0) {
+    stop("No data available after filtering for experiment_id and outlier removal")
   }
 
   # Create plot
