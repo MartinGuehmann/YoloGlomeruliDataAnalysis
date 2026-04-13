@@ -1817,9 +1817,12 @@ plot_experiment <- function(data,
                             filename,
                             outlier_filter = list(versuch="001", SuperRank=6)) {
 
-  # Filter data
+  # ----------------------------
+  # Step 1: Filter data for selected experiment
+  # ----------------------------
   subdata <- subset(data, versuch == experiment_id)
-  
+
+  # Optional: remove predefined outlier (if provided)
   if (!is.null(outlier_filter)) {
     subdata <- subdata[!(
       subdata$versuch == outlier_filter$versuch & 
@@ -1832,20 +1835,29 @@ plot_experiment <- function(data,
     stop("No data available after filtering for experiment_id and outlier removal")
   }
 
-  # Create plot
+  # ----------------------------
+  # Step 2: Create plot
+  # ----------------------------
   p <- ggplot(subdata) +
     geom_point(aes(x = Epoche, y = .data[[metric]]), size = 0.1) +
     facet_wrap(~ SuperRank, nrow = 3) +
     ggtitle(title) +
     labs(
-      x     = "Epoch",
-      y     = metric_name
+      x = "Epoch",
+      y = metric_name
     ) +
-    theme(plot.title = element_text(color = "black", size = 9))
+    theme(
+      plot.title = element_text(color = "black", size = 9)
+    )
 
-  # Create parent directory if that does not exist
+  # ----------------------------
+  # Step 3: Ensure output directory exists
+  # ----------------------------
   create_parent_dir(filename)
-  # Save to PDF
+
+  # ----------------------------
+  # Step 4: Save plot to file
+  # ----------------------------
   pdf(filename, height = 5, width = 5)
   print(p)
   dev.off()
