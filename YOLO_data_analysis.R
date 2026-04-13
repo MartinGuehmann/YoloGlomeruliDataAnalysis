@@ -1858,9 +1858,12 @@ plot_experiment <- function(data,
   # ----------------------------
   # Step 4: Save plot to file
   # ----------------------------
-  pdf(filename, height = 5, width = 5)
-  print(p)
-  dev.off()
+  ggsave(
+    filename = filename,
+    plot = p,
+    height = 5,
+    width = 5
+  )
 }
 
 #' Plot histograms and test normality (Shapiro-Wilk) per experiment
