@@ -457,11 +457,11 @@ prepare_symbol_data <- function(symbol_map, symbol_config, experiments) {
 #'   - `shape`: integer or character code for ggplot2 shapes
 #'   - `y`: numeric y-position for placement along axes
 #' @param legend_symbols A character vector of symbols to show in the plot legend, in plotting order.
-#' @param base_file_name Character, the base file name (without extension) to save the heatmap plots as PDF and SVG.
+#' @param base_filename Character, the base file name (without extension) to save the heatmap plots as PDF and SVG.
 #' @param plot_title Character, the title of the heatmap plot. Default is `"Heatmap"`.
 #'
 #' @return Invisibly returns a `ggplot` object representing the Dunn significance heatmap with symbols.
-#'   The function also saves the heatmap to PDF and SVG files using `base_file_name`.
+#'   The function also saves the heatmap to PDF and SVG files using `base_filename`.
 #'
 #' @examples
 #' # Example: simple 3x3 Dunn matrix with symbols
@@ -484,7 +484,7 @@ prepare_symbol_data <- function(symbol_map, symbol_config, experiments) {
 #'   symbol_map = symbol_map,
 #'   symbol_config = symbol_config,
 #'   legend_symbols = legend_symbols,
-#'   base_file_name = "example_heatmap"
+#'   base_filename = "example_heatmap"
 #' )
 #' print(heatmap_plot)
 #'
@@ -494,12 +494,12 @@ create_dunn_heatmap_plot <- function(
     symbol_map,
     symbol_config,
     legend_symbols,
-    base_file_name,
+    base_filename,
     plot_title = "Heatmap"
 ) {
 
   # Step 0: Create the parent dir of the output file if it does not exsist
-  create_parent_dir(base_file_name)
+  create_parent_dir(base_filename)
 
     # Step 1: Convert significance to numeric
   sig_numeric <- sig_matrix_df
@@ -619,13 +619,13 @@ create_dunn_heatmap_plot <- function(
 
   # Step 5: Save plots
   ggsave(
-    filename = paste0(base_file_name, "_dunn_heatmap.pdf"),
+    filename = paste0(base_filename, "_dunn_heatmap.pdf"),
     plot = heatmap_plot,
     width = 6,
     height = 5
   )
   ggsave(
-    filename = paste0(base_file_name, "_dunn_heatmap.svg"),
+    filename = paste0(base_filename, "_dunn_heatmap.svg"),
     plot = heatmap_plot,
     width = 6,
     height = 5
@@ -658,7 +658,7 @@ create_dunn_heatmap_plot <- function(
 #' @param legend_symbols Character vector of symbols to display in the legend, in plotting order.
 #' @param metric Character, the column name in `subdata_median` containing the values to plot.
 #' @param metric_name Character, label for the y-axis.
-#' @param base_file_name Character, base file name (without extension) to save the plot as PDF and SVG.
+#' @param base_filename Character, base file name (without extension) to save the plot as PDF and SVG.
 #' @param plot_title Character, title of the plot. Defaults to `"Plot Title"`.
 #' @param mode Character, plotting mode. Options:
 #'   - `"default"`: only boxplot and symbols
@@ -666,7 +666,7 @@ create_dunn_heatmap_plot <- function(
 #'   - `"red_raw_medians"`: overlays only red raw median points
 #'
 #' @return A `ggplot` object representing the boxplot. Also saves the plot as PDF and SVG
-#'   using `base_file_name`.
+#'   using `base_filename`.
 #'
 #' @note The y-axis is scaled from 0 to 1.25 with breaks explicitly formatted as 0.0, 0.1, … 1.0
 #'   to avoid machine precision artifacts in axis labels.
@@ -694,7 +694,7 @@ create_dunn_heatmap_plot <- function(
 #'   legend_symbols = legend_symbols,
 #'   metric = "value",
 #'   metric_name = "Metric Value",
-#'   base_file_name = "my_boxplot",
+#'   base_filename = "my_boxplot",
 #'   plot_title = "Example Boxplot",
 #'   mode = "annotated"
 #' )
@@ -708,13 +708,13 @@ create_boxplot <- function(subdata,
                            legend_symbols,
                            metric,
                            metric_name,
-                           base_file_name,
+                           base_filename,
                            plot_title = "Plot Title",
                            stats = NULL,
                            mode = "default") {
 
   # Step 0: Create the parent dir of the output file if it does not exsist
-  create_parent_dir(base_file_name)
+  create_parent_dir(base_filename)
 
   # Step 1: Create the main breaks, make sure it is 0.0, 0.1 etc instead of next machine number
   breaks_main <- seq(0, 1, 0.1)
@@ -819,13 +819,13 @@ create_boxplot <- function(subdata,
 
   # Step 8: Save plot as PDF and SVG
   ggsave(
-    filename = paste0(base_file_name, ".pdf"),
+    filename = paste0(base_filename, ".pdf"),
     plot = p,
     height = 5,
     width = 5
   )
   ggsave(
-    filename = paste0(base_file_name, ".svg"),
+    filename = paste0(base_filename, ".svg"),
     plot = p,
     height = 5,
     width = 5
@@ -1018,9 +1018,9 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 #' p-value and significance matrices, and optionally the Mann-Whitney U test
 #' if two groups are compared.
 #'
-#' @param base_file_name character. The base path and file name for the Excel
+#' @param base_filename character. The base path and file name for the Excel
 #'   workbook, without the ".xlsx" extension. The workbook will be saved as
-#'   `paste0(base_file_name, ".xlsx")`.
+#'   `paste0(base_filename, ".xlsx")`.
 #' @param kruskal_df data.frame. Output of the Kruskal-Wallis test. Must contain
 #'   columns such as statistic, parameter, p.value, method, and data.name.
 #' @param dunn_result list. Output from `dunnTest()`, must include `res` data frame
@@ -1061,7 +1061,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 #' 
 #' # Export results to Excel
 #' export_statistics_to_excel(
-#'   base_file_name = "results/statistics_summary",
+#'   base_filename = "results/statistics_summary",
 #'   kruskal_df      = stats$kruskal_df,
 #'   dunn_result     = stats$dunn_result,
 #'   p_matrix_df     = stats$p_matrix_df,
@@ -1071,7 +1071,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 #' }
 #'
 #' @export
-export_statistics_to_excel <- function(base_file_name,
+export_statistics_to_excel <- function(base_filename,
                                        kruskal_df,
                                        dunn_result,
                                        p_matrix_df,
@@ -1160,7 +1160,7 @@ export_statistics_to_excel <- function(base_file_name,
   openxlsx::freezePane(wb, "Dunn Matrix (sig)", firstRow = TRUE, firstCol = TRUE)
 
   # --- Save workbook ---
-  openxlsx::saveWorkbook(wb, paste0(base_file_name, ".xlsx"), overwrite = TRUE)
+  openxlsx::saveWorkbook(wb, paste0(base_filename, ".xlsx"), overwrite = TRUE)
 }
 
 #############
@@ -1193,7 +1193,7 @@ export_statistics_to_excel <- function(base_file_name,
 #' @param metric A string specifying the column name of the metric to analyze.
 #' @param metric_name A string used as the y-axis label in plots.
 #' @param plot_title Optional string for the plot title (default `"Plot Title"`).
-#' @param base_file_name Base file name (without extension) for saved plots and Excel sheets (default `"plot"`).
+#' @param base_filename Base file name (without extension) for saved plots and Excel sheets (default `"plot"`).
 #' @param mode Optional plotting mode: `"default"` creates plain boxplots, `"annotated"` adds median-of-medians points and labels + red raw medians, `"red_raw_medians"` overlays only raw median points in red.
 #' @param outlier_filter Optional list specifying outliers to remove, with elements `versuch` and `SuperRank` (default `list(versuch="001", SuperRank=6)`).
 #' @param epoch_range Numeric vector of length 2 specifying the start and end epochs to include (default `c(290, 299)`).
@@ -1204,7 +1204,7 @@ export_statistics_to_excel <- function(base_file_name,
 #'           \item{heatmap}{The Dunn post-hoc significance heatmap ggplot object.}
 #'         }
 #'         The plots are returned invisibly to avoid automatic printing in scripts.
-#'         Saves the following files to disk (prefix given by `base_file_name`):
+#'         Saves the following files to disk (prefix given by `base_filename`):
 #'         \itemize{
 #'           \item Excel sheets:
 #'             \describe{
@@ -1234,7 +1234,7 @@ export_statistics_to_excel <- function(base_file_name,
 #'   metric = "accuracy",
 #'   metric_name = "Accuracy",
 #'   plot_title = "YOLO Training Performance",
-#'   base_file_name = "yolo_plot",
+#'   base_filename = "yolo_plot",
 #'   mode = "annotated"
 #' )
 #'
@@ -1266,13 +1266,13 @@ analyze_data <- function(data,
                          metric,
                          metric_name,
                          plot_title = "Plot Title",
-                         base_file_name = "plot", # File name without extension
+                         base_filename = "plot", # File name without extension
                          mode = "default",
                          outlier_filter = list(versuch="001", SuperRank=6),
                          epoch_range = c(290, 299)) {
 
   # Step 0: Create the parent dir of the output file if it does not exsist
-  create_parent_dir(base_file_name)
+  create_parent_dir(base_filename)
 
   # Step 1: Filter data for epochs, outliers, and experiments
   subdata <- filter_data(data, experiments, epoch_range, outlier_filter)
@@ -1292,7 +1292,7 @@ analyze_data <- function(data,
 
 
   # Step 4: Export results to Excel with openxlsx
-  export_statistics_to_excel(base_file_name,
+  export_statistics_to_excel(base_filename,
                              kruskal_df      = stats$kruskal_df,
                              dunn_result     = stats$dunn_result,
                              p_matrix_df     = stats$p_matrix_df,
@@ -1307,7 +1307,7 @@ analyze_data <- function(data,
                          legend_symbols,
                          metric,
                          metric_name,
-                         base_file_name,
+                         base_filename,
                          plot_title,
                          stats,
                          mode)
@@ -1318,7 +1318,7 @@ analyze_data <- function(data,
     symbol_map     = symbol_map,
     symbol_config  = symbol_config,
     legend_symbols = legend_symbols,
-    base_file_name = base_file_name,
+    base_filename  = base_filename,
     plot_title     = plot_title
   )
 
@@ -1343,7 +1343,7 @@ analyze_data <- function(data,
 #' @param metric A character string specifying the column name of the response
 #'   variable to analyze.
 #' @param metric_name A human-readable name of the metric, used for plot titles.
-#' @param base_file_name A character string used as the base path and prefix
+#' @param base_filename A character string used as the base path and prefix
 #'   for all generated output files.
 #' @param outlier_filter A named list specifying an outlier to remove, with
 #'   elements `versuch` and `SuperRank`. Set to `NULL` to disable filtering.
@@ -1394,7 +1394,7 @@ analyze_data <- function(data,
 #'   experiments = c("001", "002", "003"),
 #'   metric = "accuracy",
 #'   metric_name = "Accuracy",
-#'   base_file_name = "results/model_"
+#'   base_filename = "results/model_"
 #' )
 #' }
 #'
@@ -1403,7 +1403,7 @@ run_linear_model <- function(data,
                              experiments,
                              metric,
                              metric_name,
-                             base_file_name,
+                             base_filename,
                              outlier_filter = list(versuch="001", SuperRank=6),
                              epoch_range = c(290, 299)) {
 
@@ -1411,7 +1411,7 @@ run_linear_model <- function(data,
   # Step 0: Create output folder
   #         if it does not exist
   # ----------------------------
-  create_parent_dir(base_file_name)
+  create_parent_dir(base_filename)
 
   # ----------------------------
   # Step 0a: Cheack that all
@@ -1540,9 +1540,9 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 9: File naming
   # ----------------------------
-  xlsx_name <- paste0(base_file_name, metric, "_results.xlsx")
-  pdf_name  <- paste0(base_file_name, metric, "_coefficents.pdf")
-  svg_name  <- paste0(base_file_name, metric, "_coefficents.svg")
+  xlsx_name <- paste0(base_filename, metric, "_results.xlsx")
+  pdf_name  <- paste0(base_filename, metric, "_coefficents.pdf")
+  svg_name  <- paste0(base_filename, metric, "_coefficents.svg")
 
   # ----------------------------
   # Step 10: Output consistency check
@@ -1610,7 +1610,7 @@ run_linear_model <- function(data,
     width = 5
   )
 
-  pdf_name_facet <- paste0(base_file_name, metric, "_coefficents_FACET.pdf")
+  pdf_name_facet <- paste0(base_filename, metric, "_coefficents_FACET.pdf")
 
   p_facet <- ggplot(coef_data, aes(
     x = `Training data set combinations`,
@@ -2290,13 +2290,13 @@ no_title <- theme(
 for (metric in names(metrics)) {
   for(plot_type in names(plot_types)) {
     plots_to_assemble <- list()
-    
+
     for(job in jobs) {
       metric_name     <- metrics[[metric]]
       plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
       base_dir        <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]])
-      base_file_name  <- paste0(base_dir, file_safe_name(plot_title))
-      
+      base_filename   <- paste0(base_dir, file_safe_name(plot_title))
+
       if(metric == "mAP_50" && job$name == "all") {
         plots <- analyze_data(
           data1df,
@@ -2306,7 +2306,7 @@ for (metric in names(metrics)) {
           metric,
           metric_name,
           plot_title,
-          base_file_name,
+          base_filename,
           plot_type,
           NULL
         )
@@ -2320,7 +2320,7 @@ for (metric in names(metrics)) {
           metric,
           metric_name,
           plot_title,
-          base_file_name,
+          base_filename,
           plot_type
         )
       }
@@ -2396,10 +2396,10 @@ experiments <- c("006", "014", "005",
                  "017", "018", "013", "019", "010",
                  "020", "011")
 
-base_file_name <- paste0(output_dir, "/LinearModels/LinearModel_")
+base_filename <- paste0(output_dir, "/LinearModels/LinearModel_")
 
 for (metric in names(metrics)) {
-  run_linear_model(data1df, experiments, metric, metrics[[metric]], base_file_name)
+  run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
 }
 
 #########################################################################################################################
