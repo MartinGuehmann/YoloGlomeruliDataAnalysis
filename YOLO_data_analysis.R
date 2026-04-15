@@ -646,8 +646,8 @@ create_dunn_heatmap_plot <- function(
       y = "Experiment"
     ) +
     theme(
-      axis.text.x = element_text(size = 6),
-      axis.text.y = element_text(size = 6),
+      axis.text.x = element_text(size = 8),
+      axis.text.y = element_text(size = 8),
       panel.grid = element_blank(),
       panel.background = element_rect(fill = "white", color = NA),
       legend.margin = margin(t = 10, r = 10, b = 10, l = 10),      # Adds padding around legend box
@@ -803,8 +803,8 @@ create_boxplot <- function(subdata,
     theme(
       plot.title = element_text(color = "black", size = 9, hjust = 0.5),
       plot.title.position = "plot",
-      axis.text.x = element_text(size = 6),
-      axis.text.y = element_text(size = 6),
+      axis.text.x = element_text(size = 8),
+      axis.text.y = element_text(size = 8),
       panel.grid.major.y = element_line(colour = "grey60", size = 0.2),
       panel.grid.minor.y = element_blank()
     )
