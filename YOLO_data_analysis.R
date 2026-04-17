@@ -1306,6 +1306,7 @@ build_coef_df <- function(model) {
 #'     \item \code{Training data set combinations}: Factor or character identifying model terms
 #'   }
 #'
+#' @param metric_name The name of the metric that is to be used on the y-axis
 #' @param title Character string specifying the plot title.
 #'
 #' @return A \code{ggplot} object displaying coefficient estimates with error bars
@@ -1330,13 +1331,13 @@ build_coef_df <- function(model) {
 #'
 #' @examples
 #' \dontrun{
-#' plot_coefficients(coef_data, title = "Model Coefficients")
+#' plot_coefficients(coef_data, metric_name, title = "Model Coefficients")
 #' }
 #'
 #' @import ggplot2
 #' @import dplyr
 #' @export
-plot_coefficients <- function(coef_data, title) {
+plot_coefficients <- function(coef_data, metric_name, title) {
 
   present_types <- unique(coef_data$TermType)
   simple_case <- all(present_types %in% c("Intercept", "Main Effect"))
@@ -1388,7 +1389,7 @@ plot_coefficients <- function(coef_data, title) {
     p <- p +
       labs(
       x = "Training datasets",
-      y = "Coefficients"
+      y = paste0("Coefficients of ", metric_name)
     ) +
     theme(legend.position = "none")
   }
@@ -1396,7 +1397,7 @@ plot_coefficients <- function(coef_data, title) {
     p <- p +
       labs(
         x = "Training dataset combinations",
-        y = "Coefficients"
+        y = paste0("Coefficients of ", metric_name)
       ) +
       aes(fill = TermType) +
       scale_fill_manual(values = c(
@@ -1794,12 +1795,14 @@ run_linear_model <- function(data,
   # LM plot
   p_lm <- plot_coefficients(
     coef_data_lm,
+    metric_name,
     paste("Coefficients of the linear model:", metric_name)
   )
 
   # LMI plot
   p_lmi <- plot_coefficients(
     coef_data_lmi,
+    metric_name,
     paste("Coefficients of the linear interaction model:", metric_name)
   )
 
