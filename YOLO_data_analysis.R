@@ -1250,25 +1250,47 @@ plot_coefficients <- function(coef_data, title) {
   present_types <- unique(coef_data$TermType)
   simple_case <- all(present_types %in% c("Intercept", "Main Effect"))
 
+  coef_data$Significance <- dplyr::case_when(
+    coef_data$`Pr(>|t|)` < 0.001 ~ "***",
+    coef_data$`Pr(>|t|)` < 0.01  ~ "**",
+    coef_data$`Pr(>|t|)` < 0.05  ~ "*",
+    TRUE                         ~ ""
+  )
+
+  offset <- 0.02 * max(abs(coef_data$Coefficients), na.rm = TRUE)
+  coef_data$label_y <- ifelse(
+    coef_data$Coefficients >= 0,
+    coef_data$Coefficients + coef_data$`Std. Error` + offset,  # above
+    coef_data$Coefficients - coef_data$`Std. Error` - offset   # below
+  )
+
   # Base plot (shared)
   p <- ggplot(coef_data, aes(
     x = `Training data set combinations`,
     y = Coefficients
   )) +
-    geom_bar(stat = "identity") +
-    geom_errorbar(
-      aes(
-        ymin = Coefficients - `Std. Error`,
-        ymax = Coefficients + `Std. Error`
-      ),
-      width = 0.2
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 9)
-    ) +
-    ggtitle(title)
+  geom_bar(stat = "identity") +
+  geom_errorbar(
+    aes(
+      ymin = Coefficients - `Std. Error`,
+      ymax = Coefficients + `Std. Error`
+    ),
+    width = 0.2
+  ) +
+  geom_text(
+    aes(
+      label = Significance,
+      vjust = ifelse(Coefficients >= 0, 0.6, 1.0),
+      y = label_y
+    ),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(size = 9)
+  ) +
+  ggtitle(title)
 
   # Add complexity only if needed
   if (simple_case) {
@@ -1678,13 +1700,13 @@ run_linear_model <- function(data,
   # Step 12: Plot
   # ----------------------------
 
-  # LM plot (NEW)
+  # LM plot
   p_lm <- plot_coefficients(
     coef_data_lm,
     paste("Coefficients of the linear model:", metric_name)
   )
 
-  # LMI plot (existing)
+  # LMI plot
   p_lmi <- plot_coefficients(
     coef_data_lmi,
     paste("Coefficients of the linear interaction model:", metric_name)
