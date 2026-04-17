@@ -2706,9 +2706,57 @@ experiments <- c("006", "014", "005",
 
 base_filename <- paste0(output_dir, "/LinearModels/LinearModel_")
 
+plots_to_assemble <- list()
+
 for (metric in names(metrics)) {
-  run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
+  results <- run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
+
+  plots_to_assemble[[metric]] <- results$p_lm
 }
+
+plot_50 = plots_to_assemble[["mAP_50"]] + no_title + no_xaxis
+plot_95 = plots_to_assemble[["mAP_95"]] + no_title + no_xaxis
+
+lm_plot <- plot_grid(
+  plot_50, plot_95,
+  labels = c("A", "B"),
+  ncol = 2,
+  align = "v",           # Align vertically
+  axis = "l"             # Align left edges of the plots
+)
+
+x_label <- "Training datasets"
+
+x_lab <- ggdraw() +
+  draw_label(
+    x_label,
+    x = 0.5,
+    hjust = 0.5,
+    size = 10
+  )
+
+lm_plot <- plot_grid(
+  lm_plot,
+  x_lab,
+  ncol = 1,
+  rel_heights = c(1, 0.08)
+)
+
+pdf_file <- paste0(base_filename, "Figure.pdf")
+svg_file <- paste0(base_filename, "Figure.svg")
+
+ggsave(
+  filename = pdf_file,
+  plot = lm_plot,
+  height = 3.5,
+  width = 7
+)
+ggsave(
+  filename = svg_file,
+  plot = lm_plot,
+  height = 3.5,
+  width = 7
+)
 
 #########################################################################################################################
 
