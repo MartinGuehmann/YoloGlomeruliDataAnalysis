@@ -2710,15 +2710,31 @@ experiments <- c("006", "014", "005",
 base_filename <- paste0(output_dir, "/LinearModels/LinearModel_")
 
 plots_to_assemble <- list()
+coef_to_assemble  <- list()
 
 for (metric in names(metrics)) {
   results <- run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
 
   plots_to_assemble[[metric]] <- results$p_lm
+  coef_to_assemble[[metric]]  <- results$coef_lm
 }
 
-plot_50 = plots_to_assemble[["mAP_50"]] + no_title + no_xaxis
-plot_95 = plots_to_assemble[["mAP_95"]] + no_title + no_xaxis
+selected_metrics <- c("mAP_50", "mAP_95")
+coef_selected    <- coef_to_assemble[selected_metrics]
+
+y_min <- min(sapply(coef_selected, function(df)
+  min(df$Coefficients - df$`Std. Error`)
+))
+
+y_max <- max(sapply(coef_selected, function(df)
+  max(df$Coefficients + df$`Std. Error`)
+))
+
+padding <- 0.05 * (y_max - y_min)
+common_limits <- c(y_min - padding, y_max + padding)
+
+plot_50 = plots_to_assemble[["mAP_50"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
+plot_95 = plots_to_assemble[["mAP_95"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
 
 lm_plot <- plot_grid(
   plot_50, plot_95,
