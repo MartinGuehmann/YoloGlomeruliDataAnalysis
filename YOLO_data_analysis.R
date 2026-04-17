@@ -1712,7 +1712,7 @@ run_linear_model <- function(data,
 #' overlays the regression line, and annotates the plot with the regression
 #' formula and an estimated training efficiency.
 #'
-#' @param traing_times A numeric vector containing training times (in hours).
+#' @param training_times A numeric vector containing training times (in hours).
 #' @param image_numbers A numeric vector containing the corresponding number
 #'   of training images.
 #' @param output_dir A character string specifying the directory where the
@@ -1747,8 +1747,8 @@ run_linear_model <- function(data,
 #' @export
 plot_training_times <- function(training_times, image_numbers, output_dir)
 {
-  if (length(traing_times) != length(image_numbers)) {
-    stop("traing_times and image_numbers must have the same length")
+  if (length(training_times) != length(image_numbers)) {
+    stop("training_times and image_numbers must have the same length")
   }
 
   # Build output file names
