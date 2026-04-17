@@ -1214,7 +1214,7 @@ build_coef_df <- function(model) {
     "Pr(>|t|)"    = coefs[, 4],
     check.names   = FALSE
   )
-  
+
   coef_data$TermType <- dplyr::case_when(
     coef_data$`Training data set combinations` == "(Intercept)" ~ "Intercept",
     !grepl(":", coef_data$`Training data set combinations`) ~ "Main Effect",
@@ -1223,7 +1223,7 @@ build_coef_df <- function(model) {
       "-way Interaction"
     )
   )
-  
+
   coef_data$TermType <- factor(
     coef_data$TermType,
     levels = c(
@@ -1234,17 +1234,63 @@ build_coef_df <- function(model) {
       "4-way Interaction"
     )
   )
-  
+
   coef_data$`Training data set combinations` <- factor(
     coef_data$`Training data set combinations`,
     levels = coef_data$`Training data set combinations`
   )
-  
+
   coef_data <- coef_data[order(coef_data$TermType), ]
-  
+
   return(coef_data)
 }
 
+#' Plot regression coefficients with significance annotations
+#'
+#' Creates a bar plot of linear or interaction model coefficients with standard
+#' errors and significance stars (***, **, *, or empty not significant).
+#' The function adapts the visual encoding depending on whether only main effects
+#' are present or interaction terms are included.
+#'
+#' @param coef_data A data frame containing model coefficients. Must include:
+#'   \itemize{
+#'     \item \code{Coefficients}: Numeric coefficient estimates
+#'     \item \code{Std. Error}: Standard errors of coefficients
+#'     \item \code{Pr(>|t|)}: p-values for significance testing
+#'     \item \code{TermType}: Factor indicating term type (e.g., Intercept, Main Effect, Interaction)
+#'     \item \code{Training data set combinations}: Factor or character identifying model terms
+#'   }
+#'
+#' @param title Character string specifying the plot title.
+#'
+#' @return A \code{ggplot} object displaying coefficient estimates with error bars
+#' and significance annotations.
+#'
+#' @details
+#' Significance levels are encoded as:
+#' \itemize{
+#'   \item \code{***} for p < 0.001
+#'   \item \code{**}  for p < 0.01
+#'   \item \code{*}   for p < 0.05
+#'   \item empty string otherwise
+#' }
+#'
+#' The function automatically switches between:
+#' \itemize{
+#'   \item Simple mode (Intercept + Main Effects only): No legend, single-color bars
+#'   \item Full mode (interaction models): Colored bars by term type with legend
+#' }
+#'
+#' Error bars represent ±1 standard error around coefficient estimates.
+#'
+#' @examples
+#' \dontrun{
+#' plot_coefficients(coef_data, title = "Model Coefficients")
+#' }
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @export
 plot_coefficients <- function(coef_data, title) {
 
   present_types <- unique(coef_data$TermType)
@@ -1260,8 +1306,8 @@ plot_coefficients <- function(coef_data, title) {
   offset <- 0.02 * max(abs(coef_data$Coefficients), na.rm = TRUE)
   coef_data$label_y <- ifelse(
     coef_data$Coefficients >= 0,
-    coef_data$Coefficients + coef_data$`Std. Error` + offset,  # above
-    coef_data$Coefficients - coef_data$`Std. Error` - offset   # below
+    coef_data$Coefficients + coef_data$`Std. Error` + offset,  # Above
+    coef_data$Coefficients - coef_data$`Std. Error` - offset   # Below
   )
 
   # Base plot (shared)
@@ -1317,7 +1363,7 @@ plot_coefficients <- function(coef_data, title) {
       )) +
       theme(legend.position = "right")
   }
-  
+
   return(p)
 }
 
