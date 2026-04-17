@@ -1203,6 +1203,81 @@ export_statistics_to_excel <- function(base_filename,
   openxlsx::saveWorkbook(wb, paste0(base_filename, ".xlsx"), overwrite = TRUE)
 }
 
+build_coef_df <- function(model) {
+  coefs <- summary(model)$coefficients
+  
+  coef_data <- data.frame(
+    `Training data set combinations` = rownames(coefs),
+    Coefficients  = coefs[, 1],
+    `Std. Error`  = coefs[, 2],
+    `t-value`     = coefs[, 3],
+    "Pr(>|t|)"    = coefs[, 4],
+    check.names   = FALSE
+  )
+  
+  coef_data$TermType <- dplyr::case_when(
+    coef_data$`Training data set combinations` == "(Intercept)" ~ "Intercept",
+    !grepl(":", coef_data$`Training data set combinations`) ~ "Main Effect",
+    TRUE ~ paste0(
+      stringr::str_count(coef_data$`Training data set combinations`, ":") + 1,
+      "-way Interaction"
+    )
+  )
+  
+  coef_data$TermType <- factor(
+    coef_data$TermType,
+    levels = c(
+      "Intercept",
+      "Main Effect",
+      "2-way Interaction",
+      "3-way Interaction",
+      "4-way Interaction"
+    )
+  )
+  
+  coef_data$`Training data set combinations` <- factor(
+    coef_data$`Training data set combinations`,
+    levels = coef_data$`Training data set combinations`
+  )
+  
+  coef_data <- coef_data[order(coef_data$TermType), ]
+  
+  return(coef_data)
+}
+
+plot_coefficients <- function(coef_data, title) {
+  ggplot(coef_data, aes(
+    x = `Training data set combinations`,
+    y = Coefficients,
+    fill = TermType
+  )) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(
+      aes(
+        ymin = Coefficients - `Std. Error`,
+        ymax = Coefficients + `Std. Error`
+      ),
+      width = 0.2
+    ) +
+    scale_fill_manual(values = c(
+      "Intercept" = "gray70",
+      "Main Effect" = "steelblue",
+      "2-way Interaction" = "#fdae61",
+      "3-way Interaction" = "#f46d43",
+      "4-way Interaction" = "#d73027"
+    )) +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title = element_text(size = 9)
+    ) +
+    labs(
+      x = "Training dataset combinations",
+      y = "Coefficients"
+    ) +
+    ggtitle(title)
+}
+
 #############
 # Functions #
 #############
@@ -1538,52 +1613,19 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 8: Coefficients
   # ----------------------------
-  coefs <- summary(lmi_model)$coefficients
-
-  coef_data <- data.frame(
-    `Training data set combinations` = rownames(coefs),
-    Coefficients  = coefs[, 1],
-    `Std. Error`  = coefs[, 2],
-    `t-value`     = coefs[, 3],
-    "Pr(>|t|)"    = coefs[, 4],
-    check.names   = FALSE
-  )
-
-  coef_data$TermType <- dplyr::case_when(
-    coef_data$`Training data set combinations` == "(Intercept)" ~ "Intercept",
-    !grepl(":", coef_data$`Training data set combinations`) ~ "Main Effect",
-    TRUE ~ paste0(
-      stringr::str_count(coef_data$`Training data set combinations`, ":") + 1,
-      "-way Interaction"
-    )
-  )
-  coef_data$TermType <- factor(
-    coef_data$TermType,
-    levels = c(
-      "Intercept",
-      "Main Effect",
-      "2-way Interaction",
-      "3-way Interaction",
-      "4-way Interaction"
-    )
-  )
-  # Keep model order, but group by type
-  coef_data$`Training data set combinations` <- factor(
-    coef_data$`Training data set combinations`,
-    levels = coef_data$`Training data set combinations`
-  )
-  coef_data$Group <- ifelse(coef_data$TermType == "Interaction", 2,
-                            ifelse(coef_data$TermType == "Main Effect", 1, 0))
-
-  coef_data <- coef_data[order(coef_data$TermType), ]
+  coef_data_lmi <- build_coef_df(lmi_model)
+  coef_data_lm  <- build_coef_df(lm_model)
 
   # ----------------------------
   # Step 9: File naming
   # ----------------------------
-  xlsx_name <- paste0(base_filename, metric, "_results.xlsx")
-  pdf_name  <- paste0(base_filename, metric, "_coefficents.pdf")
-  svg_name  <- paste0(base_filename, metric, "_coefficents.svg")
-
+  xlsx_name_lm  <- paste0(base_filename, metric, "_lm_results.xlsx")
+   pdf_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.pdf")
+   svg_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.svg")
+  xlsx_name_lmi <- paste0(base_filename, metric, "_lmi_results.xlsx")
+   pdf_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.pdf")
+   svg_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.svg")
+  
   # ----------------------------
   # Step 10: Output consistency check
   # ----------------------------
@@ -1594,65 +1636,67 @@ run_linear_model <- function(data,
   # ----------------------------
   # Step 11: Save Excel
   # ----------------------------
-  write_xlsx(
+   write_xlsx(
+     list("linear_model_results" = cbind(
+       coef_data_lm,
+       AIC_lm1 = AIC(lm_model),
+       AIC_lmi = AIC(lmi_model)
+     )),
+     path = xlsx_name_lm
+   )
+   write_xlsx(
     list("linear_model_results" = cbind(
-      coef_data,
+      coef_data_lmi,
       AIC_lm1 = AIC(lm_model),
       AIC_lmi = AIC(lmi_model)
     )),
-    path = xlsx_name
+    path = xlsx_name_lmi
   )
 
   # ----------------------------
   # Step 12: Plot
   # ----------------------------
-  p <- ggplot(coef_data, aes(
-    x = `Training data set combinations`,
-    y = Coefficients,
-    fill = TermType
-  )) +
-    geom_bar(stat = "identity") +
-    geom_errorbar(
-      aes(
-        ymin = Coefficients - `Std. Error`,
-        ymax = Coefficients + `Std. Error`
-      ),
-      width = 0.2
-    ) +
-    scale_fill_manual(values = c(
-      "Intercept" = "gray70",
-      "Main Effect" = "steelblue",
-      "2-way Interaction" = "#fdae61",
-      "3-way Interaction" = "#f46d43",
-      "4-way Interaction" = "#d73027"
-    )) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(size = 9)
-    ) +
-    labs(
-      x     = "Training dataset combinations",
-      y     = "Coefficients"
-    ) +
-    ggtitle(paste("Coefficients of the linear interaction model:", metric_name))
+
+  # LM plot (NEW)
+  p_lm <- plot_coefficients(
+    coef_data_lm,
+    paste("Coefficients of the linear model:", metric_name)
+  )
+
+  # LMI plot (existing)
+  p_lmi <- plot_coefficients(
+    coef_data_lmi,
+    paste("Coefficients of the linear interaction model:", metric_name)
+  )
 
   ggsave(
-    filename = pdf_name,
-    plot = p,
+    filename = pdf_name_lm,
+    plot = p_lm,
     height = 5,
     width = 5
   )
   ggsave(
-    filename = svg_name,
-    plot = p,
+    filename = svg_name_lm,
+    plot = p_lm,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = pdf_name_lmi,
+    plot = p_lmi,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = svg_name_lmi,
+    plot = p_lmi,
     height = 5,
     width = 5
   )
 
   pdf_name_facet <- paste0(base_filename, metric, "_coefficents_FACET.pdf")
 
-  p_facet <- ggplot(coef_data, aes(
+  p_facet <- ggplot(coef_data_lmi, aes(
     x = `Training data set combinations`,
     y = Coefficients,
     fill = TermType
@@ -1698,7 +1742,10 @@ run_linear_model <- function(data,
   invisible(list(
     lm = lm_model,
     lmi = lmi_model,
-    coef = coef_data,
+    p_lm = p_lm,
+    p_lmi = p_lmi,
+    coef_lm = coef_data_lm,
+    coef_lmi = coef_data_lmi,
     n_rows_subdata = nrow(subdata),
     n_rows_result = nrow(result)
   ))
