@@ -1246,10 +1246,14 @@ build_coef_df <- function(model) {
 }
 
 plot_coefficients <- function(coef_data, title) {
-  ggplot(coef_data, aes(
+
+  present_types <- unique(coef_data$TermType)
+  simple_case <- all(present_types %in% c("Intercept", "Main Effect"))
+
+  # Base plot (shared)
+  p <- ggplot(coef_data, aes(
     x = `Training data set combinations`,
-    y = Coefficients,
-    fill = TermType
+    y = Coefficients
   )) +
     geom_bar(stat = "identity") +
     geom_errorbar(
@@ -1259,23 +1263,40 @@ plot_coefficients <- function(coef_data, title) {
       ),
       width = 0.2
     ) +
-    scale_fill_manual(values = c(
-      "Intercept" = "gray70",
-      "Main Effect" = "steelblue",
-      "2-way Interaction" = "#fdae61",
-      "3-way Interaction" = "#f46d43",
-      "4-way Interaction" = "#d73027"
-    )) +
     theme_minimal() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       plot.title = element_text(size = 9)
     ) +
-    labs(
-      x = "Training dataset combinations",
+    ggtitle(title)
+
+  # Add complexity only if needed
+  if (simple_case) {
+    p <- p +
+      labs(
+      x = "Training datasets",
       y = "Coefficients"
     ) +
-    ggtitle(title)
+    theme(legend.position = "none")
+  }
+  else {
+    p <- p +
+      labs(
+        x = "Training dataset combinations",
+        y = "Coefficients"
+      ) +
+      aes(fill = TermType) +
+      scale_fill_manual(values = c(
+        "Intercept" = "gray70",
+        "Main Effect" = "steelblue",
+        "2-way Interaction" = "#fdae61",
+        "3-way Interaction" = "#f46d43",
+        "4-way Interaction" = "#d73027"
+      )) +
+      theme(legend.position = "right")
+  }
+  
+  return(p)
 }
 
 #############
