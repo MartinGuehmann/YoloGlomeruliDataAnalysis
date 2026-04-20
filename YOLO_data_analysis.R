@@ -1676,25 +1676,9 @@ run_linear_model <- function(data,
   }
 
   # ----------------------------
-  # Step 1: Filter epochs
+  # Step 1: Filter data for epochs, outliers, and experiments
   # ----------------------------
-  subdata <- subset(data, Epoche >= epoch_range[1] & Epoche <= epoch_range[2])
-
-  # ----------------------------
-  # Step 2: Remove outliers
-  # ----------------------------
-  if (!is.null(outlier_filter)) {
-    subdata <- subdata[!(
-      subdata$versuch == outlier_filter$versuch &
-        subdata$SuperRank == outlier_filter$SuperRank
-    ), ]
-  }
-
-  # ----------------------------
-  # Step 3: Keep valid versuch levels
-  # ----------------------------
-  subdata <- subdata[subdata$versuch %in% experiments, ] # This is used here, otherwise we could just use filter_data
-  subdata$versuch <- factor(subdata$versuch, levels = experiments)
+  subdata <- filter_data(data, experiments, epoch_range, outlier_filter)
 
   # ----------------------------
   # Step 4: Sanity checks
