@@ -763,7 +763,7 @@ create_boxplot <- function(subdata,
   # Step 2: Compute median per SuperRank for each versuch
   form <- as.formula(paste(metric, "~ versuch + SuperRank"))
   subdata_median <- aggregate(form, data = subdata, median)
-  
+
   # Step 3: Compute median of medians per versuch
   form <- as.formula(
     paste(metric, "~ versuch")
