@@ -1389,7 +1389,7 @@ plot_coefficients <- function(coef_data, metric_name, title) {
     p <- p +
       labs(
       x = "Training datasets",
-      y = paste0("Coefficients of ", metric_name)
+      y = paste0("Coefficients of ", metric_name, " ranks")
     ) +
     theme(legend.position = "none")
   }
@@ -1397,7 +1397,7 @@ plot_coefficients <- function(coef_data, metric_name, title) {
     p <- p +
       labs(
         x = "Training dataset combinations",
-        y = paste0("Coefficients of ", metric_name)
+        y = paste0("Coefficients of ", metric_name, " ranks")
       ) +
       aes(fill = TermType) +
       scale_fill_manual(values = c(
@@ -1681,7 +1681,7 @@ run_linear_model <- function(data,
   subdata <- filter_data(data, experiments, epoch_range, outlier_filter)
 
   # ----------------------------
-  # Step 4: Sanity checks
+  # Step 2: Sanity checks
   # ----------------------------
   if (nrow(subdata) == 0) stop("subdata is empty after filtering")
 
@@ -1695,13 +1695,26 @@ run_linear_model <- function(data,
   }
 
   # ----------------------------
+  # Step 3: Compute median per SuperRank for each Versuch
+  # ----------------------------
+  form <- as.formula(
+    paste(metric, "~ TrainTiny + TinyAug + Syn + SynAug + version + Versuch + SuperRank")
+  )
+  subdata_median <- aggregate(form, data = subdata, median)
+
+  # ----------------------------
+  # Step 4: Compute ranks for the values
+  # ----------------------------
+  subdata_median[[metric]] <- rank(subdata_median[[metric]])
+
+  # ----------------------------
   # Step 5: Aggregation
   # ----------------------------
   form_agg <- as.formula(
     paste(metric, "~ TrainTiny + TinyAug + Syn + SynAug + version + Versuch")
   )
 
-  result <- aggregate(form_agg, data = subdata, FUN = median)
+  result <- aggregate(form_agg, data = subdata_median, FUN = median)
 
   # Check aggregation integrity
   expected_groups <- length(unique(subdata$versuch))
