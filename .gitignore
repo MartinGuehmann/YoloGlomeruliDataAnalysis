@@ -2,4 +2,5 @@
 *.xlsx
 .RData
 .Rhistory
+.RDataTmp
 output*
