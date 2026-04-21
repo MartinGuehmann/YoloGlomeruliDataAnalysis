@@ -2517,6 +2517,11 @@ jobs <- list(
     experiments = c("007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
                     "020", "011")
+  ),
+  list(
+    name        = "Orignial_and_augmentation",
+    title       = "Original data and augmentations: ",
+    experiments = c("012", "004", "003", "001", "006")
   )
 )
 
