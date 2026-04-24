@@ -396,6 +396,35 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   return(p)
 }
 
+# Helper 1: Effect sizes from U (Mann–Whitney)
+compute_effects_from_U <- function(U, n1, n2) {
+  n <- n1 + n2
+  
+  mu_U <- n1 * n2 / 2
+  sigma_U <- sqrt(n1 * n2 * (n + 1) / 12)
+  Z <- (U - mu_U) / sigma_U
+  
+  r    <- Z / sqrt(n)
+  rbc  <- (2 * U) / (n1 * n2) - 1
+  cles <- U / (n1 * n2)
+  
+  list(Z = Z, r = r, rbc = rbc, cles = cles)
+}
+
+# Helper 2: Effect size from Z (used in MW + Dunn)
+compute_effects_from_Z <- function(Z, n) {
+  r <- Z / sqrt(n)
+  
+  strength <- dplyr::case_when(
+    abs(r) < 0.1 ~ "negligible",
+    abs(r) < 0.3 ~ "small",
+    abs(r) < 0.5 ~ "medium",
+    TRUE         ~ "big"
+  )
+  
+  list(r = r, strength = strength)
+}
+
 ################
 # Subfunctions #
 ################
@@ -937,6 +966,12 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
                            method = kruskal_result$method,
                            data.name = kruskal_result$data.name)
 
+  # Precompute medians per group (used in MW + Dunn)
+  medians_df <- subdata %>%
+    dplyr::group_by(versuch) %>%
+    dplyr::summarise(Median = median(.data[[metric]], na.rm = TRUE)) %>%
+    dplyr::rename(Group = versuch)
+
   # Step 3: Optional Mann-Whitney U test for exactly 2 groups
   group_count <- length(unique(subdata$versuch))
   if(group_count == 2) {
@@ -949,66 +984,29 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     # Note: This is a two-sided test by default (alternative = "two.sided")
     mw_result <- wilcox.test(x, y, exact = FALSE)
 
-    # Effect size r = Z / sqrt(N)
-    # We approximate Z from the U statistic using the normal approximation.
-    # This corresponds to the same two-sided hypothesis test as reported by wilcox.test.
-    W <- as.numeric(mw_result$statistic)
-    n <- length(x) + length(y)
-
-    # Convert W to U (same here) and compute expected value and variance under H0
-    U <- W
-    mu_U <- length(x)*length(y)/2
-    sigma_U <- sqrt(length(x)*length(y)*(length(x)+length(y)+1)/12)
-
-    # Z-score (signed; direction depends on group ordering)
-    Z <- (U - mu_U)/sigma_U
-
-    # Effect size (note: magnitude is typically interpreted, sign depends on group order)
-    # Interpretation: |r| indicates effect size magnitude; sign depends on group order
-    r <- Z / sqrt(n)
-
-    # Effect sizes
-    W <- as.numeric(mw_result$statistic)
+    # Extract U and sample sizes
+    U  <- as.numeric(mw_result$statistic)
     n1 <- length(x)
     n2 <- length(y)
-    n  <- n1 + n2
 
-    # Convert W to U (same in this case)
-    U <- W
+    # Effect sizes from U
+    eff_U <- compute_effects_from_U(U, n1, n2)
 
-    # Mean and SD under H0
-    mu_U <- n1 * n2 / 2
-    sigma_U <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
-
-    # Z-score
-    Z <- (U - mu_U) / sigma_U
-
-    # 1. Z-based effect size (r)
-    r <- Z / sqrt(n)
-
-    # 2. Rank-biserial correlation (RBC)
-    rbc <- (2 * U) / (n1 * n2) - 1
-
-    # 3. Common Language Effect Size (CLES)
-    cles <- U / (n1 * n2)
+    # Effect size from Z (shared definition with Dunn)
+    eff_Z <- compute_effects_from_Z(eff_U$Z, n1 + n2)
 
     # Create data frame with separate group columns
     mann_whitney_df <- data.frame(
       Group1 = groups[1],
-      Median1 = median(x),
+      Median1 = medians_df$Median[medians_df$Group == groups[1]],
       Group2 = groups[2],
-      Median2 = median(y),
-      W = W,
-      Z = Z,
-      r = r,
-      rbc = rbc,
-      cles = cles,
-      effect_size_strength = case_when(
-        abs(r) < 0.1 ~ "negligible",
-        abs(r) < 0.3 ~ "small",
-        abs(r) < 0.5 ~ "medium",
-        TRUE         ~ "big"
-      ),
+      Median2 = medians_df$Median[medians_df$Group == groups[2]],
+      W = U,
+      Z = eff_U$Z,
+      r = eff_U$r,
+      rbc = eff_U$rbc,
+      cles = eff_U$cles,
+      effect_size_strength = eff_Z$strength,
       p.value = mw_result$p.value,
       significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
       method = mw_result$method
@@ -1021,34 +1019,28 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
   # Step 4: Dunn's pairwise post-hoc test with Bonferroni correction and effect sizes
   dunn_result <- dunnTest(form, data = subdata, method = "bonferroni")
 
-  # Compute medians per group
-  medians_df <- subdata %>%
-    dplyr::group_by(versuch) %>%
-    dplyr::summarise(median_value = median(.data[[metric]], na.rm = TRUE)) %>%
-    dplyr::rename(Group = versuch)
-
   dunn_result$res <- dunn_result$res %>%
     # Split 'Comparison' into Group1 and Group2 first
     tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
 
-    # Join medians for both groups
+    # Add medians for both groups
     dplyr::left_join(medians_df, by = c("Group1" = "Group")) %>%
-    dplyr::rename(Median1 = median_value) %>%
+    dplyr::rename(Median1 = Median) %>%
     dplyr::left_join(medians_df, by = c("Group2" = "Group")) %>%
-    dplyr::rename(Median2 = median_value) %>%
+    dplyr::rename(Median2 = Median) %>%
 
     # Compute pairwise sample size, effect size r, significance, and strength
     rowwise() %>%
     mutate(
-      n_pair = sum(subdata$versuch %in% c(Group1, Group2)),
-      r = Z / sqrt(n_pair),
-      significant = ifelse(P.adj < alpha, "Yes", "No"),
-      effect_size_strength = case_when(
-        abs(r) < 0.1 ~ "negligible",
-        abs(r) < 0.3 ~ "small",
-        abs(r) < 0.5 ~ "medium",
-        TRUE         ~ "big"
-      )
+      n1 = sum(subdata$versuch == Group1),
+      n2 = sum(subdata$versuch == Group2),
+      n_pair = n1 + n2,
+      
+      # Effect size from Z (shared helper)
+      r = compute_effects_from_Z(Z, n_pair)$r,
+      effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
+      
+      significant = ifelse(P.adj < alpha, "Yes", "No")
     ) %>%
     ungroup() %>%
     # Reorder columns for clarity
