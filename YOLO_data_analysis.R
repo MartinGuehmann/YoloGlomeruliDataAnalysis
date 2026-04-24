@@ -2769,14 +2769,14 @@ svg_file <- paste0(base_filename, "Figure.svg")
 ggsave(
   filename = pdf_file,
   plot = lm_plot,
-  height = 3.5,
-  width = 7
+  height = 4,
+  width = 8
 )
 ggsave(
   filename = svg_file,
   plot = lm_plot,
-  height = 3.5,
-  width = 7
+  height = 4,
+  width = 8
 )
 
 #########################################################################################################################
