@@ -2449,6 +2449,7 @@ jobs <- list(
   list(
     name        = "all",
     title       = "All 19 experiments: ",
+    file_prefix = "",
     experiments = c("001", "003", "004", "012", "006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010", "020", "011")
@@ -2456,16 +2457,19 @@ jobs <- list(
   list(
     name        = "augmented",
     title       = "Original and classical augmented images: ",
+    file_prefix = "",
     experiments = c("001", "003", "004", "012")
   ),
   list(
     name        = "size",
     title       = "Training data set sizes 2: ",
+    file_prefix = "FigureA_",
     experiments = c("006", "001","003")
   ),
   list(
     name        = "combinations",
     title       = "All combinations of augmentations: ",
+    file_prefix = "FigureD_",
     experiments = c("006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
@@ -2474,41 +2478,49 @@ jobs <- list(
   list(
     name        = "small_augmented",
     title       = "Augmentations of small datasets: ",
+    file_prefix = "",
     experiments = c("006", "014", "007")
   ),
   list(
     name        = "small_syn_augmented",
     title       = "Synthetic augmentations of small datasets: ",
+    file_prefix = "",
     experiments = c("006", "005", "008")
   ),
   list(
     name        = "small_combinations",
     title       = "Classical and synthetic augmentations of small datasets: ",
+    file_prefix = "",
     experiments = c("006", "007", "008", "013", "011")
   ),
   list(
     name        = "size_to_lower",
     title       = "Training data set sizes: ",
+    file_prefix = "",
     experiments = c("003", "001","006")
   ),
   list(
     name        = "non_annotated_removed",
     title       = "Removing images without glomeruli: ",
+    file_prefix = "FigureB_",
     experiments = c("003", "004")
   ),
   list(
     name        = "add_augmented1",
     title       = "Conventional data augmentation 1: ",
+    file_prefix = "FigureC_",
     experiments = c("004", "012")
   ),
   list(
     name        = "add_augmented2",
     title       = "Conventional data augmentation 2: ",
+    file_prefix = "",
     experiments = c("006", "014", "005", "015")
   ),
   list(
     name        = "add_augmented3",
     title       = "Conventional data augmentation 3: ",
+    file_prefix = "",
     experiments = c("006", "014", "005", "015", "004", "012")
   ),
   list(
@@ -2608,7 +2620,7 @@ for (metric in names(metrics)) {
       metric_name     <- metrics[[metric]]
       plot_title      <- paste0(job$title, metrics[[metric]], " of the last 10 epochs")
       base_dir        <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]])
-      base_filename   <- paste0(base_dir, file_safe_name(plot_title))
+      base_filename   <- paste0(base_dir, job$file_prefix, file_safe_name(plot_title))
 
       if(metric == "mAP_50" && job$name == "all") {
         plots <- analyze_data(
