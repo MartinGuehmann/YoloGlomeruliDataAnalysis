@@ -1132,6 +1132,11 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       n2 = sum(subdata$versuch == Group2),
       n_pair = n1 + n2,
 
+      cles = mean(outer(
+        subdata[[metric]][subdata$versuch == Group1],
+        subdata[[metric]][subdata$versuch == Group2],
+        FUN = ">"
+      )),
       r = compute_effects_from_Z(Z, n_pair)$r,
       effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
 
@@ -1172,7 +1177,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       magnitude_effect,
 
       n1, n2, n_pair,
-      Z, r, effect_size_strength,
+      Z, cles, r, effect_size_strength,
       rank_effect,
 
       P.unadj, P.adj,
