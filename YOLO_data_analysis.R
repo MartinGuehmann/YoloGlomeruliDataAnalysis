@@ -1068,14 +1068,20 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       Median2 = medians_df$Median[medians_df$Group == groups[2]],
       abs_median_diff = abs(median(x) - median(y)),
 
+      n1 = n1,
+      n2 = n2,
+      n_pair = n1 + n2,
+
       W = U,
       Z = eff_U$Z,
 
-      r = eff_U$r,
       rbc = eff_U$rbc,
       cles = eff_U$cles,
+      r = eff_U$r,
+      effect_size_strength = eff_Z$strength,
 
-      n_pair = n1 + n2,
+      p.value = mw_result$p.value,
+      significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
 
       decision_rule = dplyr::case_when(
         mw_result$p.value < alpha & eff_Z$r >= 0.5 ~ "statistically and practically large effect",
@@ -1085,11 +1091,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
         TRUE                                       ~ "uncategorised"
       ),
 
-      p.value = mw_result$p.value,
-      significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
-      method = mw_result$method,
-
-      effect_size_strength = eff_Z$strength
+      method = mw_result$method
     )
 
   } else {
