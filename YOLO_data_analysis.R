@@ -1137,7 +1137,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
       abs_median_diff = abs(Median1 - Median2),
 
-      # Magnitude (absolute scale)
+      # Magnitude (absolute scale), assuming abs_median_diff is between 0 and 1
       magnitude_effect = dplyr::case_when(
         abs_median_diff < 0.01 ~ "negligible",
         abs_median_diff < 0.05 ~ "small",
