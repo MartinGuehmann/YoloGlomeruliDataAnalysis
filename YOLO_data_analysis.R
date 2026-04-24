@@ -1056,27 +1056,40 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     n2 <- length(y)
 
     # Effect sizes are computed via helper functions (see compute_effects_from_U / _from_Z)
-    # Effect sizes from U
-    eff_U <- compute_effects_from_U(U, n1, n2)
+    eff_U <- compute_effects_from_U(U, n1, n2)          # Effect sizes from U
+    eff_Z <- compute_effects_from_Z(eff_U$Z, n1 + n2)   # Effect size from Z (shared definition with Dunn)
 
-    # Effect size from Z (shared definition with Dunn)
-    eff_Z <- compute_effects_from_Z(eff_U$Z, n1 + n2)
-
-    # Create data frame with separate group columns
+    # Create structured result
     mann_whitney_df <- data.frame(
       Group1 = groups[1],
-      Median1 = medians_df$Median[medians_df$Group == groups[1]],
       Group2 = groups[2],
+
+      Median1 = medians_df$Median[medians_df$Group == groups[1]],
       Median2 = medians_df$Median[medians_df$Group == groups[2]],
+      abs_median_diff = abs(median(x) - median(y)),
+
       W = U,
       Z = eff_U$Z,
+
       r = eff_U$r,
       rbc = eff_U$rbc,
       cles = eff_U$cles,
-      effect_size_strength = eff_Z$strength,
+
+      n_pair = n1 + n2,
+
+      decision_rule = dplyr::case_when(
+        mw_result$p.value < alpha & eff_Z$r >= 0.5 ~ "statistically and practically large effect",
+        mw_result$p.value < alpha & eff_Z$r >= 0.3 ~ "statistically significant, moderate effect",
+        mw_result$p.value < alpha & eff_Z$r < 0.3  ~ "statistically significant, small practical effect",
+        mw_result$p.value >= alpha                 ~ "no statistically significant difference",
+        TRUE                                       ~ "uncategorised"
+      ),
+
       p.value = mw_result$p.value,
       significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
-      method = mw_result$method
+      method = mw_result$method,
+
+      effect_size_strength = eff_Z$strength
     )
 
   } else {
@@ -1096,23 +1109,32 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     dplyr::left_join(medians_df, by = c("Group2" = "Group")) %>%
     dplyr::rename(Median2 = Median) %>%
 
-    # Compute pairwise sample size, effect size r, significance, and strength
+    # Compute statistics
     rowwise() %>%
     mutate(
       n1 = sum(subdata$versuch == Group1),
       n2 = sum(subdata$versuch == Group2),
       n_pair = n1 + n2,
-      
-      # Effect size from Z (shared helper)
+
       r = compute_effects_from_Z(Z, n_pair)$r,
       effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
-      
+
+      abs_median_diff = abs(Median1 - Median2),
+
+      decision_rule = case_when(
+        P.adj < alpha & r >= 0.5 ~ "statistically and practically large effect",
+        P.adj < alpha & r >= 0.3 ~ "statistically significant, moderate effect",
+        P.adj < alpha & r < 0.3  ~ "statistically significant, small practical effect",
+        P.adj >= alpha           ~ "no statistically significant difference",
+        TRUE                     ~ "uncategorised"
+      ),
+
       significant = ifelse(P.adj < alpha, "Yes", "No")
     ) %>%
     ungroup() %>%
     # Reorder columns for clarity
-    select(Group1, Median1, Group2, Median2, Z, P.unadj, P.adj,
-           n_pair, r, significant, effect_size_strength)
+    select(Group1, Group2, Median1, Median2, abs_median_diff, n1, n2, n_pair, Z, r, effect_size_strength,
+           P.unadj, P.adj, significant, decision_rule)
 
   # Step 5: Create Dunn matrices (p-values and significance)
   groups <- levels(subdata$versuch)
