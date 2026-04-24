@@ -1089,8 +1089,8 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       effect_size_strength = eff_Z$strength,
       # Rank-based interpretation
       rank_effect = dplyr::case_when(
-        eff_Z$r >= 0.5 ~ "large rank separation",
-        eff_Z$r >= 0.3 ~ "moderate rank separation",
+        abs(eff_Z$r) >= 0.5 ~ "large rank separation",
+        abs(eff_Z$r) >= 0.3 ~ "moderate rank separation",
         TRUE           ~ "small rank separation"
       ),
 
@@ -1098,9 +1098,9 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
 
       decision_rule = dplyr::case_when(
-        mw_result$p.value < alpha & eff_Z$r >= 0.5 ~ "statistically and practically large effect",
-        mw_result$p.value < alpha & eff_Z$r >= 0.3 ~ "statistically significant, moderate effect",
-        mw_result$p.value < alpha & eff_Z$r < 0.3  ~ "statistically significant, small practical effect",
+        mw_result$p.value < alpha & abs(eff_Z$r) >= 0.5 ~ "statistically and practically large effect",
+        mw_result$p.value < alpha & abs(eff_Z$r) >= 0.3 ~ "statistically significant, moderate effect",
+        mw_result$p.value < alpha & abs(eff_Z$r) < 0.3  ~ "statistically significant, small practical effect",
         mw_result$p.value >= alpha                 ~ "no statistically significant difference",
         TRUE                                       ~ "uncategorised"
       ),
@@ -1147,15 +1147,15 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
       # Rank-based interpretation
       rank_effect = dplyr::case_when(
-        r >= 0.5 ~ "large rank separation",
-        r >= 0.3 ~ "moderate rank separation",
+        abs(r) >= 0.5 ~ "large rank separation",
+        abs(r) >= 0.3 ~ "moderate rank separation",
         TRUE     ~ "small rank separation"
       ),
 
       decision_rule = dplyr::case_when(
-        P.adj < alpha & r >= 0.5 ~ "statistically and practically large effect",
-        P.adj < alpha & r >= 0.3 ~ "statistically significant, moderate effect",
-        P.adj < alpha & r < 0.3  ~ "statistically significant, small practical effect",
+        P.adj < alpha & abs(r) >= 0.5 ~ "statistically and practically large effect",
+        P.adj < alpha & abs(r) >= 0.3 ~ "statistically significant, moderate effect",
+        P.adj < alpha & abs(r) < 0.3  ~ "statistically significant, small practical effect",
         P.adj >= alpha           ~ "no statistically significant difference",
         TRUE                     ~ "uncategorised"
       ),
