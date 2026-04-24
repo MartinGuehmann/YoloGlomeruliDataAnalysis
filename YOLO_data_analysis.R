@@ -1045,6 +1045,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     groups <- levels(subdata$versuch)
     x <- subdata[[metric]][subdata$versuch == groups[1]]
     y <- subdata[[metric]][subdata$versuch == groups[2]]
+    abs_median_diff = abs(median(x) - median(y))
 
     # Mann-Whitney U test (implemented as Wilcoxon rank-sum test in R)
     # Note: This is a two-sided test by default (alternative = "two.sided")
@@ -1066,7 +1067,14 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
       Median1 = medians_df$Median[medians_df$Group == groups[1]],
       Median2 = medians_df$Median[medians_df$Group == groups[2]],
-      abs_median_diff = abs(median(x) - median(y)),
+      abs_median_diff = abs_median_diff,
+      # Magnitude effect (absolute scale)
+      magnitude_effect = dplyr::case_when(
+        abs_median_diff < 0.01 ~ "negligible",
+        abs_median_diff < 0.05 ~ "small",
+        abs_median_diff < 0.10 ~ "moderate",
+        TRUE                   ~ "large"
+      ),
 
       n1 = n1,
       n2 = n2,
@@ -1079,6 +1087,12 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       cles = eff_U$cles,
       r = eff_U$r,
       effect_size_strength = eff_Z$strength,
+      # Rank-based interpretation
+      rank_effect = dplyr::case_when(
+        eff_Z$r >= 0.5 ~ "large rank separation",
+        eff_Z$r >= 0.3 ~ "moderate rank separation",
+        TRUE           ~ "small rank separation"
+      ),
 
       p.value = mw_result$p.value,
       significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
@@ -1123,7 +1137,22 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
       abs_median_diff = abs(Median1 - Median2),
 
-      decision_rule = case_when(
+      # Magnitude (absolute scale)
+      magnitude_effect = dplyr::case_when(
+        abs_median_diff < 0.01 ~ "negligible",
+        abs_median_diff < 0.05 ~ "small",
+        abs_median_diff < 0.10 ~ "moderate",
+        TRUE                   ~ "large"
+      ),
+
+      # Rank-based interpretation
+      rank_effect = dplyr::case_when(
+        r >= 0.5 ~ "large rank separation",
+        r >= 0.3 ~ "moderate rank separation",
+        TRUE     ~ "small rank separation"
+      ),
+
+      decision_rule = dplyr::case_when(
         P.adj < alpha & r >= 0.5 ~ "statistically and practically large effect",
         P.adj < alpha & r >= 0.3 ~ "statistically significant, moderate effect",
         P.adj < alpha & r < 0.3  ~ "statistically significant, small practical effect",
@@ -1134,9 +1163,22 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       significant = ifelse(P.adj < alpha, "Yes", "No")
     ) %>%
     ungroup() %>%
+
     # Reorder columns for clarity
-    select(Group1, Group2, Median1, Median2, abs_median_diff, n1, n2, n_pair, Z, r, effect_size_strength,
-           P.unadj, P.adj, significant, decision_rule)
+    select(
+      Group1, Group2,
+      Median1, Median2,
+      abs_median_diff,
+      magnitude_effect,
+
+      n1, n2, n_pair,
+      Z, r, effect_size_strength,
+      rank_effect,
+
+      P.unadj, P.adj,
+      significant, decision_rule
+    ) %>%
+    as.data.frame()
 
   # Step 5: Create Dunn matrices (p-values and significance)
   groups <- levels(subdata$versuch)
