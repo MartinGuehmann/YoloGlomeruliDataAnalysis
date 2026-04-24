@@ -987,9 +987,22 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
   # Step 4: Dunn's pairwise post-hoc test with Bonferroni correction and effect sizes
   dunn_result <- dunnTest(form, data = subdata, method = "bonferroni")
 
+  # Compute medians per group
+  medians_df <- subdata %>%
+    dplyr::group_by(versuch) %>%
+    dplyr::summarise(median_value = median(.data[[metric]], na.rm = TRUE)) %>%
+    dplyr::rename(Group = versuch)
+
   dunn_result$res <- dunn_result$res %>%
     # Split 'Comparison' into Group1 and Group2 first
     tidyr::separate(Comparison, into = c("Group1", "Group2"), sep = " - ") %>%
+
+    # Join medians for both groups
+    dplyr::left_join(medians_df, by = c("Group1" = "Group")) %>%
+    dplyr::rename(Median1 = median_value) %>%
+    dplyr::left_join(medians_df, by = c("Group2" = "Group")) %>%
+    dplyr::rename(Median2 = median_value) %>%
+
     # Compute pairwise sample size, effect size r, significance, and strength
     rowwise() %>%
     mutate(
@@ -1005,7 +1018,8 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     ) %>%
     ungroup() %>%
     # Reorder columns for clarity
-    select(Group1, Group2, Z, P.unadj, P.adj, n_pair, r, significant, effect_size_strength)
+    select(Group1, Median1, Group2, Median2, Z, P.unadj, P.adj,
+           n_pair, r, significant, effect_size_strength)
 
   # Step 5: Create Dunn matrices (p-values and significance)
   groups <- levels(subdata$versuch)
