@@ -967,6 +967,31 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     # Interpretation: |r| indicates effect size magnitude; sign depends on group order
     r <- Z / sqrt(n)
 
+    # Effect sizes
+    W <- as.numeric(mw_result$statistic)
+    n1 <- length(x)
+    n2 <- length(y)
+    n  <- n1 + n2
+
+    # Convert W to U (same in this case)
+    U <- W
+
+    # Mean and SD under H0
+    mu_U <- n1 * n2 / 2
+    sigma_U <- sqrt(n1 * n2 * (n1 + n2 + 1) / 12)
+
+    # Z-score
+    Z <- (U - mu_U) / sigma_U
+
+    # 1. Z-based effect size (r)
+    r <- Z / sqrt(n)
+
+    # 2. Rank-biserial correlation (RBC)
+    rbc <- (2 * U) / (n1 * n2) - 1
+
+    # 3. Common Language Effect Size (CLES)
+    cles <- U / (n1 * n2)
+
     # Create data frame with separate group columns
     mann_whitney_df <- data.frame(
       Group1 = groups[1],
@@ -974,9 +999,18 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       Group2 = groups[2],
       Median2 = median(y),
       W = W,
+      Z = Z,
       r = r,
+      rbc = rbc,
+      cles = cles,
+      effect_size_strength = case_when(
+        abs(r) < 0.1 ~ "negligible",
+        abs(r) < 0.3 ~ "small",
+        abs(r) < 0.5 ~ "medium",
+        TRUE         ~ "big"
+      ),
       p.value = mw_result$p.value,
-      significant = ifelse(mw_result$p.value < 0.05, "Yes", "No"),
+      significant = ifelse(mw_result$p.value < alpha, "Yes", "No"),
       method = mw_result$method
     )
 
