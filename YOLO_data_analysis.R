@@ -396,7 +396,45 @@ add_significance_stars <- function(p, subdata, metric, stats, alpha = 0.05) {
   return(p)
 }
 
-# Helper 1: Effect sizes from U (Mann–Whitney)
+#' Compute effect sizes from Mann–Whitney U statistic
+#'
+#' Calculates multiple effect size measures based on the Mann–Whitney U statistic.
+#' Includes Z (normal approximation), r (standardized effect size),
+#' rank-biserial correlation (RBC), and common language effect size (CLES).
+#'
+#' @param U Numeric. Mann–Whitney U statistic (as returned by \code{wilcox.test}).
+#' @param n1 Integer. Sample size of group 1.
+#' @param n2 Integer. Sample size of group 2.
+#'
+#' @details
+#' The Z value is computed using the normal approximation:
+#' \deqn{Z = (U - \mu_U) / \sigma_U}
+#' where \eqn{\mu_U = n1 * n2 / 2} and
+#' \eqn{\sigma_U = sqrt(n1 * n2 * (n1 + n2 + 1) / 12)}.
+#'
+#' Effect sizes:
+#' \itemize{
+#'   \item \strong{r}: \eqn{Z / sqrt(n)}, comparable across nonparametric tests
+#'   \item \strong{rbc}: rank-biserial correlation, ranges [-1, 1]
+#'   \item \strong{cles}: common language effect size, probability that a value
+#'         from group 1 exceeds a value from group 2
+#' }
+#'
+#' @return A list with the following elements:
+#' \describe{
+#'   \item{Z}{Numeric. Standardized test statistic}
+#'   \item{r}{Numeric. Effect size based on Z}
+#'   \item{rbc}{Numeric. Rank-biserial correlation}
+#'   \item{cles}{Numeric. Common language effect size}
+#' }
+#'
+#' @seealso \code{\link{wilcox.test}}
+#'
+#' @examples
+#' x <- c(1, 2, 3)
+#' y <- c(4, 5, 6)
+#' test <- wilcox.test(x, y, exact = FALSE)
+#' compute_effects_from_U(as.numeric(test$statistic), length(x), length(y))
 compute_effects_from_U <- function(U, n1, n2) {
   n <- n1 + n2
   
@@ -411,7 +449,35 @@ compute_effects_from_U <- function(U, n1, n2) {
   list(Z = Z, r = r, rbc = rbc, cles = cles)
 }
 
-# Helper 2: Effect size from Z (used in MW + Dunn)
+#' Compute standardized effect size r from Z statistic
+#'
+#' Computes the standardized effect size r and its qualitative interpretation
+#' from a Z statistic. This is commonly used for nonparametric tests such as
+#' Mann–Whitney U and Dunn's test.
+#'
+#' @param Z Numeric. Z statistic (e.g., from Dunn's test or normal approximation).
+#' @param n Integer. Total sample size used to compute Z.
+#'
+#' @details
+#' The effect size is calculated as:
+#' \deqn{r = Z / sqrt(n)}
+#'
+#' Interpretation follows common thresholds:
+#' \itemize{
+#'   \item < 0.1: negligible
+#'   \item < 0.3: small
+#'   \item < 0.5: medium
+#'   \item >= 0.5: large
+#' }
+#'
+#' @return A list with:
+#' \describe{
+#'   \item{r}{Numeric. Standardized effect size}
+#'   \item{strength}{Character. Qualitative interpretation of effect size}
+#' }
+#'
+#' @examples
+#' compute_effects_from_Z(Z = 2.1, n = 30)
 compute_effects_from_Z <- function(Z, n) {
   r <- Z / sqrt(n)
   
@@ -989,6 +1055,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
     n1 <- length(x)
     n2 <- length(y)
 
+    # Effect sizes are computed via helper functions (see compute_effects_from_U / _from_Z)
     # Effect sizes from U
     eff_U <- compute_effects_from_U(U, n1, n2)
 
