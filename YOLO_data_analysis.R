@@ -2722,6 +2722,7 @@ jobs <- list(
   list(
     name        = "combinations_only",
     title       = "Only combinations of augmentations: ",
+    file_prefix = "",
     experiments = c("007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
                     "020", "011")
@@ -2729,7 +2730,14 @@ jobs <- list(
   list(
     name        = "Orignial_and_augmentation",
     title       = "Original data and augmentations: ",
+    file_prefix = "",
     experiments = c("012", "004", "003", "001", "006")
+  ),
+  list(
+    name        = "TrainSmall_vs_Augmented",
+    title       = "TrainSmall vs Augmented: ",
+    file_prefix = "FigureSupp_",
+    experiments = c("001", "019")
   )
 )
 
