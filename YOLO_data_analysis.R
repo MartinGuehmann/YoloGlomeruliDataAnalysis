@@ -1092,7 +1092,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
         abs(eff_U$cles - 0.5) <  0.06  ~ "negligible"
       ),
       r = eff_U$r,
-      effect_size_strength = eff_Z$strength,
+      r_effect_size_strength = eff_Z$strength,
       # Rank-based interpretation
       rank_effect = dplyr::case_when(
         abs(eff_Z$r) >= 0.5 ~ "large rank separation",
@@ -1146,7 +1146,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
         FUN = ">"
       )),
       r = compute_effects_from_Z(Z, n_pair)$r,
-      effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
+      r_effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
 
       abs_median_diff = abs(Median1 - Median2)
     ) %>%
@@ -1195,7 +1195,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       magnitude_effect,
 
       n1, n2, n_pair,
-      Z, cles, cles_effect_size, r, effect_size_strength,
+      Z, cles, cles_effect_size, r, r_effect_size_strength,
       rank_effect,
 
       P.unadj, P.adj,
