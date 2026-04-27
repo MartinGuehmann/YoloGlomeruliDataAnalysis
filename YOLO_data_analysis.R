@@ -1085,6 +1085,12 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
       rbc = eff_U$rbc,
       cles = eff_U$cles,
+      cles_effect_size = dplyr::case_when(
+        abs(eff_U$cles - 0.5) >= 0.21 ~ "large",
+        abs(eff_U$cles - 0.5) >= 0.14 ~ "medium",
+        abs(eff_U$cles - 0.5) >= 0.06  ~ "small",
+        abs(eff_U$cles - 0.5) <  0.06  ~ "negligible"
+      ),
       r = eff_U$r,
       effect_size_strength = eff_Z$strength,
       # Rank-based interpretation
@@ -1127,6 +1133,8 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
 
     # Compute statistics
     rowwise() %>%
+
+    # FIRST mutate block: compute cles + everything else EXCEPT cles_effect_size
     mutate(
       n1 = sum(subdata$versuch == Group1),
       n2 = sum(subdata$versuch == Group2),
@@ -1140,7 +1148,17 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       r = compute_effects_from_Z(Z, n_pair)$r,
       effect_size_strength = compute_effects_from_Z(Z, n_pair)$strength,
 
-      abs_median_diff = abs(Median1 - Median2),
+      abs_median_diff = abs(Median1 - Median2)
+    ) %>%
+
+    # SECOND mutate block: interpret cles + classify everything derived from earlier values
+    mutate(
+      cles_effect_size = dplyr::case_when(
+        abs(cles - 0.5) >= 0.21 ~ "large",
+        abs(cles - 0.5) >= 0.14 ~ "medium",
+        abs(cles - 0.5) >= 0.06 ~ "small",
+        TRUE ~ "negligible"
+      ),
 
       # Magnitude (absolute scale), assuming abs_median_diff is between 0 and 1
       magnitude_effect = dplyr::case_when(
@@ -1154,15 +1172,15 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       rank_effect = dplyr::case_when(
         abs(r) >= 0.5 ~ "large rank separation",
         abs(r) >= 0.3 ~ "moderate rank separation",
-        TRUE     ~ "small rank separation"
+        TRUE          ~ "small rank separation"
       ),
 
       decision_rule = dplyr::case_when(
         P.adj < alpha & abs(r) >= 0.5 ~ "statistically and practically large effect",
         P.adj < alpha & abs(r) >= 0.3 ~ "statistically significant, moderate effect",
-        P.adj < alpha & abs(r) < 0.3  ~ "statistically significant, small practical effect",
-        P.adj >= alpha           ~ "no statistically significant difference",
-        TRUE                     ~ "uncategorised"
+        P.adj < alpha & abs(r)  < 0.3 ~ "statistically significant, small practical effect",
+        P.adj >= alpha                ~ "no statistically significant difference",
+        TRUE                          ~ "uncategorised"
       ),
 
       significant = ifelse(P.adj < alpha, "Yes", "No")
@@ -1177,7 +1195,7 @@ compute_statistics <- function(subdata, metric, experiments, alpha = 0.05) {
       magnitude_effect,
 
       n1, n2, n_pair,
-      Z, cles, r, effect_size_strength,
+      Z, cles, cles_effect_size, r, effect_size_strength,
       rank_effect,
 
       P.unadj, P.adj,
