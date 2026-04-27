@@ -485,7 +485,7 @@ compute_effects_from_Z <- function(Z, n) {
     abs(r) < 0.1 ~ "negligible",
     abs(r) < 0.3 ~ "small",
     abs(r) < 0.5 ~ "medium",
-    TRUE         ~ "big"
+    TRUE         ~ "large"
   )
   
   list(r = r, strength = strength)
