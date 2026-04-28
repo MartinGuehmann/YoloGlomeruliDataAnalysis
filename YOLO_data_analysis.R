@@ -491,6 +491,38 @@ compute_effects_from_Z <- function(Z, n) {
   list(r = r, strength = strength)
 }
 
+#' Schema definition for job configurations
+#'
+#' Defines the expected structure and validation rules for a job object
+#' used in analysis pipelines. This schema is used by \code{validate_job()}
+#' to enforce consistency across job definitions.
+#'
+#' @format A named list where each element defines a field in a job
+#' configuration. Each field is itself a list with validation rules:
+#' \itemize{
+#'   \item \code{type}: expected data type (currently "character")
+#'   \item \code{length}: required length or \code{NA} for variable length
+#'   \item \code{required}: logical, whether the field must be present
+#'   \item \code{allow_empty}: logical, whether empty strings are allowed
+#' }
+#'
+#' The following fields are defined:
+#' \itemize{
+#'   \item \code{name}: character(1), required, not empty
+#'   \item \code{title}: character(1), required, not empty
+#'   \item \code{file_prefix}: character(1), required, may be empty
+#'   \item \code{lm_prefix}: character(1), required, may be empty
+#'   \item \code{experiments}: character vector, required, must not be empty
+#' }
+#'
+#' @details
+#' This object acts as the single source of truth for job structure.
+#' Modifications to this schema will affect all validation behavior
+#' in \code{validate_job()} and \code{validate_jobs()}.
+#'
+#' @seealso \code{\link{validate_job}}, \code{\link{validate_jobs}}
+#'
+#' @export
 JOB_SCHEMA <- list(
   name = list(
     type = "character",
