@@ -491,6 +491,39 @@ compute_effects_from_Z <- function(Z, n) {
   list(r = r, strength = strength)
 }
 
+#' Validate a single job configuration
+#'
+#' Checks whether a job list contains all required fields, no unexpected fields,
+#' and that all fields have the correct types and structure.
+#'
+#' @param job A named list representing a single job configuration.
+#'   Required fields are:
+#'   \itemize{
+#'     \item \code{name}: character(1)
+#'     \item \code{title}: character(1)
+#'     \item \code{file_prefix}: character(1)
+#'     \item \code{lm_prefix}: character(1), may be an empty string
+#'     \item \code{experiments}: non-empty character vector
+#'   }
+#' @param idx Optional integer index of the job, used for more informative
+#'   error messages when validating multiple jobs.
+#'
+#' @return Returns \code{TRUE} invisibly if validation succeeds.
+#'
+#' @throws An error if validation fails. The error message indicates
+#'   missing fields, unexpected fields, or invalid field types.
+#'
+#' @examples
+#' job <- list(
+#'   name = "example",
+#'   title = "Example job",
+#'   file_prefix = "Fig_",
+#'   lm_prefix = "",
+#'   experiments = c("001", "002")
+#' )
+#' validate_job(job)
+#'
+#' @export
 validate_job <- function(job, idx = NULL) {
   prefix <- if (!is.null(idx)) paste0("Job[[", idx, "]]: ") else ""
 
@@ -533,9 +566,47 @@ validate_job <- function(job, idx = NULL) {
     stop(prefix, "`experiments` contains empty strings.", call. = FALSE)
   }
 
-  TRUE
+  invisible(TRUE)
 }
 
+#' Validate a list of job configurations
+#'
+#' Applies \code{validate_job()} to each element of a list of jobs and
+#' collects all validation errors. Stops with a combined error message
+#' if any job is invalid.
+#'
+#' @param jobs A list of job configurations (each a named list).
+#'
+#' @return Returns \code{TRUE} invisibly if all jobs are valid.
+#'
+#' @details
+#' Unlike \code{validate_job()}, this function does not stop at the first
+#' error. Instead, it evaluates all jobs and reports all detected issues
+#' in a single error message.
+#'
+#' @examples
+#' jobs <- list(
+#'   list(
+#'     name = "job1",
+#'     title = "First job",
+#'     file_prefix = "A_",
+#'     lm_prefix = "",
+#'     experiments = c("001")
+#'   ),
+#'   list(
+#'     name = "job2",
+#'     title = "Second job",
+#'     file_prefix = "B_",
+#'     lm_prefix = "LM_",
+#'     experiments = c("002", "003")
+#'   )
+#' )
+#'
+#' validate_jobs(jobs)
+#'
+#' @seealso \code{\link{validate_job}}
+#'
+#' @export
 validate_jobs <- function(jobs) {
   errors <- character(0)
 
@@ -568,7 +639,7 @@ validate_jobs <- function(jobs) {
     )
   }
 
-  TRUE
+  invisible(TRUE)
 }
 
 ################
