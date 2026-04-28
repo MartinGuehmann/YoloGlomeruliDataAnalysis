@@ -2655,7 +2655,7 @@ jobs <- list(
     name        = "augmented",
     title       = "Original and classical augmented images: ",
     file_prefix = "",
-    lm_prefix   = "LM_Original_",
+    lm_prefix   = "",
     experiments = c("001", "003", "004", "012")
   ),
   list(
