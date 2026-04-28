@@ -2646,6 +2646,7 @@ jobs <- list(
     name        = "all",
     title       = "All 19 experiments: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("001", "003", "004", "012", "006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010", "020", "011")
@@ -2654,18 +2655,21 @@ jobs <- list(
     name        = "augmented",
     title       = "Original and classical augmented images: ",
     file_prefix = "",
+    lm_prefix   = "LM_Original_",
     experiments = c("001", "003", "004", "012")
   ),
   list(
     name        = "size",
     title       = "Training data set sizes 2: ",
     file_prefix = "FigureA_",
+    lm_prefix   = "",
     experiments = c("006", "001","003")
   ),
   list(
     name        = "combinations",
     title       = "All combinations of augmentations: ",
     file_prefix = "FigureD_",
+    lm_prefix   = "LinearModel_",
     experiments = c("006", "014", "005",
                     "015", "007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
@@ -2675,54 +2679,63 @@ jobs <- list(
     name        = "small_augmented",
     title       = "Augmentations of small datasets: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("006", "014", "007")
   ),
   list(
     name        = "small_syn_augmented",
     title       = "Synthetic augmentations of small datasets: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("006", "005", "008")
   ),
   list(
     name        = "small_combinations",
     title       = "Classical and synthetic augmentations of small datasets: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("006", "007", "008", "013", "011")
   ),
   list(
     name        = "size_to_lower",
     title       = "Training data set sizes: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("003", "001","006")
   ),
   list(
     name        = "non_annotated_removed",
     title       = "Removing images without glomeruli: ",
     file_prefix = "FigureB_",
+    lm_prefix   = "",
     experiments = c("003", "004")
   ),
   list(
     name        = "add_augmented1",
     title       = "Conventional data augmentation 1: ",
     file_prefix = "FigureC_",
+    lm_prefix   = "",
     experiments = c("004", "012")
   ),
   list(
     name        = "add_augmented2",
     title       = "Conventional data augmentation 2: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("006", "014", "005", "015")
   ),
   list(
     name        = "add_augmented3",
     title       = "Conventional data augmentation 3: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("006", "014", "005", "015", "004", "012")
   ),
   list(
     name        = "combinations_only",
     title       = "Only combinations of augmentations: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("007", "016", "009", "008",
                     "017", "018", "013", "019", "010",
                     "020", "011")
@@ -2731,12 +2744,14 @@ jobs <- list(
     name        = "Orignial_and_augmentation",
     title       = "Original data and augmentations: ",
     file_prefix = "",
+    lm_prefix   = "",
     experiments = c("012", "004", "003", "001", "006")
   ),
   list(
     name        = "TrainSmall_vs_Augmented",
     title       = "TrainSmall vs Augmented: ",
     file_prefix = "FigureSupp_",
+    lm_prefix   = "",
     experiments = c("001", "019")
   )
 )
@@ -2919,81 +2934,84 @@ for (metric in names(metrics)) {
 
 #########################################################################################################################
 
-# Multiple linear regression for the models for all metrics to determine what has the most effect
-experiments <- c("006", "014", "005",
-                 "015", "007", "016", "009", "008",
-                 "017", "018", "013", "019", "010",
-                 "020", "011")
+for(job in jobs) {
+  if(job$lm_prefix == ""){
+    next
+  }
 
-base_filename <- paste0(output_dir, "/LinearModels/LinearModel_")
+  # Multiple linear regression for the models for all metrics to determine what has the most effect
+  experiments <- job$experiments
 
-plots_to_assemble <- list()
-coef_to_assemble  <- list()
+  base_filename <- paste0(output_dir, "/LinearModels/", job$lm_prefix)
 
-for (metric in names(metrics)) {
-  results <- run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
+  plots_to_assemble <- list()
+  coef_to_assemble  <- list()
 
-  plots_to_assemble[[metric]] <- results$p_lm
-  coef_to_assemble[[metric]]  <- results$coef_lm
-}
+  for (metric in names(metrics)) {
+    results <- run_linear_model(data1df, experiments, metric, metrics[[metric]], base_filename)
 
-selected_metrics <- c("mAP_50", "mAP_95")
-coef_selected    <- coef_to_assemble[selected_metrics]
+    plots_to_assemble[[metric]] <- results$p_lm
+    coef_to_assemble[[metric]]  <- results$coef_lm
+  }
 
-y_min <- min(sapply(coef_selected, function(df)
-  min(df$Coefficients - df$`Std. Error`)
-))
+  selected_metrics <- c("mAP_50", "mAP_95")
+  coef_selected    <- coef_to_assemble[selected_metrics]
 
-y_max <- max(sapply(coef_selected, function(df)
-  max(df$Coefficients + df$`Std. Error`)
-))
+  y_min <- min(sapply(coef_selected, function(df)
+    min(df$Coefficients - df$`Std. Error`)
+  ))
 
-padding <- 0.05 * (y_max - y_min)
-common_limits <- c(y_min - padding, y_max + padding)
+  y_max <- max(sapply(coef_selected, function(df)
+    max(df$Coefficients + df$`Std. Error`)
+  ))
 
-plot_50 = plots_to_assemble[["mAP_50"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
-plot_95 = plots_to_assemble[["mAP_95"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
+  padding <- 0.05 * (y_max - y_min)
+  common_limits <- c(y_min - padding, y_max + padding)
 
-lm_plot <- plot_grid(
-  plot_50, plot_95,
-  labels = c("A", "B"),
-  ncol = 2,
-  align = "v",           # Align vertically
-  axis = "l"             # Align left edges of the plots
-)
+  plot_50 = plots_to_assemble[["mAP_50"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
+  plot_95 = plots_to_assemble[["mAP_95"]] + no_title + no_xaxis + coord_cartesian(ylim = common_limits)
 
-x_label <- "Training datasets"
-
-x_lab <- ggdraw() +
-  draw_label(
-    x_label,
-    x = 0.5,
-    hjust = 0.5,
-    size = 10
+  lm_plot <- plot_grid(
+    plot_50, plot_95,
+    labels = c("A", "B"),
+    ncol = 2,
+    align = "v",           # Align vertically
+    axis = "l"             # Align left edges of the plots
   )
 
-lm_plot <- plot_grid(
-  lm_plot,
-  x_lab,
-  ncol = 1,
-  rel_heights = c(1, 0.08)
-)
+  x_label <- "Training datasets"
 
-pdf_file <- paste0(base_filename, "Figure.pdf")
-svg_file <- paste0(base_filename, "Figure.svg")
+  x_lab <- ggdraw() +
+    draw_label(
+      x_label,
+      x = 0.5,
+      hjust = 0.5,
+      size = 10
+    )
 
-ggsave(
-  filename = pdf_file,
-  plot = lm_plot,
-  height = 4,
-  width = 8
-)
-ggsave(
-  filename = svg_file,
-  plot = lm_plot,
-  height = 4,
-  width = 8
-)
+  lm_plot <- plot_grid(
+    lm_plot,
+    x_lab,
+    ncol = 1,
+    rel_heights = c(1, 0.08)
+  )
+
+  pdf_file <- paste0(base_filename, "Figure.pdf")
+  svg_file <- paste0(base_filename, "Figure.svg")
+
+  ggsave(
+    filename = pdf_file,
+    plot = lm_plot,
+    height = 4,
+    width = 8
+  )
+  ggsave(
+    filename = svg_file,
+    plot = lm_plot,
+    height = 4,
+    width = 8
+  )
+}
 
 #########################################################################################################################
 
