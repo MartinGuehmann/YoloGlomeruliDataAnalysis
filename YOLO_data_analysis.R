@@ -491,6 +491,86 @@ compute_effects_from_Z <- function(Z, n) {
   list(r = r, strength = strength)
 }
 
+validate_job <- function(job, idx = NULL) {
+  prefix <- if (!is.null(idx)) paste0("Job[[", idx, "]]: ") else ""
+
+  required_fields <- c("name", "title", "file_prefix", "lm_prefix", "experiments")
+
+  # 1. Missing fields
+  missing <- setdiff(required_fields, names(job))
+  if (length(missing) > 0) {
+    stop(prefix, "Missing field(s): ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  # 2. Unexpected extra fields
+  extra <- setdiff(names(job), required_fields)
+  if (length(extra) > 0) {
+    stop(prefix, "Unexpected field(s): ", paste(extra, collapse = ", "), call. = FALSE)
+  }
+
+  # 3. Type checks
+  if (!is.character(job$name) || length(job$name) != 1) {
+    stop(prefix, "`name` must be a single string.", call. = FALSE)
+  }
+
+  if (!is.character(job$title) || length(job$title) != 1) {
+    stop(prefix, "`title` must be a single string.", call. = FALSE)
+  }
+
+  if (!is.character(job$file_prefix) || length(job$file_prefix) != 1) {
+    stop(prefix, "`file_prefix` must be a single string.", call. = FALSE)
+  }
+
+  if (!is.character(job$lm_prefix) || length(job$lm_prefix) != 1) {
+    stop(prefix, "`lm_prefix` must be a single string (can be \"\").", call. = FALSE)
+  }
+
+  if (!is.character(job$experiments) || length(job$experiments) == 0) {
+    stop(prefix, "`experiments` must be a non-empty character vector.", call. = FALSE)
+  }
+
+  if (any(nchar(job$experiments) == 0)) {
+    stop(prefix, "`experiments` contains empty strings.", call. = FALSE)
+  }
+
+  TRUE
+}
+
+validate_jobs <- function(jobs) {
+  errors <- character(0)
+
+  for (i in seq_along(jobs)) {
+    job <- jobs[[i]]
+
+    result <- tryCatch(
+      {
+        validate_job(job, i)
+        NULL  # no error
+      },
+      error = function(e) {
+        e$message
+      }
+    )
+
+    if (!is.null(result)) {
+      errors <- c(errors, result)
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(
+      paste(
+        "Validation failed for the following job(s):",
+        paste0("- ", errors, collapse = "\n"),
+        sep = "\n"
+      ),
+      call. = FALSE
+    )
+  }
+
+  TRUE
+}
+
 ################
 # Subfunctions #
 ################
@@ -2755,6 +2835,9 @@ jobs <- list(
     experiments = c("001", "019")
   )
 )
+
+# Make sure that all jobs have all required fields
+validate_jobs(jobs)
 
 # Make vectors for training time and number of images, hard encoded, come from outside.
 # Would be better to have it in its own file.
