@@ -491,27 +491,72 @@ compute_effects_from_Z <- function(Z, n) {
   list(r = r, strength = strength)
 }
 
+JOB_SCHEMA <- list(
+  name = list(
+    type = "character",
+    length = 1,
+    required = TRUE,
+    allow_empty = FALSE
+  ),
+  title = list(
+    type = "character",
+    length = 1,
+    required = TRUE,
+    allow_empty = FALSE
+  ),
+  file_prefix = list(
+    type = "character",
+    length = 1,
+    required = TRUE,
+    allow_empty = TRUE
+  ),
+  lm_prefix = list(
+    type = "character",
+    length = 1,
+    required = TRUE,
+    allow_empty = TRUE
+  ),
+  experiments = list(
+    type = "character",
+    length = NA,   # variable length
+    required = TRUE,
+    allow_empty = FALSE
+  )
+)
+
 #' Validate a single job configuration
 #'
-#' Checks whether a job list contains all required fields, no unexpected fields,
-#' and that all fields have the correct types and structure.
+#' Checks that a job list conforms to the expected schema defined in
+#' \code{JOB_SCHEMA}. This includes verifying required fields, detecting
+#' unexpected fields, and validating field types and constraints.
 #'
 #' @param job A named list representing a single job configuration.
-#'   Required fields are:
+#'   The expected structure is defined by \code{JOB_SCHEMA}.
+#'
+#' @param idx Optional integer index of the job. If provided, it is included
+#'   in error messages to make debugging batches of jobs easier.
+#'
+#' @param schema A named list defining the expected structure of the job.
+#'   Defaults to \code{JOB_SCHEMA}. Each field must specify:
 #'   \itemize{
-#'     \item \code{name}: character(1)
-#'     \item \code{title}: character(1)
-#'     \item \code{file_prefix}: character(1)
-#'     \item \code{lm_prefix}: character(1), may be an empty string
-#'     \item \code{experiments}: non-empty character vector
+#'     \item \code{type}: expected data type (currently "character")
+#'     \item \code{length}: required length or \code{NA} for variable length
+#'     \item \code{allow_empty}: whether empty strings are allowed
 #'   }
-#' @param idx Optional integer index of the job, used for more informative
-#'   error messages when validating multiple jobs.
 #'
-#' @return Returns \code{TRUE} invisibly if validation succeeds.
+#' @return Invisibly returns \code{TRUE} if validation succeeds.
 #'
-#' @throws An error if validation fails. The error message indicates
-#'   missing fields, unexpected fields, or invalid field types.
+#' @details
+#' Validation includes:
+#' \itemize{
+#'   \item Checking for missing required fields
+#'   \item Checking for unexpected extra fields
+#'   \item Verifying data types and lengths
+#'   \item Ensuring required fields are not empty
+#' }
+#'
+#' If validation fails, an error is thrown immediately with a descriptive
+#' message indicating the problem.
 #'
 #' @examples
 #' job <- list(
@@ -521,49 +566,52 @@ compute_effects_from_Z <- function(Z, n) {
 #'   lm_prefix = "",
 #'   experiments = c("001", "002")
 #' )
+#'
 #' validate_job(job)
 #'
+#' @seealso \code{\link{validate_jobs}}, \code{\link{JOB_SCHEMA}}
 #' @export
-validate_job <- function(job, idx = NULL) {
+validate_job <- function(job, idx = NULL, schema = JOB_SCHEMA) {
   prefix <- if (!is.null(idx)) paste0("Job[[", idx, "]]: ") else ""
 
-  required_fields <- c("name", "title", "file_prefix", "lm_prefix", "experiments")
+  schema_fields <- names(schema)
+  job_fields <- names(job)
 
-  # 1. Missing fields
-  missing <- setdiff(required_fields, names(job))
+  # Missing fields
+  missing <- setdiff(schema_fields, job_fields)
   if (length(missing) > 0) {
     stop(prefix, "Missing field(s): ", paste(missing, collapse = ", "), call. = FALSE)
   }
 
-  # 2. Unexpected extra fields
-  extra <- setdiff(names(job), required_fields)
+  # Extra fields
+  extra <- setdiff(job_fields, schema_fields)
   if (length(extra) > 0) {
     stop(prefix, "Unexpected field(s): ", paste(extra, collapse = ", "), call. = FALSE)
   }
 
-  # 3. Type checks
-  if (!is.character(job$name) || length(job$name) != 1) {
-    stop(prefix, "`name` must be a single string.", call. = FALSE)
-  }
+  # Field-by-field validation
+  for (field in schema_fields) {
+    rules <- schema[[field]]
+    value <- job[[field]]
 
-  if (!is.character(job$title) || length(job$title) != 1) {
-    stop(prefix, "`title` must be a single string.", call. = FALSE)
-  }
+    # Type check
+    if (rules$type == "character" && !is.character(value)) {
+      stop(prefix, sprintf("`%s` must be of type character.", field), call. = FALSE)
+    }
 
-  if (!is.character(job$file_prefix) || length(job$file_prefix) != 1) {
-    stop(prefix, "`file_prefix` must be a single string.", call. = FALSE)
-  }
+    # Length check
+    if (!is.na(rules$length) && length(value) != rules$length) {
+      stop(prefix, sprintf("`%s` must have length %d.", field, rules$length), call. = FALSE)
+    }
 
-  if (!is.character(job$lm_prefix) || length(job$lm_prefix) != 1) {
-    stop(prefix, "`lm_prefix` must be a single string (can be \"\").", call. = FALSE)
-  }
+    if (is.na(rules$length) && length(value) == 0) {
+      stop(prefix, sprintf("`%s` must not be empty.", field), call. = FALSE)
+    }
 
-  if (!is.character(job$experiments) || length(job$experiments) == 0) {
-    stop(prefix, "`experiments` must be a non-empty character vector.", call. = FALSE)
-  }
-
-  if (any(nchar(job$experiments) == 0)) {
-    stop(prefix, "`experiments` contains empty strings.", call. = FALSE)
+    # Empty string check
+    if (!rules$allow_empty && any(nchar(value) == 0)) {
+      stop(prefix, sprintf("`%s` contains empty strings.", field), call. = FALSE)
+    }
   }
 
   invisible(TRUE)
