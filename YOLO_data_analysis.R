@@ -2374,7 +2374,7 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
 
   # Fit linear model for regression line
   fit <- lm(Time_h ~ Images, data = df)
-  formula_text <- paste0("f(x) = ", round(coef(fit)[2], 3), " x + ", round(coef(fit)[1], 3))
+  formula_text <- paste0("f(x) = ", round(coef(fit)[2], 5), " x + ", round(coef(fit)[1], 5))
 
   # Compute dynamic text position: just below regression line
   pred_vals <- predict(fit, newdata = data.frame(Images = df$Images))
