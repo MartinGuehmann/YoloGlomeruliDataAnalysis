@@ -2396,7 +2396,7 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
 
   # Compute training time per 10,000 images
   time_per_10000 <- coef(fit)[1] + coef(fit)[2] * 10000
-  efficiency_text <- paste0("ca. ", round(time_per_10000, 2), " h / 10,000 images")
+  efficiency_text <- paste0("ca. ", round(time_per_10000, 1), " h / 10,000 images")
 
   # Dynamic Y position for efficiency annotation: slightly below regression formula
   y_eff_pos <- y_pos - 0.08 * (max(pred_vals) - min(pred_vals))  # 8% below formula
