@@ -1196,6 +1196,12 @@ create_boxplot <- function(subdata,
     height = 5,
     width = 5
   )
+  ggsave(
+    filename = paste0(base_filename, ".eps"),
+    plot = p,
+    height = 5,
+    width = 5
+  )
 
   # Step 8: Return plot object explicitly (invisible)
   return(invisible(p))
@@ -2181,10 +2187,12 @@ run_linear_model <- function(data,
   xlsx_name_lm  <- paste0(base_filename, metric, "_lm_results.xlsx")
    pdf_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.pdf")
    svg_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.svg")
+   eps_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.eps")
   xlsx_name_lmi <- paste0(base_filename, metric, "_lmi_results.xlsx")
    pdf_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.pdf")
    svg_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.svg")
-  
+   eps_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.eps")
+
   # ----------------------------
   # Step 10: Output consistency check
   # ----------------------------
@@ -2243,6 +2251,12 @@ run_linear_model <- function(data,
     width = 5
   )
   ggsave(
+    filename = eps_name_lm,
+    plot = p_lm,
+    height = 5,
+    width = 5
+  )
+  ggsave(
     filename = pdf_name_lmi,
     plot = p_lmi,
     height = 5,
@@ -2250,6 +2264,12 @@ run_linear_model <- function(data,
   )
   ggsave(
     filename = svg_name_lmi,
+    plot = p_lmi,
+    height = 5,
+    width = 5
+  )
+  ggsave(
+    filename = eps_name_lmi,
     plot = p_lmi,
     height = 5,
     width = 5
@@ -2362,7 +2382,8 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime.svg")
-
+  output_file_name_eps <- paste0(output_dir, "/NumberOfImages_TraingTime.eps")
+  
   # Ensure the parent directory exists
   create_parent_dir(output_file_name_pdf)
 
@@ -2445,14 +2466,17 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   # Save plot as PDF and SVG
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in") # Set the "default" units explicitly. Quite weired that inchi-binchies are the default.
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
+  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in")
 
   # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.svg")
+  output_file_name_eps <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.eps")
 
   p <- p + theme(plot.title = element_blank())
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in")
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
+  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in")
 
   return(invisible(fit))
 }
@@ -3150,6 +3174,7 @@ for (metric in names(metrics)) {
 
     pdf_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".pdf")
     svg_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".svg")
+    eps_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".eps")
 
     ggsave(
       filename = pdf_file,
@@ -3159,6 +3184,12 @@ for (metric in names(metrics)) {
     )
     ggsave(
       filename = svg_file,
+      plot = final_plot,
+      height = 5,
+      width = 10
+    )
+    ggsave(
+      filename = eps_file,
       plot = final_plot,
       height = 5,
       width = 10
@@ -3232,7 +3263,8 @@ for(job in jobs) {
 
   pdf_file <- paste0(base_filename, "Figure.pdf")
   svg_file <- paste0(base_filename, "Figure.svg")
-
+  eps_file <- paste0(base_filename, "Figure.eps")
+  
   ggsave(
     filename = pdf_file,
     plot = lm_plot,
@@ -3241,6 +3273,12 @@ for(job in jobs) {
   )
   ggsave(
     filename = svg_file,
+    plot = lm_plot,
+    height = 4,
+    width = 8
+  )
+  ggsave(
+    filename = eps_file,
     plot = lm_plot,
     height = 4,
     width = 8
