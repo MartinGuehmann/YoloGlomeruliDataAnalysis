@@ -996,6 +996,21 @@ create_dunn_heatmap_plot <- function(
     width = 6,
     height = 5
   )
+  ggsave(
+    filename = paste0(base_filename, "_dunn_heatmap.eps"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5,
+    device = cairo_ps
+  )
+  ggsave(
+    filename = paste0(base_filename, "_dunn_heatmap.tiff"),
+    plot = heatmap_plot,
+    width = 6,
+    height = 5,
+    dpi = 600,
+    compression = "lzw"
+  )
 
   # Step 6: Return heatmap_plot object explicitly (invisible)
   return(invisible(heatmap_plot))
@@ -1200,7 +1215,16 @@ create_boxplot <- function(subdata,
     filename = paste0(base_filename, ".eps"),
     plot = p,
     height = 5,
-    width = 5
+    width = 5,
+    device = cairo_ps
+  )
+  ggsave(
+    filename = paste0(base_filename, ".tiff"),
+    plot = p,
+    height = 5,
+    width = 5,
+    dpi = 600,
+    compression = "lzw"
   )
 
   # Step 8: Return plot object explicitly (invisible)
@@ -2188,10 +2212,12 @@ run_linear_model <- function(data,
    pdf_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.pdf")
    svg_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.svg")
    eps_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.eps")
+   tif_name_lm  <- paste0(base_filename, metric, "_lm_coefficents.tiff")
   xlsx_name_lmi <- paste0(base_filename, metric, "_lmi_results.xlsx")
    pdf_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.pdf")
    svg_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.svg")
    eps_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.eps")
+   tif_name_lmi <- paste0(base_filename, metric, "_lmi_coefficents.tiff")
 
   # ----------------------------
   # Step 10: Output consistency check
@@ -2254,7 +2280,16 @@ run_linear_model <- function(data,
     filename = eps_name_lm,
     plot = p_lm,
     height = 5,
-    width = 5
+    width = 5,
+    device = cairo_ps
+  )
+  ggsave(
+    filename = tif_name_lm,
+    plot = p_lm,
+    height = 5,
+    width = 5,
+    dpi = 600,
+    compression = "lzw"
   )
   ggsave(
     filename = pdf_name_lmi,
@@ -2272,7 +2307,16 @@ run_linear_model <- function(data,
     filename = eps_name_lmi,
     plot = p_lmi,
     height = 5,
-    width = 5
+    width = 5,
+    device = cairo_ps
+  )
+  ggsave(
+    filename = tif_name_lmi,
+    plot = p_lmi,
+    height = 5,
+    width = 5,
+    dpi = 600,
+    compression = "lzw"
   )
 
   pdf_name_facet <- paste0(base_filename, metric, "_coefficents_FACET.pdf")
@@ -2383,7 +2427,8 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime.svg")
   output_file_name_eps <- paste0(output_dir, "/NumberOfImages_TraingTime.eps")
-  
+  output_file_name_tif <- paste0(output_dir, "/NumberOfImages_TraingTime.tiff")
+
   # Ensure the parent directory exists
   create_parent_dir(output_file_name_pdf)
 
@@ -2466,18 +2511,21 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   # Save plot as PDF and SVG
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in") # Set the "default" units explicitly. Quite weired that inchi-binchies are the default.
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
-  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in")
-
+  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in", device = cairo_ps)
+  ggsave(filename = output_file_name_tif, plot = p, height = 5, width = 5, units = "in", dpi = 600, compression = "lzw")
+  
   # Build output file names
   output_file_name_pdf <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.pdf")
   output_file_name_svg <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.svg")
   output_file_name_eps <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.eps")
-
+  output_file_name_tif <- paste0(output_dir, "/NumberOfImages_TraingTime_NoTitle.tiff")
+  
   p <- p + theme(plot.title = element_blank())
   ggsave(filename = output_file_name_pdf, plot = p, height = 5, width = 5, units = "in")
   ggsave(filename = output_file_name_svg, plot = p, height = 5, width = 5, units = "in")
-  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in")
-
+  ggsave(filename = output_file_name_eps, plot = p, height = 5, width = 5, units = "in", device = cairo_ps)
+  ggsave(filename = output_file_name_tif, plot = p, height = 5, width = 5, units = "in", dpi = 600, compression = "lzw")
+  
   return(invisible(fit))
 }
 
@@ -3175,7 +3223,8 @@ for (metric in names(metrics)) {
     pdf_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".pdf")
     svg_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".svg")
     eps_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".eps")
-
+    tif_file <- paste0(base_dir, "/FigureBoxPlots_", metric, ".tiff")
+    
     ggsave(
       filename = pdf_file,
       plot = final_plot,
@@ -3192,7 +3241,16 @@ for (metric in names(metrics)) {
       filename = eps_file,
       plot = final_plot,
       height = 5,
-      width = 10
+      width = 10,
+      device = cairo_ps
+    )
+    ggsave(
+      filename = tif_file,
+      plot = final_plot,
+      height = 5,
+      width = 10,
+      dpi = 600,
+      compression = "lzw"
     )
   }
 }
@@ -3264,7 +3322,8 @@ for(job in jobs) {
   pdf_file <- paste0(base_filename, "Figure.pdf")
   svg_file <- paste0(base_filename, "Figure.svg")
   eps_file <- paste0(base_filename, "Figure.eps")
-  
+  tif_file <- paste0(base_filename, "Figure.tiff")
+
   ggsave(
     filename = pdf_file,
     plot = lm_plot,
@@ -3281,7 +3340,16 @@ for(job in jobs) {
     filename = eps_file,
     plot = lm_plot,
     height = 4,
-    width = 8
+    width = 8,
+    device = cairo_ps
+  )
+  ggsave(
+    filename = tif_file,
+    plot = lm_plot,
+    height = 4,
+    width = 8,
+    dpi = 600,
+    compression = "lzw"
   )
 }
 
