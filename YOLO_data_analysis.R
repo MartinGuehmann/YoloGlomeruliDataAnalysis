@@ -3147,33 +3147,17 @@ for (metric in names(metrics)) {
       base_dir        <- paste0(output_dir, "/", metric, "/", plot_types[[plot_type]])
       base_filename   <- paste0(base_dir, job$file_prefix, file_safe_name(plot_title))
 
-      if(metric == "mAP_50" && job$name == "all") {
-        plots <- analyze_data(
-          data1df,
-          job$experiments,
-          symbol_map_experiments,
-          symbol_config,
-          metric,
-          metric_name,
-          plot_title,
-          base_filename,
-          plot_type,
-          NULL
-        )
-      }
-      else {
-        plots <- analyze_data(
-          data1df,
-          job$experiments,
-          symbol_map_experiments,
-          symbol_config,
-          metric,
-          metric_name,
-          plot_title,
-          base_filename,
-          plot_type
-        )
-      }
+      plots <- analyze_data(
+        data1df,
+        job$experiments,
+        symbol_map_experiments,
+        symbol_config,
+        metric,
+        metric_name,
+        plot_title,
+        base_filename,
+        plot_type
+      )
       plots_to_assemble[[job$name]] <- plots
     }
 
