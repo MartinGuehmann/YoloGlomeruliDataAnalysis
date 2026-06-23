@@ -2,5 +2,5 @@
 *.xlsx
 .RData
 .Rhistory
-.RDataTmp
+.RDataTmp*
 output*
