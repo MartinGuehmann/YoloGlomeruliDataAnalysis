@@ -2452,6 +2452,8 @@ run_linear_model <- function(data,
 #'   \item A linear regression model (\code{lm}) is fitted and drawn as a line.
 #'   \item The regression formula is displayed inside the plot area,
 #'         slightly below the regression line.
+#'   \item The coefficient of determination (R²) of the fit is displayed
+#'         below the regression formula.
 #'   \item Axis ticks are fixed:
 #'     \itemize{
 #'       \item X-axis: every 10,000 images
@@ -2494,6 +2496,7 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   # Fit linear model for regression line
   fit <- lm(Time_h ~ Images, data = df)
   formula_text <- paste0("f(x) = ", round(coef(fit)[2], 5), " x + ", round(coef(fit)[1], 5))
+  r_squared_text <- paste0("R^2 == ", round(summary(fit)$r.squared, 5))
 
   # Compute dynamic text position: just below regression line
   pred_vals <- predict(fit, newdata = data.frame(Images = df$Images))
@@ -2520,6 +2523,9 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
   # Dynamic Y position for efficiency annotation: slightly below regression formula
   y_eff_pos <- y_pos - 0.08 * (max(pred_vals) - min(pred_vals))  # 8% below formula
 
+  # Dynamic Y position for R^2 annotation: slightly below efficiency annotation
+  y_r2_pos <- y_eff_pos - 0.08 * (max(pred_vals) - min(pred_vals))  # 8% below efficiency
+
   # Create ggplot
   p <- ggplot(df, aes(x = Images, y = Time_h)) +
     geom_point(shape = 1, color = "red", size = 2) +                                           # Unfilled circles
@@ -2540,6 +2546,16 @@ plot_training_times <- function(training_times, image_numbers, output_dir)
       hjust = 0,
       size = 3,
       color = "black"
+    ) +
+    annotate(
+      "text",
+      x = x_pos,
+      y = y_r2_pos,
+      label = r_squared_text,
+      hjust = 0,
+      size = 3,
+      color = "black",
+      parse = TRUE
     ) +
     labs(
       x = "Number of training images",
