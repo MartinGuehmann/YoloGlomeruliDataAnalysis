@@ -8,7 +8,7 @@
 # statistical comparisons, linear modeling, and generates
 # publication-ready plots and statistical summaries.
 #
-# Author: August Pfeiffer, Martin Gühmann
+# Authors: August Pfeiffer, Martin Gühmann
 # Date: 2026-06-23
 #
 # Purpose:

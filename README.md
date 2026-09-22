@@ -95,3 +95,9 @@ Or open it in RStudio and select all lines and press run.
 The script sets its working directory to its own location and expects
 `allresults_header_tab_final_v002.txt` and `Design2.xlsx` alongside it.
 
+## License
+
+- **Code** (`YOLO_data_analysis.R`): [MIT License](LICENSE).
+- **Data and generated figures** (`allresults_header_tab_final_v002.txt`,
+  `Design2.xlsx`, and the contents of `output/`): [CC BY 4.0](LICENSE-DATA.txt).
+
